@@ -8,21 +8,7 @@ const Configuration = {
    * Any rules defined here will override rules from @commitlint/config-conventional
    */
   rules: {
-    'scope-enum': [
-      2,
-      'always',
-      [
-        'frontend',
-        'gateway',
-        'auth',
-        'pairing',
-        'code-executor',
-        'video',
-        'room',
-        'history',
-        'coding',
-      ],
-    ],
+    'scope-enum': [2, 'always', ['auth', 'interfaces', 'prisma']],
     'type-enum': [
       2,
       'always',
@@ -45,7 +31,7 @@ const Configuration = {
    * Custom URL to show upon failure
    */
   helpUrl:
-    'https://github.com/CS3219-SE-Principles-and-Patterns/cs3219-project-ay2122-2122-s1-g32/blob/main/CONTRIBUTING.md',
+    'https://github.com/CodeToGather/TIPS-Backend/blob/main/CONTRIBUTING.md',
   /*
    * Custom prompt configs
    */

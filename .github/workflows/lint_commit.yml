@@ -11,4 +11,4 @@ jobs:
           fetch-depth: 0
       - uses: wagoid/commitlint-github-action@v4
         with:
-          helpURL: https://github.com/CS3219-SE-Principles-and-Patterns/cs3219-project-ay2122-2122-s1-g32/blob/main/CONTRIBUTING.md
+          helpURL: https://github.com/CodeToGather/TIPS-Backend/blob/main/CONTRIBUTING.md
