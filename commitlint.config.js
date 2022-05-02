@@ -8,7 +8,7 @@ const Configuration = {
    * Any rules defined here will override rules from @commitlint/config-conventional
    */
   rules: {
-    'scope-enum': [2, 'always', ['auth', 'interfaces', 'prisma']],
+    'scope-enum': [2, 'always', ['auth', 'interfaces', 'firebase', 'prisma']],
     'type-enum': [
       2,
       'always',

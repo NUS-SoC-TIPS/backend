@@ -38,7 +38,7 @@ Any line of the commit message cannot be longer than 100 characters.
   │       │             │
   │       │             └─⫸ Summary in present tense. Not capitalized. No period at the end.
   │       │
-  │       └─⫸ Commit Scope: auth|interfaces|prisma
+  │       └─⫸ Commit Scope: auth|interfaces|firebase|prisma
   │
   └─⫸ Commit Type: build|ci|docs|feat|fix|perf|refactor|test
 ```
@@ -69,6 +69,7 @@ The following is the list of supported scopes (to be extended as new subdirector
 
 - `auth`
 - `interfaces`
+- `firebase`
 - `prisma`
 
 There are currently a few exceptions to the "use package name" rule:

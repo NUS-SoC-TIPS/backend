@@ -124,8 +124,6 @@ module.exports = {
         groups: [
           // Dependency packages come first.
           ['^@?\\w'],
-          // Internal packages.
-          ['^(auth|interfaces|prisma)(/.*|$)'],
           // Side effect imports.
           ['^\\u0000'],
           // Parent imports. Put `..` last.
