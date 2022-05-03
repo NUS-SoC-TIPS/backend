@@ -14,7 +14,7 @@ export class AuthService {
     private jwt: JwtService,
   ) {}
 
-  async login(dto: AuthDto): Promise<{ token: string }> {
+  async login(dto: AuthDto): Promise<string> {
     const { token, ...userInfo } = dto;
     const uid = await this.firebaseService.verifyToken(token); // TODO: Look into error handling
     const user = await this.prismaService.user.upsert({
@@ -29,7 +29,7 @@ export class AuthService {
         ...userInfo,
       },
     });
-    return { token: await this.signToken(user.id) };
+    return this.signToken(user.id);
   }
 
   private signToken(userId: string): Promise<string> {
