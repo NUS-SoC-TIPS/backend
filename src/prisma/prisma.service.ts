@@ -12,4 +12,9 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
       await app.close();
     });
   }
+
+  // Sequencing matters here!
+  async cleanDb(): Promise<void> {
+    await this.user.deleteMany();
+  }
 }

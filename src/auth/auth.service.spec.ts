@@ -65,6 +65,7 @@ describe('AuthService', () => {
 
   describe('integration with Prisma', () => {
     let prisma: PrismaService;
+
     beforeEach(async () => {
       const module: TestingModule = await Test.createTestingModule({
         providers: [AuthService, PrismaService],
@@ -78,6 +79,10 @@ describe('AuthService', () => {
         .compile();
       service = module.get<AuthService>(AuthService);
       prisma = module.get<PrismaService>(PrismaService);
+    });
+
+    afterAll(async () => {
+      await prisma.cleanDb();
     });
 
     it('should create user via prisma', async () => {
