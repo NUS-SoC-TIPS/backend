@@ -3,7 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 
 import { FirebaseService } from '../firebase/firebase.service';
 import { PrismaService } from '../prisma/prisma.service';
-import { mocker } from '../utils/mocker';
+import { mocker } from '../utils/mocker.util';
 
 import { AuthService } from './auth.service';
 import { AuthDto } from './dtos';
