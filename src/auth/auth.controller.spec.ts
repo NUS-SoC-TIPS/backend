@@ -55,5 +55,10 @@ describe('AuthController', () => {
       expect(login.mock.calls[0][0]).toMatchObject(authDto);
       expect(result).toHaveProperty('token');
     });
+
+    it('should return an object with token', async () => {
+      const result = await controller.login(authDto);
+      expect(result).toMatchObject({ token: '1' });
+    });
   });
 });
