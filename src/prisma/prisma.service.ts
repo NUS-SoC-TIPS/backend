@@ -1,5 +1,5 @@
 import { INestApplication, Injectable, OnModuleInit } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
+import { Prisma, PrismaClient } from '@prisma/client';
 
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit {
@@ -14,7 +14,8 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
   }
 
   // Sequencing matters here!
-  async cleanDb(): Promise<void> {
-    await this.user.deleteMany();
+  cleanDb(): Promise<Prisma.BatchPayload[]> {
+    const deleteUsers = this.user.deleteMany();
+    return this.$transaction([deleteUsers]);
   }
 }
