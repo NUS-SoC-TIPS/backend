@@ -11,7 +11,7 @@ const Configuration = {
     'scope-enum': [
       2,
       'always',
-      ['auth', 'interfaces', 'firebase', 'prisma', 'users', 'utils'],
+      ['auth', 'firebase', 'prisma', 'rooms', 'users', 'utils'],
     ],
     'type-enum': [
       2,
