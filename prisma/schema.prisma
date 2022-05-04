@@ -20,5 +20,31 @@ model User {
 
   // TODO: Look into supporting Telegram ID and verification
 
+  roomUsers RoomUser[]
   @@map("users")
+}
+
+model Room {
+  id        String     @id // Random word slug generated at app level
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  closedAt  DateTime? // Null if not closed
+  status    RoomStatus @default(OPEN)
+
+  roomUsers RoomUser[] // Max 2 room users
+  @@map("rooms")
+}
+
+model RoomUser {
+  id     Int    @id @default(autoincrement())
+  roomId String
+  room   Room   @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+enum RoomStatus {
+  OPEN
+  CLOSED_MANUALLY
+  CLOSED_AUTOMATICALLY
 }
