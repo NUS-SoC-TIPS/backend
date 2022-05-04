@@ -1,6 +1,10 @@
-import { InjectionToken } from '@nestjs/common';
+import { INestApplication, InjectionToken } from '@nestjs/common';
 import { CanActivate } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+import { User } from '@prisma/client';
 import { Mock, MockFunctionMetadata, ModuleMocker } from 'jest-mock';
+
+import { PrismaService } from '../prisma/prisma.service';
 
 const moduleMocker = new ModuleMocker(global);
 
@@ -21,10 +25,10 @@ export const mocker = (token: InjectionToken): Mock | undefined => {
  * @param guardType is the type of the guard, for example, JwtRestGuard.
  * @returns true if the specified guard is applied.
  */
-export function isGuarded(
+export const isGuarded = (
   route: ((...args: any[]) => any) | (new (...args: any[]) => unknown),
   guardType: new (...args: any[]) => CanActivate,
-): boolean {
+): boolean => {
   const guards = Reflect.getMetadata('__guards__', route);
   if (!guards) {
     throw Error(
@@ -33,4 +37,25 @@ export function isGuarded(
   }
   const guard = new guards[0]();
   return guard instanceof guardType;
-}
+};
+
+/**
+ * Creates a user with the given userId and returns the relevant JWT.
+ */
+export const createUserAndLogin = async (
+  app: INestApplication,
+  userId = '1',
+): Promise<{ user: User; token: string }> => {
+  const prismaService = app.get(PrismaService);
+  const user = await prismaService.user.create({
+    data: {
+      id: userId,
+      githubUsername: `hello-${userId}`,
+      photoUrl: 'https://avatars.githubusercontent.com/u/45617494?v=4',
+      profileUrl: 'https://github.com/zhuhanming',
+    },
+  });
+
+  const jwtService = app.get(JwtService);
+  return { user, token: await jwtService.signAsync({ sub: userId }) };
+};
