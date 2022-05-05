@@ -11,6 +11,7 @@ import { Room, RoomStatus, User } from '@prisma/client';
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { Server } from 'socket.io';
 
+import { AgoraService } from '../agora/agora.service';
 import { GetUserWs } from '../auth/decorators';
 import { AuthWsGuard } from '../auth/guards';
 import { ISocket } from '../interfaces/socket';
@@ -27,7 +28,10 @@ export class RoomsGateway implements OnGatewayDisconnect {
   private roomIdToSockets: Map<number, ISocket[]>;
   private roomIdToTimeouts: Map<number, NodeJS.Timeout>;
 
-  constructor(private roomsService: RoomsService) {
+  constructor(
+    private roomsService: RoomsService,
+    private agoraService: AgoraService,
+  ) {
     this.roomIdToSockets = new Map();
     this.roomIdToTimeouts = new Map();
   }
@@ -65,10 +69,11 @@ export class RoomsGateway implements OnGatewayDisconnect {
       .emit(ROOM_EVENTS.JOINED_ROOM, { partner: user });
 
     // TODO: Fetch coding information via code service
-    // TODO: Generate video information via video service
+    // TODO: Fetch comments via comment service
+    const videoToken = this.agoraService.generateAccessToken(room.id, user.id);
     const partner = room.roomUsers.filter((u) => u.userId !== user.id)[0]?.user;
 
-    return { partner };
+    return { partner, videoToken };
   }
 
   @UseGuards(AuthWsGuard, InRoomGuard)
