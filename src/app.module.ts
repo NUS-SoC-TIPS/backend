@@ -5,6 +5,7 @@ import { AgoraModule } from './agora/agora.module';
 import { AuthModule } from './auth/auth.module';
 import { CodeModule } from './code/code.module';
 import { FirebaseModule } from './firebase/firebase.module';
+import { NotesModule } from './notes/notes.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { RoomsModule } from './rooms/rooms.module';
 import { UsersModule } from './users/users.module';
@@ -19,6 +20,7 @@ import { UsersModule } from './users/users.module';
     RoomsModule,
     AgoraModule,
     CodeModule,
+    NotesModule,
   ],
 })
 export class AppModule {}
