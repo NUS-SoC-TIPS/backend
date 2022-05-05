@@ -17,6 +17,7 @@ const Configuration = {
         'code',
         'firebase',
         'interfaces',
+        'notes',
         'prisma',
         'rooms',
         'users',

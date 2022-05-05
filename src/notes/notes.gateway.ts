@@ -4,10 +4,11 @@ import {
   SubscribeMessage,
   WebSocketGateway,
 } from '@nestjs/websockets';
-import { GetUserWs } from 'src/auth/decorators';
-import { AuthWsGuard } from 'src/auth/guards';
-import { GetRoom } from 'src/rooms/decorators';
-import { InRoomGuard } from 'src/rooms/guards';
+
+import { GetUserWs } from '../auth/decorators';
+import { AuthWsGuard } from '../auth/guards';
+import { GetRoom } from '../rooms/decorators';
+import { InRoomGuard } from '../rooms/guards';
 
 import { NOTES_EVENTS } from './notes.constants';
 import { NotesService } from './notes.service';

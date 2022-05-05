@@ -16,6 +16,7 @@ import { GetUserWs } from '../auth/decorators';
 import { AuthWsGuard } from '../auth/guards';
 import { CodeService } from '../code/code.service';
 import { ISocket } from '../interfaces/socket';
+import { NotesService } from '../notes/notes.service';
 
 import { GetRoom } from './decorators';
 import { InRoomGuard } from './guards';
@@ -33,6 +34,7 @@ export class RoomsGateway implements OnGatewayDisconnect {
     private roomsService: RoomsService,
     private agoraService: AgoraService,
     private codeService: CodeService,
+    private notesService: NotesService,
   ) {
     this.roomIdToSockets = new Map();
     this.roomIdToTimeouts = new Map();
@@ -70,12 +72,12 @@ export class RoomsGateway implements OnGatewayDisconnect {
       .to(`${room.id}`)
       .emit(ROOM_EVENTS.JOINED_ROOM, { partner: user });
 
-    // TODO: Fetch comments via comment service
     const { code, language } = this.codeService.findCode(room.id);
+    const notes = this.notesService.findForUserInRoom(room.id, user.id);
     const videoToken = this.agoraService.generateAccessToken(room.id, user.id);
     const partner = room.roomUsers.filter((u) => u.userId !== user.id)[0]?.user;
 
-    return { partner, videoToken, code, language };
+    return { partner, videoToken, code, language, notes };
   }
 
   @UseGuards(AuthWsGuard, InRoomGuard)
