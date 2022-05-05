@@ -6,7 +6,7 @@ import {
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets';
-import { Language, Room } from '@prisma/client';
+import { Language } from '@prisma/client';
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { Server } from 'socket.io';
 
@@ -29,10 +29,10 @@ export class CodeGateway {
   updateCode(
     @MessageBody(new ParseArrayPipe({ items: String })) code: string[],
     @ConnectedSocket() socket: ISocket,
-    @GetRoom() room: Room,
+    @GetRoom('id') roomId: number,
   ): void {
-    this.codeService.updateCode(room, code);
-    socket.to(`${room.id}`).emit(CODE_EVENTS.UPDATE_CODE, code);
+    this.codeService.updateCode(roomId, code);
+    socket.to(`${roomId}`).emit(CODE_EVENTS.UPDATE_CODE, code);
   }
 
   @UseGuards(AuthWsGuard, InRoomGuard)
@@ -40,9 +40,9 @@ export class CodeGateway {
   updateLanguage(
     @MessageBody(new ParseEnumPipe(Language))
     language: Language,
-    @GetRoom() room: Room,
+    @GetRoom('id') roomId: number,
   ): void {
-    this.codeService.updateLanguage(room, language);
-    this.server.to(`${room.id}`).emit(CODE_EVENTS.UPDATE_LANGUAGE, language);
+    this.codeService.updateLanguage(roomId, language);
+    this.server.to(`${roomId}`).emit(CODE_EVENTS.UPDATE_LANGUAGE, language);
   }
 }
