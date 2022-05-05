@@ -73,6 +73,20 @@ export class RoomsService {
     });
   }
 
+  closeRoom(roomId: number, isAuto: boolean): Promise<Room> {
+    return this.prismaService.room.update({
+      where: {
+        id: roomId,
+      },
+      data: {
+        status: isAuto
+          ? RoomStatus.CLOSED_AUTOMATICALLY
+          : RoomStatus.CLOSED_MANUALLY,
+        closedAt: new Date(),
+      },
+    });
+  }
+
   /**
    * Finds the active room user for the user, and also returns the room.
    */
