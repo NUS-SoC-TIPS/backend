@@ -14,6 +14,7 @@ const Configuration = {
       [
         'agora',
         'auth',
+        'code',
         'firebase',
         'interfaces',
         'prisma',
