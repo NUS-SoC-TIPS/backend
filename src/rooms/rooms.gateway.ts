@@ -10,6 +10,7 @@ import {
 import { Room, RoomStatus, User } from '@prisma/client';
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { Server } from 'socket.io';
+import { RecordsService } from 'src/records/records.service';
 
 import { AgoraService } from '../agora/agora.service';
 import { GetUserWs } from '../auth/decorators';
@@ -17,6 +18,7 @@ import { AuthWsGuard } from '../auth/guards';
 import { CodeService } from '../code/code.service';
 import { ISocket } from '../interfaces/socket';
 import { NotesService } from '../notes/notes.service';
+import { CreateRecordDto } from '../records/dtos';
 
 import { GetRoom } from './decorators';
 import { InRoomGuard } from './guards';
@@ -35,6 +37,7 @@ export class RoomsGateway implements OnGatewayDisconnect {
     private agoraService: AgoraService,
     private codeService: CodeService,
     private notesService: NotesService,
+    private recordsService: RecordsService,
   ) {
     this.roomIdToSockets = new Map();
     this.roomIdToTimeouts = new Map();
@@ -82,26 +85,39 @@ export class RoomsGateway implements OnGatewayDisconnect {
 
   @UseGuards(AuthWsGuard, InRoomGuard)
   @SubscribeMessage(ROOM_EVENTS.CLOSE_ROOM)
-  closeRoom(@GetRoom('id') roomId: number): Promise<void> {
-    return this.closeRoomHelper(roomId, false);
+  closeRoom(@GetRoom() room: Room): Promise<void> {
+    return this.closeRoomHelper(room, false);
   }
 
   handleDisconnect(@ConnectedSocket() socket: ISocket): void {
     if (!socket.room) {
       return;
     }
-    this.removeSocketFromRoomStructures(socket, socket.room.id);
+    this.removeSocketFromRoomStructures(socket, socket.room);
   }
 
-  private async closeRoomHelper(
-    roomId: number,
-    isAuto: boolean,
-  ): Promise<void> {
-    // TODO: Grab code from code service and persist it somehow + clean up on code
-    // TODO: Also do the same with the comments written + clean up on comments
-    await this.roomsService.closeRoom(roomId, isAuto);
-    this.server.to(`${roomId}`).emit(ROOM_EVENTS.ALREADY_IN_ROOM);
-    this.removeRoomFromRoomStructures(roomId);
+  private async closeRoomHelper(room: Room, isAuto: boolean): Promise<void> {
+    this.server.to(`${room.id}`).emit(ROOM_EVENTS.CLOSING_ROOM);
+    const { code, language } = this.codeService.closeRoom(room.id);
+    const userNotes = this.notesService.closeRoom(room.id);
+    const recordData: CreateRecordDto = {
+      isRoleplay: false,
+      duration: new Date().getTime() - room.createdAt.getTime(),
+      roomId: room.id,
+      language,
+      codeWritten: code,
+      users: userNotes.map((notes) => ({
+        ...notes,
+        isInterviewer: false,
+      })),
+    };
+
+    await Promise.all([
+      this.recordsService.create(recordData),
+      this.roomsService.closeRoom(room.id, isAuto),
+    ]);
+    this.server.to(`${room.id}`).emit(ROOM_EVENTS.CLOSE_ROOM);
+    this.removeRoomFromRoomStructures(room.id);
   }
 
   // This is the only method that needs to take in Room instead of just id,
@@ -116,28 +132,25 @@ export class RoomsGateway implements OnGatewayDisconnect {
     socket.room = room;
   }
 
-  private removeSocketFromRoomStructures(
-    socket: ISocket,
-    roomId: number,
-  ): void {
-    if (!this.roomIdToSockets.has(roomId)) {
+  private removeSocketFromRoomStructures(socket: ISocket, room: Room): void {
+    if (!this.roomIdToSockets.has(room.id)) {
       // Invariant violated
       return;
     }
     const sockets = this.roomIdToSockets
-      .get(roomId)
+      .get(room.id)
       .filter((s) => s.id !== socket.id);
-    this.roomIdToSockets.set(roomId, sockets);
+    this.roomIdToSockets.set(room.id, sockets);
     socket.room = undefined;
-    socket.leave(`${roomId}`);
+    socket.leave(`${room.id}`);
 
     // If there's nobody left in the room, we set it to autoclose in 30 minutes
     if (sockets.length === 0) {
-      this.clearRoomTimeout(roomId);
+      this.clearRoomTimeout(room.id);
       const timeout = setTimeout(() => {
-        this.closeRoomHelper(roomId, true);
+        this.closeRoomHelper(room, true);
       }, 1800000);
-      this.roomIdToTimeouts.set(roomId, timeout);
+      this.roomIdToTimeouts.set(room.id, timeout);
     }
   }
 

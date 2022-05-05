@@ -13,6 +13,7 @@ export const ROOM_EVENTS = {
 
   // For any of the two users in the room to end the session. Also sent back to both users in room.
   CLOSE_ROOM: 'close_room',
+  CLOSING_ROOM: 'closing_room', // Sent to block any further changes from users
 
   // To inform the other user that one user has disconnected
   PARTNER_DISCONNECTED: 'partner_disconnected',
