@@ -72,10 +72,14 @@ export class RoomsGateway {
 
   @UseGuards(AuthWsGuard, InRoomGuard)
   @SubscribeMessage(ROOM_EVENTS.CLOSE_ROOM)
-  async closeRoom(@GetRoom() room: Room): Promise<void> {
-    // TODO: Grab code from code service and persist it somehow
-    // TODO: Also do the same with the comments written
-    await this.roomsService.closeRoom(room.id, false);
+  closeRoom(@GetRoom() room: Room): Promise<void> {
+    return this.closeRoomHelper(room, false);
+  }
+
+  private async closeRoomHelper(room: Room, isAuto: boolean): Promise<void> {
+    // TODO: Grab code from code service and persist it somehow + clean up on code
+    // TODO: Also do the same with the comments written + clean up on comments
+    await this.roomsService.closeRoom(room.id, isAuto);
     this.server.to(`${room.id}`).emit(ROOM_EVENTS.ALREADY_IN_ROOM);
     this.removeRoomFromRoomStructures(room);
   }
