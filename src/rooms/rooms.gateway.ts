@@ -2,6 +2,7 @@ import { UseGuards } from '@nestjs/common';
 import {
   ConnectedSocket,
   MessageBody,
+  OnGatewayDisconnect,
   SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
@@ -20,7 +21,7 @@ import { ROOM_EVENTS } from './rooms.constants';
 import { RoomsService } from './rooms.service';
 
 @WebSocketGateway()
-export class RoomsGateway {
+export class RoomsGateway implements OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
   private roomIdToSockets: Map<number, ISocket[]>;
@@ -76,6 +77,13 @@ export class RoomsGateway {
     return this.closeRoomHelper(room, false);
   }
 
+  handleDisconnect(@ConnectedSocket() socket: ISocket): void {
+    if (!socket.room) {
+      return;
+    }
+    this.removeSocketFromRoomStructures(socket, socket.room);
+  }
+
   private async closeRoomHelper(room: Room, isAuto: boolean): Promise<void> {
     // TODO: Grab code from code service and persist it somehow + clean up on code
     // TODO: Also do the same with the comments written + clean up on comments
@@ -89,12 +97,31 @@ export class RoomsGateway {
       this.roomIdToSockets.set(room.id, []);
     }
     this.roomIdToSockets.get(room.id).push(socket);
-    if (this.roomIdToTimeouts.has(room.id)) {
-      clearTimeout(this.roomIdToTimeouts.get(room.id));
-      this.roomIdToTimeouts.delete(room.id);
-    }
+    this.clearRoomTimeout(room);
     socket.join(`${room.id}`);
     socket.room = room;
+  }
+
+  private removeSocketFromRoomStructures(socket: ISocket, room: Room): void {
+    if (!this.roomIdToSockets.has(room.id)) {
+      // Invariant violated
+      return;
+    }
+    const sockets = this.roomIdToSockets
+      .get(room.id)
+      .filter((s) => s.id !== socket.id);
+    this.roomIdToSockets.set(room.id, sockets);
+    socket.room = undefined;
+    socket.leave(`${room.id}`);
+
+    // If there's nobody left in the room, we set it to autoclose in 30 minutes
+    if (sockets.length === 0) {
+      this.clearRoomTimeout(room);
+      const timeout = setTimeout(() => {
+        this.closeRoomHelper(room, true);
+      }, 1800000);
+      this.roomIdToTimeouts.set(room.id, timeout);
+    }
   }
 
   private removeRoomFromRoomStructures(room: Room): void {
@@ -106,6 +133,10 @@ export class RoomsGateway {
       s.leave(`${room.id}`);
     });
     this.roomIdToSockets.delete(room.id);
+    this.clearRoomTimeout(room);
+  }
+
+  private clearRoomTimeout(room: Room): void {
     if (this.roomIdToTimeouts.has(room.id)) {
       clearTimeout(this.roomIdToTimeouts.get(room.id));
       this.roomIdToTimeouts.delete(room.id);
