@@ -11,7 +11,7 @@ import { JwtRestStrategy } from './strategies';
   imports: [
     JwtModule.registerAsync({
       useFactory: async (configService: ConfigService) => ({
-        secretOrPrivateKey: configService.get('JWT_SECRET'),
+        secret: configService.get('JWT_SECRET'),
         signOptions: {
           expiresIn: '7d',
         },
