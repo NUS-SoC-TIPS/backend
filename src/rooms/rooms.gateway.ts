@@ -71,12 +71,11 @@ export class RoomsGateway implements OnGatewayDisconnect {
       .emit(ROOM_EVENTS.JOINED_ROOM, { partner: user });
 
     // TODO: Fetch comments via comment service
-    // TODO: Fetch language via code service
-    const code = this.codeService.findCode(room);
+    const { code, language } = this.codeService.findCode(room);
     const videoToken = this.agoraService.generateAccessToken(room.id, user.id);
     const partner = room.roomUsers.filter((u) => u.userId !== user.id)[0]?.user;
 
-    return { partner, videoToken, code };
+    return { partner, videoToken, code, language };
   }
 
   @UseGuards(AuthWsGuard, InRoomGuard)
