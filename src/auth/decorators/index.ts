@@ -1,2 +1,2 @@
-export * from './user-rest.decorator';
-export * from './user-ws.decorator';
+export * from './get-user-rest.decorator';
+export * from './get-user-ws.decorator';
