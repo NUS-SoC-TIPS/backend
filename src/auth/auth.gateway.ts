@@ -3,6 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import {
   ConnectedSocket,
   MessageBody,
+  OnGatewayConnection,
   SubscribeMessage,
   WebSocketGateway,
   WsException,
@@ -16,7 +17,7 @@ import { AUTH_EVENTS } from './auth.constants';
 import { JsonWebTokenExceptionFilter } from './filters';
 
 @WebSocketGateway()
-export class AuthGateway {
+export class AuthGateway implements OnGatewayConnection {
   constructor(
     private jwtService: JwtService,
     private prismaService: PrismaService,
@@ -39,5 +40,14 @@ export class AuthGateway {
     }
     socket.user = user;
     return { user };
+  }
+
+  handleConnection(@ConnectedSocket() socket: ISocket): void {
+    setTimeout(() => {
+      // If after 1 second, the socket still hasn't authenticated itself, then we will kick.
+      if (socket.user == null) {
+        socket.disconnect();
+      }
+    }, 1000);
   }
 }
