@@ -8,8 +8,9 @@ import {
   WsException,
 } from '@nestjs/websockets';
 import { User } from '@prisma/client';
-import { ISocket } from 'src/interfaces/socket';
-import { PrismaService } from 'src/prisma/prisma.service';
+
+import { ISocket } from '../interfaces/socket';
+import { PrismaService } from '../prisma/prisma.service';
 
 import { AUTH_EVENTS } from './auth.constants';
 import { JsonWebTokenExceptionFilter } from './filters';
