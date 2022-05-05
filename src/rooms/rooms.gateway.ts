@@ -71,7 +71,7 @@ export class RoomsGateway implements OnGatewayDisconnect {
       .emit(ROOM_EVENTS.JOINED_ROOM, { partner: user });
 
     // TODO: Fetch comments via comment service
-    const { code, language } = this.codeService.findCode(room);
+    const { code, language } = this.codeService.findCode(room.id);
     const videoToken = this.agoraService.generateAccessToken(room.id, user.id);
     const partner = room.roomUsers.filter((u) => u.userId !== user.id)[0]?.user;
 
@@ -80,73 +80,81 @@ export class RoomsGateway implements OnGatewayDisconnect {
 
   @UseGuards(AuthWsGuard, InRoomGuard)
   @SubscribeMessage(ROOM_EVENTS.CLOSE_ROOM)
-  closeRoom(@GetRoom() room: Room): Promise<void> {
-    return this.closeRoomHelper(room, false);
+  closeRoom(@GetRoom('id') roomId: number): Promise<void> {
+    return this.closeRoomHelper(roomId, false);
   }
 
   handleDisconnect(@ConnectedSocket() socket: ISocket): void {
     if (!socket.room) {
       return;
     }
-    this.removeSocketFromRoomStructures(socket, socket.room);
+    this.removeSocketFromRoomStructures(socket, socket.room.id);
   }
 
-  private async closeRoomHelper(room: Room, isAuto: boolean): Promise<void> {
+  private async closeRoomHelper(
+    roomId: number,
+    isAuto: boolean,
+  ): Promise<void> {
     // TODO: Grab code from code service and persist it somehow + clean up on code
     // TODO: Also do the same with the comments written + clean up on comments
-    await this.roomsService.closeRoom(room.id, isAuto);
-    this.server.to(`${room.id}`).emit(ROOM_EVENTS.ALREADY_IN_ROOM);
-    this.removeRoomFromRoomStructures(room);
+    await this.roomsService.closeRoom(roomId, isAuto);
+    this.server.to(`${roomId}`).emit(ROOM_EVENTS.ALREADY_IN_ROOM);
+    this.removeRoomFromRoomStructures(roomId);
   }
 
+  // This is the only method that needs to take in Room instead of just id,
+  // because we need to link it to the socket.
   private addSocketToRoomStructures(socket: ISocket, room: Room): void {
     if (!this.roomIdToSockets.has(room.id)) {
       this.roomIdToSockets.set(room.id, []);
     }
     this.roomIdToSockets.get(room.id).push(socket);
-    this.clearRoomTimeout(room);
+    this.clearRoomTimeout(room.id);
     socket.join(`${room.id}`);
     socket.room = room;
   }
 
-  private removeSocketFromRoomStructures(socket: ISocket, room: Room): void {
-    if (!this.roomIdToSockets.has(room.id)) {
+  private removeSocketFromRoomStructures(
+    socket: ISocket,
+    roomId: number,
+  ): void {
+    if (!this.roomIdToSockets.has(roomId)) {
       // Invariant violated
       return;
     }
     const sockets = this.roomIdToSockets
-      .get(room.id)
+      .get(roomId)
       .filter((s) => s.id !== socket.id);
-    this.roomIdToSockets.set(room.id, sockets);
+    this.roomIdToSockets.set(roomId, sockets);
     socket.room = undefined;
-    socket.leave(`${room.id}`);
+    socket.leave(`${roomId}`);
 
     // If there's nobody left in the room, we set it to autoclose in 30 minutes
     if (sockets.length === 0) {
-      this.clearRoomTimeout(room);
+      this.clearRoomTimeout(roomId);
       const timeout = setTimeout(() => {
-        this.closeRoomHelper(room, true);
+        this.closeRoomHelper(roomId, true);
       }, 1800000);
-      this.roomIdToTimeouts.set(room.id, timeout);
+      this.roomIdToTimeouts.set(roomId, timeout);
     }
   }
 
-  private removeRoomFromRoomStructures(room: Room): void {
-    if (!this.roomIdToSockets.has(room.id)) {
+  private removeRoomFromRoomStructures(roomId: number): void {
+    if (!this.roomIdToSockets.has(roomId)) {
       return;
     }
-    this.roomIdToSockets.get(room.id).forEach((s) => {
+    this.roomIdToSockets.get(roomId).forEach((s) => {
       s.room = undefined;
-      s.leave(`${room.id}`);
+      s.leave(`${roomId}`);
     });
-    this.roomIdToSockets.delete(room.id);
-    this.clearRoomTimeout(room);
+    this.roomIdToSockets.delete(roomId);
+    this.clearRoomTimeout(roomId);
   }
 
-  private clearRoomTimeout(room: Room): void {
-    if (this.roomIdToTimeouts.has(room.id)) {
-      clearTimeout(this.roomIdToTimeouts.get(room.id));
-      this.roomIdToTimeouts.delete(room.id);
+  private clearRoomTimeout(roomId: number): void {
+    if (this.roomIdToTimeouts.has(roomId)) {
+      clearTimeout(this.roomIdToTimeouts.get(roomId));
+      this.roomIdToTimeouts.delete(roomId);
     }
   }
 }
