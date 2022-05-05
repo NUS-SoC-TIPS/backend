@@ -1,4 +1,4 @@
-import { UseGuards } from '@nestjs/common';
+import { UseGuards, ValidationPipe } from '@nestjs/common';
 import {
   ConnectedSocket,
   MessageBody,
@@ -41,7 +41,7 @@ export class RoomsGateway implements OnGatewayDisconnect {
   @UseGuards(AuthWsGuard)
   @SubscribeMessage(ROOM_EVENTS.JOIN_ROOM)
   async joinRoom(
-    @MessageBody('slug') slug: string,
+    @MessageBody('slug', new ValidationPipe()) slug: string,
     @GetUserWs() user: User,
     @ConnectedSocket() socket: ISocket,
   ): Promise<any> {
