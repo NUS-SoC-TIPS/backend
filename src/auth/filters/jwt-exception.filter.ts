@@ -6,6 +6,6 @@ import { JsonWebTokenError } from 'jsonwebtoken';
 export class JsonWebTokenExceptionFilter implements ExceptionFilter {
   catch(_exception: JsonWebTokenError, host: ArgumentsHost): void {
     const socket = host.switchToWs().getClient();
-    socket.emit('exception', { statusCode: 400, message: 'Invalid token' });
+    socket.emit('exception', { status: 'error', message: 'Invalid token' });
   }
 }
