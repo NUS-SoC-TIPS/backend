@@ -10,7 +10,6 @@ import {
 import { Room, RoomStatus, User } from '@prisma/client';
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { Server } from 'socket.io';
-import { RecordsService } from 'src/records/records.service';
 
 import { AgoraService } from '../agora/agora.service';
 import { GetUserWs } from '../auth/decorators';
@@ -19,6 +18,7 @@ import { CodeService } from '../code/code.service';
 import { ISocket } from '../interfaces/socket';
 import { NotesService } from '../notes/notes.service';
 import { CreateRecordDto } from '../records/dtos';
+import { RecordsService } from '../records/records.service';
 
 import { GetRoom } from './decorators';
 import { InRoomGuard } from './guards';
