@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 
+import { AgoraModule } from './agora/agora.module';
 import { AuthModule } from './auth/auth.module';
 import { FirebaseModule } from './firebase/firebase.module';
 import { PrismaModule } from './prisma/prisma.module';
@@ -15,6 +16,7 @@ import { UsersModule } from './users/users.module';
     AuthModule,
     UsersModule,
     RoomsModule,
+    AgoraModule,
   ],
 })
 export class AppModule {}
