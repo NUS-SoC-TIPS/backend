@@ -1,4 +1,4 @@
-import { UseGuards } from '@nestjs/common';
+import { UseGuards, ValidationPipe } from '@nestjs/common';
 import {
   ConnectedSocket,
   MessageBody,
@@ -14,6 +14,7 @@ import { InRoomGuard } from '../rooms/guards';
 
 import { CODE_EVENTS } from './code.constants';
 import { CodeService } from './code.service';
+import { UpdateCodeDto } from './dtos';
 
 @WebSocketGateway()
 export class CodeGateway {
@@ -21,12 +22,12 @@ export class CodeGateway {
 
   @UseGuards(AuthWsGuard, InRoomGuard)
   @SubscribeMessage(CODE_EVENTS.UPDATE_CODE)
-  handleMessage(
-    @MessageBody() code: string[],
+  updateCode(
+    @MessageBody(new ValidationPipe()) data: UpdateCodeDto,
     @ConnectedSocket() socket: ISocket,
     @GetRoom() room: Room,
   ): void {
-    this.codeService.updateCode(room, code);
-    socket.to(`${room.id}`).emit(CODE_EVENTS.UPDATE_CODE, code);
+    this.codeService.updateCode(room, data.code);
+    socket.to(`${room.id}`).emit(CODE_EVENTS.UPDATE_CODE, data);
   }
 }
