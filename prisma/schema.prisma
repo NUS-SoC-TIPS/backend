@@ -20,7 +20,8 @@ model User {
 
   // TODO: Look into supporting Telegram ID and verification
 
-  roomUsers RoomUser[]
+  roomUsers   RoomUser[]
+  recordUsers RoomRecordUser[]
   @@map("users")
 }
 
@@ -33,6 +34,7 @@ model Room {
   status    RoomStatus @default(OPEN)
 
   roomUsers RoomUser[] // Max 2 room users
+  records   RoomRecord[]
   @@map("rooms")
 }
 
@@ -42,10 +44,62 @@ model RoomUser {
   room   Room   @relation(fields: [roomId], references: [id], onDelete: Cascade)
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([roomId, userId])
+}
+
+// The following model is designed to handle both general mock interviews and
+// interviewee-interviewer roleplay. For roleplay, 2 records will be generated
+model RoomRecord {
+  id          Int              @id @default(autoincrement())
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  isRoleplay  Boolean          @default(false)
+  duration    Float // In milliseconds. Time taken for both users if general, else time taken for specific turn.
+  language    Language
+  codeWritten String // Code written by both users if general, else by interviewee
+  isSolved    Boolean          @default(false) // Ignored if general
+  room        Room             @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  roomId      Int
+  questionId  String?
+  question    Question?        @relation(fields: [questionId], references: [id]) // Null if general
+  users       RoomRecordUser[]
+}
+
+model Question {
+  id         String       @id // Fixed ID per question
+  title      String
+  difficulty Difficulty
+  records    RoomRecord[]
+}
+
+// 1 pair of users per room record
+model RoomRecordUser {
+  id            Int        @id @default(autoincrement())
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  isInterviewer Boolean // Ignored if record is general
+  notes         String // Markdown notes taken during interview
+  userId        String
+  user          User       @relation(fields: [userId], references: [id])
+  recordId      Int
+  record        RoomRecord @relation(fields: [recordId], references: [id])
 }
 
 enum RoomStatus {
   OPEN
   CLOSED_MANUALLY
   CLOSED_AUTOMATICALLY
+}
+
+enum Language {
+  PYTHON
+  JAVA
+  JAVASCRIPT
+}
+
+enum Difficulty {
+  EASY
+  MEDIUM
+  HARD
 }
