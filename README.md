@@ -24,9 +24,7 @@ Code2Gather was originally developed by the following people for NUS CS3219:
 
 ## Project Requirements
 
-This project requires Docker and Docker Compose to be installed. We will be using the `docker-compose` family of commands.
-
-We will also have some local dependencies to help with developer UX. This will require the following:
+This project requires Docker and Docker Compose to be installed for the database. We will be using the `docker-compose` family of commands.
 
 ### Node.js v14 LTS
 
@@ -74,6 +72,8 @@ Then, start developing by running:
 ```sh
 yarn start:dev
 ```
+
+The REST API and Socket.IO gateway can be found at `http://localhost:3001` and `ws://localhost:3001` respectively.
 
 ### Others
 
