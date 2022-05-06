@@ -3,6 +3,8 @@
 
 <h1 align="center">Backend for TIPS</h1>
 
+<p align="center"><img src="https://github.com/CodeToGather/TIPS-Backend/workflows/Lint/badge.svg" alt="Lint" />&nbsp;<img src="https://github.com/CodeToGather/TIPS-Backend/workflows/Test/badge.svg" alt="Test" /></p>
+
 ## Overview
 
 TIPS is a monolithic rewrite of Code2Gather to support the technical interview preparation for NUS SoC students. Its functionalities include:
