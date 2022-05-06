@@ -38,7 +38,7 @@ Any line of the commit message cannot be longer than 100 characters.
   │       │             │
   │       │             └─⫸ Summary in present tense. Not capitalized. No period at the end.
   │       │
-  │       └─⫸ Commit Scope: auth|interfaces|firebase|prisma
+  │       └─⫸ Commit Scope: agora|auth|code|firebase|interfaces|...
   │
   └─⫸ Commit Type: build|ci|docs|feat|fix|perf|refactor|test
 ```
@@ -67,10 +67,17 @@ The scope should be the name of the subdirectory affected (as perceived by the p
 
 The following is the list of supported scopes (to be extended as new subdirectories are added):
 
+- `agora`
 - `auth`
-- `interfaces`
+- `code`
 - `firebase`
+- `interfaces`
+- `notes`
 - `prisma`
+- `records`
+- `rooms`
+- `users`
+- `utils`
 
 There are currently a few exceptions to the "use package name" rule:
 
