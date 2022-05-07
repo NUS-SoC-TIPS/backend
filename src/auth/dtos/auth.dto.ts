@@ -7,6 +7,10 @@ export class AuthDto {
 
   @IsString()
   @IsNotEmpty()
+  name: string;
+
+  @IsString()
+  @IsNotEmpty()
   githubUsername: string;
 
   @IsUrl()

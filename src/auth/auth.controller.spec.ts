@@ -11,6 +11,7 @@ describe('AuthController', () => {
   const authDto: AuthDto = {
     token: '123',
     githubUsername: 'hello',
+    name: 'world',
     photoUrl: 'https://avatars.githubusercontent.com/u/45617494?v=4',
     profileUrl: 'https://github.com/zhuhanming',
   };

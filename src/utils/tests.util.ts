@@ -51,6 +51,7 @@ export const createUserAndLogin = async (
     data: {
       id: userId,
       githubUsername: `hello-${userId}`,
+      name: `world-${userId}`,
       photoUrl: 'https://avatars.githubusercontent.com/u/45617494?v=4',
       profileUrl: 'https://github.com/zhuhanming',
     },
