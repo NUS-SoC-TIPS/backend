@@ -80,9 +80,6 @@ describe('AuthService', () => {
         .compile();
       service = module.get<AuthService>(AuthService);
       prisma = module.get<PrismaService>(PrismaService);
-    });
-
-    afterAll(async () => {
       await prisma.cleanDb();
     });
 

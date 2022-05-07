@@ -27,6 +27,7 @@ describe('Application (e2e)', () => {
     await prisma.enableShutdownHooks(app);
     await app.init();
     await app.listen(3333);
+    await prisma.cleanDb();
     const result = await createUserAndLogin(app, '1');
     user = result.user;
     token = result.token;
@@ -35,7 +36,6 @@ describe('Application (e2e)', () => {
   });
 
   afterAll(async () => {
-    await prisma.cleanDb();
     await app.close();
   });
 

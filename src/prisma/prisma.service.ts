@@ -15,7 +15,19 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
 
   // Sequencing matters here!
   cleanDb(): Promise<Prisma.BatchPayload[]> {
+    const deleteRoomRecordUsers = this.roomRecordUser.deleteMany();
+    const deleteQuestions = this.question.deleteMany();
+    const deleteRoomRecords = this.roomRecord.deleteMany();
+    const deleteRoomUsers = this.roomUser.deleteMany();
+    const deleteRooms = this.room.deleteMany();
     const deleteUsers = this.user.deleteMany();
-    return this.$transaction([deleteUsers]);
+    return this.$transaction([
+      deleteRoomRecordUsers,
+      deleteQuestions,
+      deleteRoomRecords,
+      deleteRoomUsers,
+      deleteRooms,
+      deleteUsers,
+    ]);
   }
 }

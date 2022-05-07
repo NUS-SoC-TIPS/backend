@@ -3,15 +3,17 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { User } from '@prisma/client';
 
 import { PrismaService } from '../../prisma/prisma.service';
+import { AuthDto } from '../dtos';
 
 import { JwtRestStrategy } from './jwt-rest.strategy';
 
 describe('JwtRestStrategy', () => {
   let strategy: JwtRestStrategy;
   let prisma: PrismaService;
-  const userData = {
+  const userData: Omit<AuthDto, 'token'> & { id: string } = {
     id: '1',
     githubUsername: 'hello',
+    name: 'world',
     photoUrl: 'https://avatars.githubusercontent.com/u/45617494?v=4',
     profileUrl: 'https://github.com/zhuhanming',
   };
@@ -34,16 +36,13 @@ describe('JwtRestStrategy', () => {
     let user: User;
 
     beforeAll(async () => {
+      await prisma.cleanDb();
       user = await prisma.user.create({
         data: {
           ...userData,
         },
       });
       delete user.updatedAt;
-    });
-
-    afterAll(async () => {
-      await prisma.cleanDb();
     });
 
     it('should return the user if they exist', async () => {
