@@ -25,7 +25,11 @@ import { InRoomGuard } from './guards';
 import { ROOM_EVENTS } from './rooms.constants';
 import { RoomsService } from './rooms.service';
 
-@WebSocketGateway()
+@WebSocketGateway({
+  cors: {
+    origin: '*',
+  },
+})
 export class RoomsGateway implements OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
@@ -49,23 +53,29 @@ export class RoomsGateway implements OnGatewayDisconnect {
     @MessageBody('slug', new ValidationPipe()) slug: string,
     @GetUserWs() user: User,
     @ConnectedSocket() socket: ISocket,
-  ): Promise<any> {
+  ): Promise<void> {
     const room = await this.roomsService.findBySlug(slug);
     if (!room) {
-      return { event: ROOM_EVENTS.ROOM_DOES_NOT_EXIST };
+      socket.emit(ROOM_EVENTS.ROOM_DOES_NOT_EXIST);
+      return;
     }
 
     // Do corresponding checks
     const userCurrentRoom = socket.room;
     const userInAnotherRoom = userCurrentRoom && userCurrentRoom.slug !== slug;
     if (userInAnotherRoom) {
-      return { event: ROOM_EVENTS.ALREADY_IN_ROOM };
+      socket.emit(ROOM_EVENTS.ALREADY_IN_ROOM, { slug: userCurrentRoom.slug });
+      return;
     }
     if (room.status !== RoomStatus.OPEN) {
-      return { event: ROOM_EVENTS.ROOM_IS_CLOSED };
+      socket.emit(ROOM_EVENTS.ROOM_IS_CLOSED);
+      return;
     }
     if (room.roomUsers.length === 2 && userCurrentRoom == null) {
-      return { event: ROOM_EVENTS.ROOM_IS_FULL };
+      socket.emit(ROOM_EVENTS.ROOM_IS_FULL, {
+        users: room.roomUsers.map((u) => u.user),
+      });
+      return;
     }
 
     // Update relevant data
@@ -80,13 +90,19 @@ export class RoomsGateway implements OnGatewayDisconnect {
     const videoToken = this.agoraService.generateAccessToken(room.id, user.id);
     const partner = room.roomUsers.filter((u) => u.userId !== user.id)[0]?.user;
 
-    return { partner, videoToken, code, language, notes };
+    socket.emit(ROOM_EVENTS.JOIN_ROOM, {
+      partner,
+      videoToken,
+      code,
+      language,
+      notes,
+    });
   }
 
   @UseGuards(AuthWsGuard, InRoomGuard)
   @SubscribeMessage(ROOM_EVENTS.CLOSE_ROOM)
-  closeRoom(@GetRoom() room: Room): Promise<void> {
-    return this.closeRoomHelper(room, false);
+  closeRoom(@GetRoom() room: Room): void {
+    this.closeRoomHelper(room, false);
   }
 
   handleDisconnect(@ConnectedSocket() socket: ISocket): void {

@@ -8,7 +8,6 @@ import {
   WebSocketGateway,
   WsException,
 } from '@nestjs/websockets';
-import { User } from '@prisma/client';
 
 import { ISocket } from '../interfaces/socket';
 import { PrismaService } from '../prisma/prisma.service';
@@ -16,7 +15,11 @@ import { PrismaService } from '../prisma/prisma.service';
 import { AUTH_EVENTS } from './auth.constants';
 import { JsonWebTokenExceptionFilter } from './filters';
 
-@WebSocketGateway()
+@WebSocketGateway({
+  cors: {
+    origin: '*',
+  },
+})
 export class AuthGateway implements OnGatewayConnection {
   constructor(
     private jwtService: JwtService,
@@ -28,7 +31,7 @@ export class AuthGateway implements OnGatewayConnection {
   async authenticate(
     @MessageBody('bearerToken') token: string,
     @ConnectedSocket() socket: ISocket,
-  ): Promise<{ user: User }> {
+  ): Promise<void> {
     const payload = await this.jwtService.verifyAsync(token);
     const user = await this.prismaService.user.findUnique({
       where: {
@@ -39,7 +42,7 @@ export class AuthGateway implements OnGatewayConnection {
       throw new WsException('Invalid token');
     }
     socket.user = user;
-    return { user };
+    socket.emit(AUTH_EVENTS.AUTHENTICATE, { user });
   }
 
   handleConnection(@ConnectedSocket() socket: ISocket): void {

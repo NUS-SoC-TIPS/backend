@@ -13,7 +13,11 @@ import { InRoomGuard } from '../rooms/guards';
 import { NOTES_EVENTS } from './notes.constants';
 import { NotesService } from './notes.service';
 
-@WebSocketGateway()
+@WebSocketGateway({
+  cors: {
+    origin: '*',
+  },
+})
 export class NotesGateway {
   constructor(private notesService: NotesService) {}
 

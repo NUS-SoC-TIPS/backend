@@ -18,7 +18,11 @@ import { InRoomGuard } from '../rooms/guards';
 import { CODE_EVENTS } from './code.constants';
 import { CodeService } from './code.service';
 
-@WebSocketGateway()
+@WebSocketGateway({
+  cors: {
+    origin: '*',
+  },
+})
 export class CodeGateway {
   @WebSocketServer()
   server: Server;
