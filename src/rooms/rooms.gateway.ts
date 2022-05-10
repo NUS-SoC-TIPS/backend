@@ -89,6 +89,7 @@ export class RoomsGateway implements OnGatewayDisconnect {
     const notes = this.notesService.findForUserInRoom(room.id, user.id);
     const videoToken = this.agoraService.generateAccessToken(room.id, user.id);
     const partner = room.roomUsers.filter((u) => u.userId !== user.id)[0]?.user;
+    const isPartnerInRoom = this.roomIdToSockets.get(room.id).length === 2;
 
     socket.emit(ROOM_EVENTS.JOIN_ROOM, {
       partner,
@@ -96,6 +97,7 @@ export class RoomsGateway implements OnGatewayDisconnect {
       code,
       language,
       notes,
+      isPartnerInRoom,
     });
   }
 
@@ -110,6 +112,7 @@ export class RoomsGateway implements OnGatewayDisconnect {
       return;
     }
     this.removeSocketFromRoomStructures(socket, socket.room);
+    this.server.to(`${socket.room.id}`).emit(ROOM_EVENTS.PARTNER_DISCONNECTED);
   }
 
   private async closeRoomHelper(room: Room, isAuto: boolean): Promise<void> {
