@@ -1,4 +1,9 @@
-import { ParseArrayPipe, ParseEnumPipe, UseGuards } from '@nestjs/common';
+import {
+  ParseArrayPipe,
+  ParseEnumPipe,
+  UseGuards,
+  ValidationPipe,
+} from '@nestjs/common';
 import {
   ConnectedSocket,
   MessageBody,
@@ -15,6 +20,7 @@ import { ISocket } from '../interfaces/socket';
 import { GetRoom } from '../rooms/decorators';
 import { InRoomGuard } from '../rooms/guards';
 
+import { CursorDto } from './dtos/cursor.dto';
 import { CODE_EVENTS } from './code.constants';
 import { CodeService } from './code.service';
 
@@ -48,5 +54,15 @@ export class CodeGateway {
   ): void {
     this.codeService.updateLanguage(roomId, language);
     this.server.to(`${roomId}`).emit(CODE_EVENTS.UPDATE_LANGUAGE, language);
+  }
+
+  @UseGuards(AuthWsGuard, InRoomGuard)
+  @SubscribeMessage(CODE_EVENTS.UPDATE_CURSOR)
+  updateCursor(
+    @MessageBody(new ValidationPipe()) cursor: CursorDto,
+    @ConnectedSocket() socket: ISocket,
+    @GetRoom('id') roomId: number,
+  ): void {
+    socket.broadcast.to(`${roomId}`).emit(CODE_EVENTS.UPDATE_CURSOR, cursor);
   }
 }
