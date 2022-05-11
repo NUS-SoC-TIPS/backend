@@ -111,8 +111,9 @@ export class RoomsGateway implements OnGatewayDisconnect {
     if (!socket.room) {
       return;
     }
-    this.removeSocketFromRoomStructures(socket, socket.room);
-    this.server.to(`${socket.room.id}`).emit(ROOM_EVENTS.PARTNER_DISCONNECTED);
+    const { room } = socket;
+    this.removeSocketFromRoomStructures(socket, room);
+    this.server.to(`${room.id}`).emit(ROOM_EVENTS.PARTNER_DISCONNECTED);
   }
 
   private async closeRoomHelper(room: Room, isAuto: boolean): Promise<void> {
