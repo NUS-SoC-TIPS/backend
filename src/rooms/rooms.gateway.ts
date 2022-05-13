@@ -77,6 +77,14 @@ export class RoomsGateway implements OnGatewayDisconnect {
       });
       return;
     }
+    if (
+      this.roomIdToSockets.get(room.id)?.filter((s) => s.user?.id === user.id)
+        ?.length ??
+      0 > 0
+    ) {
+      socket.emit(ROOM_EVENTS.IN_ANOTHER_TAB);
+      return;
+    }
 
     // Update relevant data
     this.addSocketToRoomStructures(socket, room);
