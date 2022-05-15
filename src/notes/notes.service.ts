@@ -7,9 +7,15 @@ export class NotesService {
     this.roomIdToUserIdToNotesMap = new Map();
   }
 
+  /**
+   * Note: Update will fail silently if the room doesn't exist.
+   *
+   * Assumption: When joining the room, the findForUserInRoom method is called first, which would
+   * have initialised the room and user. If the room doesn't exist, then the room must have been closed.
+   */
   updateNotes(roomId: number, userId: string, notes: string): void {
     if (!this.roomIdToUserIdToNotesMap.has(roomId)) {
-      this.roomIdToUserIdToNotesMap.set(roomId, new Map());
+      return;
     }
     this.roomIdToUserIdToNotesMap.get(roomId).set(userId, notes);
   }

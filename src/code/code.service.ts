@@ -11,53 +11,74 @@ import {
 
 @Injectable()
 export class CodeService {
-  private roomIdToDoc: Map<number, Automerge.Doc<TextDoc>>;
-  private roomIdToLanguage: Map<number, Language>;
+  private roomIdToCode: Map<
+    number,
+    { doc: Automerge.Doc<TextDoc>; language: Language }
+  >;
   constructor() {
-    this.roomIdToDoc = new Map();
-    this.roomIdToLanguage = new Map();
+    this.roomIdToCode = new Map();
   }
 
   /**
    * Returns the code (in Automerge changes) for a given room.
+   *
+   * Assumption: If this method is called, then the room should be open and "fetchable".
+   * It will not handle cases such as when the room is already in the midst of closing.
    */
   findCode(roomId: number): { code: string[]; language: Language } {
-    if (!this.roomIdToDoc.has(roomId)) {
-      this.roomIdToDoc.set(roomId, initDocWithText(''));
-      this.roomIdToLanguage.set(roomId, Language.PYTHON);
+    if (!this.roomIdToCode.has(roomId)) {
+      this.roomIdToCode.set(roomId, {
+        doc: initDocWithText(''),
+        language: Language.PYTHON,
+      });
     }
-    const code = binaryChangeToBase64String(
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      Automerge.getAllChanges(this.roomIdToDoc.get(roomId)!),
-    );
-    const language = this.roomIdToLanguage.get(roomId);
+    const { doc, language } = this.roomIdToCode.get(roomId);
+    const code = binaryChangeToBase64String(Automerge.getAllChanges(doc));
     return { code, language };
   }
 
+  /**
+   * Note: Update will fail silently if the room doesn't exist in its data structures.
+   *
+   * Assumption: When joining the room, the findCode method is called first, which would
+   * have initialised the room. If the room doesn't exist, then it must have been closed.
+   */
   updateCode(roomId: number, code: string[]): void {
-    const doc = this.roomIdToDoc.get(roomId);
+    if (!this.roomIdToCode.has(roomId)) {
+      return;
+    }
+    const data = this.roomIdToCode.get(roomId);
     const [newDoc] = Automerge.applyChanges(
-      Automerge.clone(doc),
+      Automerge.clone(data.doc),
       base64StringToBinaryChange(code),
     );
-    this.roomIdToDoc.set(roomId, newDoc);
+    this.roomIdToCode.set(roomId, { ...data, doc: newDoc });
   }
 
+  /**
+   * Note: Update will fail silently if the room doesn't exist in its data structures.
+   *
+   * Assumption: When joining the room, the findCode method is called first, which would
+   * have initialised the room. If the room doesn't exist, then it must have been closed.
+   */
   updateLanguage(roomId: number, language: Language): void {
-    this.roomIdToLanguage.set(roomId, language);
+    if (!this.roomIdToCode.has(roomId)) {
+      return;
+    }
+    const data = this.roomIdToCode.get(roomId);
+    this.roomIdToCode.set(roomId, { ...data, language });
   }
 
   /**
    * Closes the room and returns stringified data for persistence purposes.
    */
   closeRoom(roomId: number): { code: string; language: Language } {
-    if (!this.roomIdToDoc.has(roomId)) {
+    if (!this.roomIdToCode.has(roomId)) {
       return { code: '', language: Language.PYTHON };
     }
-    const code = this.roomIdToDoc.get(roomId).text.toString();
-    const language = this.roomIdToLanguage.get(roomId);
-    this.roomIdToDoc.delete(roomId);
-    this.roomIdToLanguage.delete(roomId);
+    const { doc, language } = this.roomIdToCode.get(roomId);
+    const code = doc.text.toString();
+    this.roomIdToCode.delete(roomId);
     return { code, language };
   }
 }
