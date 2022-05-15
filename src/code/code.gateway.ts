@@ -42,7 +42,7 @@ export class CodeGateway {
     @GetRoom('id') roomId: number,
   ): void {
     this.codeService.updateCode(roomId, code);
-    socket.to(`${roomId}`).emit(CODE_EVENTS.UPDATE_CODE, code);
+    socket.broadcast.to(`${roomId}`).emit(CODE_EVENTS.UPDATE_CODE, code);
   }
 
   @UseGuards(AuthWsGuard, InRoomGuard)
@@ -51,9 +51,12 @@ export class CodeGateway {
     @MessageBody(new ParseEnumPipe(Language))
     language: Language,
     @GetRoom('id') roomId: number,
+    @ConnectedSocket() socket: ISocket,
   ): void {
     this.codeService.updateLanguage(roomId, language);
-    this.server.to(`${roomId}`).emit(CODE_EVENTS.UPDATE_LANGUAGE, language);
+    socket.broadcast
+      .to(`${roomId}`)
+      .emit(CODE_EVENTS.UPDATE_LANGUAGE, language);
   }
 
   @UseGuards(AuthWsGuard, InRoomGuard)
