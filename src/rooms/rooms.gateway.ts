@@ -125,7 +125,6 @@ export class RoomsGateway implements OnGatewayDisconnect {
   }
 
   private async closeRoomHelper(room: Room, isAuto: boolean): Promise<void> {
-    this.server.to(`${room.id}`).emit(ROOM_EVENTS.CLOSING_ROOM);
     const { code, language } = this.codeService.closeRoom(room.id);
     const userNotes = this.notesService.closeRoom(room.id);
     const recordData: CreateRecordDto = {
