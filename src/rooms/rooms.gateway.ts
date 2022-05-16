@@ -61,7 +61,7 @@ export class RoomsGateway implements OnGatewayDisconnect {
     }
 
     // Do corresponding checks
-    const userCurrentRoom = socket.room;
+    const userCurrentRoom = await this.roomsService.findCurrent(user.id);
     const userInAnotherRoom = userCurrentRoom && userCurrentRoom.slug !== slug;
     if (userInAnotherRoom) {
       socket.emit(ROOM_EVENTS.ALREADY_IN_ROOM, { slug: userCurrentRoom.slug });
