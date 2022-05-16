@@ -1,4 +1,5 @@
 import { ValidationPipe } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import helmet from 'helmet';
 
@@ -14,8 +15,9 @@ async function bootstrap(): Promise<void> {
   app.use(helmet());
   app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
   const prismaService = app.get(PrismaService);
+  const configService = app.get(ConfigService);
   await prismaService.enableShutdownHooks(app);
   // app.enableCors();
-  await app.listen(3001);
+  await app.listen(configService.get('PORT'));
 }
 bootstrap();
