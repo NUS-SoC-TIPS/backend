@@ -19,6 +19,7 @@ const Configuration = {
         'interfaces',
         'notes',
         'prisma',
+        'questions',
         'records',
         'rooms',
         'submissions',
