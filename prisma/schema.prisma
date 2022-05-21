@@ -21,8 +21,10 @@ model User {
 
   // TODO: Look into supporting Telegram ID and verification
 
-  roomUsers   RoomUser[]
-  recordUsers RoomRecordUser[]
+  roomUsers           RoomUser[]
+  roomRecordUsers     RoomRecordUser[]
+  questionSubmissions QuestionSubmission[]
+
   @@map("users")
 }
 
@@ -34,8 +36,9 @@ model Room {
   closedAt  DateTime? // Null if not closed
   status    RoomStatus @default(OPEN)
 
-  roomUsers RoomUser[] // Max 2 room users
-  records   RoomRecord[]
+  roomUsers   RoomUser[] // Max 2 room users
+  roomRecords RoomRecord[]
+
   @@map("rooms")
 }
 
@@ -47,31 +50,42 @@ model RoomUser {
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([roomId, userId])
+  @@map("room_users")
 }
 
 // The following model is designed to handle both general mock interviews and
-// interviewee-interviewer roleplay. For roleplay, 2 records will be generated
+// interviewee-interviewer roleplay. For roleplay, 2 records will be generated.
 model RoomRecord {
-  id          Int              @id @default(autoincrement())
-  createdAt   DateTime         @default(now())
-  updatedAt   DateTime         @updatedAt
-  isRoleplay  Boolean          @default(false)
-  duration    Float // In milliseconds. Time taken for both users if general, else time taken for specific turn.
-  language    Language
-  codeWritten String // Code written by both users if general, else by interviewee
-  isSolved    Boolean          @default(false) // Ignored if general
-  room        Room             @relation(fields: [roomId], references: [id], onDelete: Cascade)
-  roomId      Int
-  questionId  String?
-  question    Question?        @relation(fields: [questionId], references: [id]) // Null if general
-  users       RoomRecordUser[]
+  id              Int              @id @default(autoincrement())
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  isRoleplay      Boolean          @default(false)
+  duration        Float // In milliseconds. Time taken for both users if general, else time taken for specific turn.
+  language        Language
+  codeWritten     String // Code written by both users if general, else by interviewee
+  isSolved        Boolean          @default(false) // Ignored if general
+  room            Room             @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  roomId          Int
+  questionSlug    String?
+  question        Question?        @relation(fields: [questionSlug], references: [slug]) // Null if general
+  roomRecordUsers RoomRecordUser[]
+
+  @@map("room_records")
 }
 
+// Can be LeetCode questions or our own custom questions
+// No tracking of created/updated at timings because this is fixed data
 model Question {
-  id         String       @id // Fixed ID per question
-  title      String
-  difficulty Difficulty
-  records    RoomRecord[]
+  slug                String               @id // Fixed ID per question
+  name                String
+  difficulty          QuestionDifficulty
+  type                QuestionType
+  source              QuestionSource
+  isPremium           Boolean
+  roomRecords         RoomRecord[]
+  questionSubmissions QuestionSubmission[]
+
+  @@map("questions")
 }
 
 // 1 pair of users per room record
@@ -83,24 +97,85 @@ model RoomRecordUser {
   notes         String // Markdown notes taken during interview
   userId        String
   user          User       @relation(fields: [userId], references: [id])
-  recordId      Int
-  record        RoomRecord @relation(fields: [recordId], references: [id])
+  roomRecordId  Int
+  roomRecord    RoomRecord @relation(fields: [roomRecordId], references: [id])
+
+  @@map("room_record_users")
+}
+
+model QuestionSubmission {
+  id           Int      @id @default(autoincrement())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  languageUsed Language
+  codeWritten  String
+  userId       String
+  user         User     @relation(fields: [userId], references: [id])
+  questionSlug String
+  question     Question @relation(fields: [questionSlug], references: [slug])
+
+  @@map("question_submissions")
 }
 
 enum RoomStatus {
   OPEN
   CLOSED_MANUALLY
   CLOSED_AUTOMATICALLY
+
+  @@map("room_status")
 }
 
 enum Language {
-  PYTHON
+  C_PLUS_PLUS
   JAVA
+  PYTHON
+  PYTHON_THREE
+  C
+  C_SHARP
   JAVASCRIPT
+  RUBY
+  SWIFT
+  GO
+  SCALA
+  KOTLIN
+  RUST
+  PHP
+  TYPESCRIPT
+  RACKET
+  ERLANG
+  ELIXIR
+
+  // For database questions
+  MY_SQL
+  MS_SQL_SERVER
+  ORACLE
+
+  @@map("language")
 }
 
-enum Difficulty {
+enum QuestionDifficulty {
   EASY
   MEDIUM
   HARD
+
+  @@map("question_difficulty")
+}
+
+// Based on LeetCode
+enum QuestionType {
+  ALGORITHMS
+  DATABASE
+  SHELL
+  CONCURRENCY
+
+  @@map("question_type")
+}
+
+enum QuestionSource {
+  LEETCODE
+  HACKERRANK
+  KATTIS
+  CUSTOM
+
+  @@map("question_source")
 }
