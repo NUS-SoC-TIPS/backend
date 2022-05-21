@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { QuestionSubmission } from '@prisma/client';
-import { PrismaService } from 'src/prisma/prisma.service';
+
+import { PrismaService } from '../prisma/prisma.service';
 
 import { CreateSubmissionDto } from './dtos/create-submission.dto';
 
