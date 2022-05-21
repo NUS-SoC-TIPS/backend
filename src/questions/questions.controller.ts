@@ -1,6 +1,7 @@
 import { Controller, Get, UseGuards } from '@nestjs/common';
 import { Question } from '@prisma/client';
-import { JwtRestGuard } from 'src/auth/guards';
+
+import { JwtRestGuard } from '../auth/guards';
 
 import { QuestionsService } from './questions.service';
 
