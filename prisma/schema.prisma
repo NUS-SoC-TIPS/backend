@@ -77,6 +77,7 @@ model RoomRecord {
 // No tracking of created/updated at timings because this is fixed data
 model Question {
   slug                String               @id // Fixed ID per question
+  id                  Int
   name                String
   difficulty          QuestionDifficulty
   type                QuestionType
@@ -85,6 +86,7 @@ model Question {
   roomRecords         RoomRecord[]
   questionSubmissions QuestionSubmission[]
 
+  @@unique([id, source])
   @@map("questions")
 }
 
@@ -144,6 +146,9 @@ enum Language {
   RACKET
   ERLANG
   ELIXIR
+
+  // For shell question
+  BASH
 
   // For database questions
   MY_SQL
