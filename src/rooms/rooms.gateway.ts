@@ -133,7 +133,7 @@ export class RoomsGateway implements OnGatewayDisconnect {
       roomId: room.id,
       language,
       codeWritten: code,
-      users: userNotes.map((notes) => ({
+      roomRecordUsers: userNotes.map((notes) => ({
         ...notes,
         isInterviewer: false,
       })),

@@ -10,13 +10,13 @@ export class RecordsService {
   constructor(private prismaService: PrismaService) {}
 
   create(dto: CreateRecordDto): Promise<RoomRecord> {
-    const { users, ...recordData } = dto;
+    const { roomRecordUsers, ...recordData } = dto;
     return this.prismaService.roomRecord.create({
       data: {
         ...recordData,
-        users: {
+        roomRecordUsers: {
           createMany: {
-            data: users,
+            data: roomRecordUsers,
           },
         },
       },
@@ -32,7 +32,7 @@ export class RecordsService {
   }> {
     const records = await this.prismaService.roomRecord.findMany({
       where: {
-        users: {
+        roomRecordUsers: {
           some: {
             userId,
             isInterviewer: false,
@@ -40,7 +40,7 @@ export class RecordsService {
         },
       },
       include: {
-        users: {
+        roomRecordUsers: {
           include: {
             user: true,
           },
@@ -54,7 +54,7 @@ export class RecordsService {
     });
     const totalNumRecords = await this.prismaService.roomRecord.count({
       where: {
-        users: {
+        roomRecordUsers: {
           some: {
             userId,
             isInterviewer: false,
@@ -67,7 +67,9 @@ export class RecordsService {
     return {
       records: records.map((r) => ({
         ...r,
-        partner: r.users.filter((u) => u.userId !== userId)?.[0].user ?? null,
+        partner:
+          r.roomRecordUsers.filter((u) => u.userId !== userId)?.[0].user ??
+          null,
       })),
       isLastPage: numSkippedRecords + records.length >= totalNumRecords,
     };

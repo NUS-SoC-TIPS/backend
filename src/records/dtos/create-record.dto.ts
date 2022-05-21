@@ -44,10 +44,10 @@ export class CreateRecordDto {
   questionId?: string;
 
   @IsArray({ each: true })
-  users: CreateRecordUserDto[];
+  roomRecordUsers: CreateRoomRecordUserDto[];
 }
 
-class CreateRecordUserDto {
+class CreateRoomRecordUserDto {
   @IsString()
   @IsNotEmpty()
   userId: string;
