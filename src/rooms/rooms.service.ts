@@ -8,7 +8,7 @@ import { CreateRoomUserDto } from './dtos/create-room-user.dto';
 
 @Injectable()
 export class RoomsService {
-  constructor(private prismaService: PrismaService) {}
+  constructor(private readonly prismaService: PrismaService) {}
 
   async create(userId: string): Promise<Room> {
     const currentRoomUser = await this.findCurrentRoomUser(userId);

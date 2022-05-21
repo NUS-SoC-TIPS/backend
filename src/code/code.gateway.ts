@@ -32,7 +32,8 @@ import { CodeService } from './code.service';
 export class CodeGateway {
   @WebSocketServer()
   server: Server;
-  constructor(private codeService: CodeService) {}
+
+  constructor(private readonly codeService: CodeService) {}
 
   @UseGuards(AuthWsGuard, InRoomGuard)
   @SubscribeMessage(CODE_EVENTS.UPDATE_CODE)

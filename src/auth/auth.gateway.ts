@@ -22,8 +22,8 @@ import { JsonWebTokenExceptionFilter } from './filters';
 })
 export class AuthGateway implements OnGatewayConnection {
   constructor(
-    private jwtService: JwtService,
-    private prismaService: PrismaService,
+    private readonly jwtService: JwtService,
+    private readonly prismaService: PrismaService,
   ) {}
 
   @SubscribeMessage(AUTH_EVENTS.AUTHENTICATE)

@@ -4,7 +4,7 @@ import firebase from 'firebase-admin';
 
 @Injectable()
 export class FirebaseService implements OnModuleInit {
-  constructor(private configService: ConfigService) {}
+  constructor(private readonly configService: ConfigService) {}
 
   async onModuleInit(): Promise<void> {
     if (this.configService.get('NODE_ENV') === 'test') {

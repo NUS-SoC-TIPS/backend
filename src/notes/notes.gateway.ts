@@ -19,7 +19,7 @@ import { NotesService } from './notes.service';
   },
 })
 export class NotesGateway {
-  constructor(private notesService: NotesService) {}
+  constructor(private readonly notesService: NotesService) {}
 
   @UseGuards(AuthWsGuard, InRoomGuard)
   @SubscribeMessage(NOTES_EVENTS.UPDATE_NOTES)

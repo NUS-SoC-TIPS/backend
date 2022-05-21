@@ -37,11 +37,11 @@ export class RoomsGateway implements OnGatewayDisconnect {
   private roomIdToTimeouts: Map<number, NodeJS.Timeout>;
 
   constructor(
-    private roomsService: RoomsService,
-    private agoraService: AgoraService,
-    private codeService: CodeService,
-    private notesService: NotesService,
-    private recordsService: RecordsService,
+    private readonly roomsService: RoomsService,
+    private readonly agoraService: AgoraService,
+    private readonly codeService: CodeService,
+    private readonly notesService: NotesService,
+    private readonly recordsService: RecordsService,
   ) {
     this.roomIdToSockets = new Map();
     this.roomIdToTimeouts = new Map();

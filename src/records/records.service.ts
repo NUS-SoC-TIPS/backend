@@ -7,7 +7,7 @@ import { CreateRecordDto } from './dtos';
 
 @Injectable()
 export class RecordsService {
-  constructor(private prismaService: PrismaService) {}
+  constructor(private readonly prismaService: PrismaService) {}
 
   create(dto: CreateRecordDto): Promise<RoomRecord> {
     const { roomRecordUsers, ...recordData } = dto;

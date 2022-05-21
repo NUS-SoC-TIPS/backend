@@ -15,6 +15,7 @@ export class CodeService {
     number,
     { doc: Automerge.Doc<TextDoc>; language: Language }
   >;
+
   constructor() {
     this.roomIdToCode = new Map();
   }

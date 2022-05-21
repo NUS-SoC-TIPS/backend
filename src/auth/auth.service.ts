@@ -9,9 +9,9 @@ import { AuthDto } from './dtos';
 @Injectable()
 export class AuthService {
   constructor(
-    private prismaService: PrismaService,
-    private firebaseService: FirebaseService,
-    private jwt: JwtService,
+    private readonly prismaService: PrismaService,
+    private readonly firebaseService: FirebaseService,
+    private readonly jwt: JwtService,
   ) {}
 
   async login(dto: AuthDto): Promise<string> {

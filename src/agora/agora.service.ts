@@ -4,7 +4,7 @@ import { RtcRole, RtcTokenBuilder } from 'agora-access-token';
 
 @Injectable()
 export class AgoraService {
-  constructor(private configService: ConfigService) {}
+  constructor(private readonly configService: ConfigService) {}
 
   generateAccessToken(roomId: number, userId: string): string {
     return RtcTokenBuilder.buildTokenWithAccount(

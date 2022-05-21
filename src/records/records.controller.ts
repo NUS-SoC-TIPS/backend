@@ -7,7 +7,7 @@ import { RecordsService } from './records.service';
 
 @Controller('records')
 export class RecordsController {
-  constructor(private recordsService: RecordsService) {}
+  constructor(private readonly recordsService: RecordsService) {}
 
   @Get()
   findPageOfRecords(
