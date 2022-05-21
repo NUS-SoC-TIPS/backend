@@ -9,6 +9,7 @@ import { NotesModule } from './notes/notes.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { RecordsModule } from './records/records.module';
 import { RoomsModule } from './rooms/rooms.module';
+import { SubmissionsModule } from './submissions/submissions.module';
 import { UsersModule } from './users/users.module';
 
 @Module({
@@ -23,6 +24,7 @@ import { UsersModule } from './users/users.module';
     CodeModule,
     RecordsModule,
     NotesModule,
+    SubmissionsModule,
   ],
 })
 export class AppModule {}
