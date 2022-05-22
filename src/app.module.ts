@@ -10,6 +10,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { QuestionsModule } from './questions/questions.module';
 import { RecordsModule } from './records/records.module';
 import { RoomsModule } from './rooms/rooms.module';
+import { StatsModule } from './stats/stats.module';
 import { SubmissionsModule } from './submissions/submissions.module';
 import { UsersModule } from './users/users.module';
 
@@ -27,6 +28,7 @@ import { UsersModule } from './users/users.module';
     NotesModule,
     SubmissionsModule,
     QuestionsModule,
+    StatsModule,
   ],
 })
 export class AppModule {}

@@ -22,6 +22,7 @@ const Configuration = {
         'questions',
         'records',
         'rooms',
+        'stats',
         'submissions',
         'users',
         'utils',
