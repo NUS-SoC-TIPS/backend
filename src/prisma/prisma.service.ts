@@ -47,7 +47,14 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
   private seedWindows(): Promise<Window[]> {
     return Promise.all(
       windows.map((window) => {
-        const { id, startAt, endAt, iteration, requireInterview } = window;
+        const {
+          id,
+          startAt,
+          endAt,
+          iteration,
+          requireInterview,
+          numQuestions,
+        } = window;
         const startAtDate = new Date(startAt);
         const endAtDate = new Date(endAt);
         return this.window.upsert({
@@ -57,12 +64,14 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
             endAt: endAtDate,
             iteration,
             requireInterview,
+            numQuestions,
           },
           update: {
             startAt: startAtDate,
             endAt: endAtDate,
             iteration,
             requireInterview,
+            numQuestions,
           },
           where: {
             id,
