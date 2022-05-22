@@ -67,7 +67,8 @@ model RoomRecord {
   room            Room             @relation(fields: [roomId], references: [id], onDelete: Cascade)
   roomId          Int
   questionSlug    String?
-  question        Question?        @relation(fields: [questionSlug], references: [slug]) // Null if general
+  questionSource  QuestionSource?
+  question        Question?        @relation(fields: [questionSlug, questionSource], references: [slug, source]) // Null if general
   roomRecordUsers RoomRecordUser[]
 
   @@map("room_records")
@@ -75,18 +76,19 @@ model RoomRecord {
 
 // Can be LeetCode questions or our own custom questions
 model Question {
-  slug                String               @id // Fixed ID per question
+  slug                String
+  source              QuestionSource
   createdAt           DateTime             @default(now())
   updatedAt           DateTime             @updatedAt
   id                  Int
   name                String
   difficulty          QuestionDifficulty
   type                QuestionType
-  source              QuestionSource
   isPremium           Boolean
   roomRecords         RoomRecord[]
   questionSubmissions QuestionSubmission[]
 
+  @@id([slug, source])
   @@unique([id, source])
   @@map("questions")
 }
@@ -107,15 +109,16 @@ model RoomRecordUser {
 }
 
 model QuestionSubmission {
-  id           Int      @id @default(autoincrement())
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  languageUsed Language
-  codeWritten  String
-  userId       String
-  user         User     @relation(fields: [userId], references: [id])
-  questionSlug String
-  question     Question @relation(fields: [questionSlug], references: [slug])
+  id             Int            @id @default(autoincrement())
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  languageUsed   Language
+  codeWritten    String
+  userId         String
+  user           User           @relation(fields: [userId], references: [id])
+  questionSlug   String
+  questionSource QuestionSource
+  question       Question       @relation(fields: [questionSlug, questionSource], references: [slug, source])
 
   @@map("question_submissions")
 }
