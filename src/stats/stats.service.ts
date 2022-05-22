@@ -101,6 +101,9 @@ export class StatsService {
       where: {
         iteration: Number(this.configService.get('CURRENT_ITERATION')),
       },
+      orderBy: {
+        startAt: 'asc',
+      },
     });
 
     return {
