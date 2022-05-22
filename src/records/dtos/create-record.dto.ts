@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Language } from '@prisma/client';
+import { Language, QuestionSource } from '@prisma/client';
 import {
   IsArray,
   IsBoolean,
@@ -42,6 +42,10 @@ export class CreateRecordDto {
   @IsString()
   @IsOptional()
   questionId?: string;
+
+  @IsEnum(QuestionSource)
+  @IsOptional()
+  questionSource?: QuestionSource;
 
   @IsArray({ each: true })
   roomRecordUsers: CreateRoomRecordUserDto[];

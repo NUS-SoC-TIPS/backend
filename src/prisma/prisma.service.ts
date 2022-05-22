@@ -101,11 +101,13 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
             id,
             difficulty: QuestionDifficulty[difficulty],
             type: QuestionType[type],
-            source: QuestionSource[source],
             isPremium,
           },
           where: {
-            slug,
+            slug_source: {
+              slug,
+              source: QuestionSource[source],
+            },
           },
         });
       }),
