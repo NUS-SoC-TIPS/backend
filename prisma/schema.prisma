@@ -74,9 +74,10 @@ model RoomRecord {
 }
 
 // Can be LeetCode questions or our own custom questions
-// No tracking of created/updated at timings because this is fixed data
 model Question {
   slug                String               @id // Fixed ID per question
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
   id                  Int
   name                String
   difficulty          QuestionDifficulty
@@ -117,6 +118,18 @@ model QuestionSubmission {
   question     Question @relation(fields: [questionSlug], references: [slug])
 
   @@map("question_submissions")
+}
+
+model Window {
+  id               Int      @id
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  startAt          DateTime
+  endAt            DateTime
+  iteration        Int
+  requireInterview Boolean
+
+  @@map("windows")
 }
 
 enum RoomStatus {
