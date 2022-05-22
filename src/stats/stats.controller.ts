@@ -4,6 +4,7 @@ import { GetUserRest } from '../auth/decorators';
 import { JwtRestGuard } from '../auth/guards';
 
 import { QuestionStats } from './entities/question-stats.entity';
+import { TaskStats } from './entities/task-stats.entity';
 import { StatsService } from './stats.service';
 
 @UseGuards(JwtRestGuard)
@@ -27,5 +28,10 @@ export class StatsController {
       numCompletedThisWindow,
       closestWindow,
     };
+  }
+
+  @Get('tasks')
+  async findTaskStats(@GetUserRest('id') userId: string): Promise<TaskStats> {
+    return this.statsService.findTaskStats(userId);
   }
 }

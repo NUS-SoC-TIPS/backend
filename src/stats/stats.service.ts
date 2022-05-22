@@ -1,11 +1,17 @@
 import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Window } from '@prisma/client';
 
 import { PrismaService } from '../prisma/prisma.service';
 
+import { TaskStats } from './entities/task-stats.entity';
+
 @Injectable()
 export class StatsService {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(
+    private readonly prismaService: PrismaService,
+    private readonly configService: ConfigService,
+  ) {}
 
   findNumCompletedAllTime(userId: string): Promise<number> {
     return this.prismaService.questionSubmission.count({
@@ -88,6 +94,73 @@ export class StatsService {
       },
       take: 1,
     });
+  }
+
+  async findTaskStats(userId: string): Promise<TaskStats> {
+    const windows = await this.prismaService.window.findMany({
+      where: {
+        iteration: Number(this.configService.get('CURRENT_ITERATION')),
+      },
+    });
+
+    return {
+      windows: await Promise.all(
+        windows.map(async (window) => {
+          const submissions =
+            await this.prismaService.questionSubmission.findMany({
+              where: {
+                userId,
+                createdAt: {
+                  gte: window.startAt,
+                  lte: window.endAt,
+                },
+              },
+              include: {
+                question: true,
+              },
+              orderBy: {
+                createdAt: 'asc',
+              },
+            });
+          const interviews = await this.prismaService.roomRecord.findMany({
+            where: {
+              roomRecordUsers: {
+                some: {
+                  userId,
+                  isInterviewer: false,
+                },
+              },
+            },
+            include: {
+              roomRecordUsers: {
+                include: {
+                  user: true,
+                },
+              },
+            },
+            orderBy: {
+              createdAt: 'asc',
+            },
+          });
+
+          return {
+            window,
+            submissions: submissions.map((s) => {
+              const { question, ...submission } = s;
+              return { question, submission };
+            }),
+            interviews: interviews.map((i) => {
+              const { roomRecordUsers, ...record } = i;
+              return {
+                record,
+                partner: roomRecordUsers.filter((u) => u.user.id !== userId)[0]
+                  .user,
+              };
+            }),
+          };
+        }),
+      ),
+    };
   }
 
   // We won't handle much of timezones here. If it's slightly off, so be it.
