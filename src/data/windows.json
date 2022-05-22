@@ -1,0 +1,65 @@
+[
+  {
+    "id": 1,
+    "startAt": "2022-05-22T16:00:00.000Z",
+    "endAt": "2022-05-29T15:59:59.999Z",
+    "iteration": 1,
+    "requireInterview": false
+  },
+  {
+    "id": 2,
+    "startAt": "2022-05-29T16:00:00.000Z",
+    "endAt": "2022-06-05T15:59:59.999Z",
+    "iteration": 1,
+    "requireInterview": false
+  },
+  {
+    "id": 3,
+    "startAt": "2022-06-05T16:00:00.000Z",
+    "endAt": "2022-06-12T15:59:59.999Z",
+    "iteration": 1,
+    "requireInterview": true
+  },
+  {
+    "id": 4,
+    "startAt": "2022-06-12T16:00:00.000Z",
+    "endAt": "2022-06-19T15:59:59.999Z",
+    "iteration": 1,
+    "requireInterview": true
+  },
+  {
+    "id": 5,
+    "startAt": "2022-06-19T16:00:00.000Z",
+    "endAt": "2022-06-26T15:59:59.999Z",
+    "iteration": 1,
+    "requireInterview": true
+  },
+  {
+    "id": 6,
+    "startAt": "2022-06-26T16:00:00.000Z",
+    "endAt": "2022-07-03T15:59:59.999Z",
+    "iteration": 1,
+    "requireInterview": true
+  },
+  {
+    "id": 7,
+    "startAt": "2022-07-03T16:00:00.000Z",
+    "endAt": "2022-07-10T15:59:59.999Z",
+    "iteration": 1,
+    "requireInterview": true
+  },
+  {
+    "id": 8,
+    "startAt": "2022-07-10T16:00:00.000Z",
+    "endAt": "2022-07-17T15:59:59.999Z",
+    "iteration": 1,
+    "requireInterview": true
+  },
+  {
+    "id": 9,
+    "startAt": "2022-07-17T16:00:00.000Z",
+    "endAt": "2022-07-24T15:59:59.999Z",
+    "iteration": 1,
+    "requireInterview": true
+  }
+]

@@ -6,14 +6,17 @@ import {
   QuestionDifficulty,
   QuestionSource,
   QuestionType,
+  Window,
 } from '@prisma/client';
 
 import leetCodeQuestions from '../data/leetcode.json';
+import windows from '../data/windows.json';
 
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit {
   async onModuleInit(): Promise<void> {
     await this.$connect();
+    await this.seedWindows();
     await this.seedLeetCodeQuestions();
   }
 
@@ -39,6 +42,34 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
       deleteRooms,
       deleteUsers,
     ]);
+  }
+
+  private seedWindows(): Promise<Window[]> {
+    return Promise.all(
+      windows.map((window) => {
+        const { id, startAt, endAt, iteration, requireInterview } = window;
+        const startAtDate = new Date(startAt);
+        const endAtDate = new Date(endAt);
+        return this.window.upsert({
+          create: {
+            id,
+            startAt: startAtDate,
+            endAt: endAtDate,
+            iteration,
+            requireInterview,
+          },
+          update: {
+            startAt: startAtDate,
+            endAt: endAtDate,
+            iteration,
+            requireInterview,
+          },
+          where: {
+            id,
+          },
+        });
+      }),
+    );
   }
 
   private seedLeetCodeQuestions(): Promise<Question[]> {
