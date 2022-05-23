@@ -77,8 +77,8 @@ export class UsersService {
       },
       update: {
         ...dto,
-        name: settings.hasUpdatedName ? undefined : dto.name,
-        photoUrl: settings.hasUpdatedPhoto ? undefined : dto.photoUrl,
+        name: settings?.hasUpdatedName ? undefined : dto.name,
+        photoUrl: settings?.hasUpdatedPhoto ? undefined : dto.photoUrl,
       },
       create: {
         ...dto,
