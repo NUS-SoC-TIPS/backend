@@ -3,6 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 
 import { FirebaseService } from '../firebase/firebase.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { UsersService } from '../users/users.service';
 
 import { AuthDto } from './dtos';
 
@@ -12,23 +13,13 @@ export class AuthService {
     private readonly prismaService: PrismaService,
     private readonly firebaseService: FirebaseService,
     private readonly jwt: JwtService,
+    private readonly usersService: UsersService,
   ) {}
 
   async login(dto: AuthDto): Promise<string> {
     const { token, ...userInfo } = dto;
     const uid = await this.firebaseService.verifyToken(token); // TODO: Look into error handling
-    const user = await this.prismaService.user.upsert({
-      where: {
-        id: uid,
-      },
-      update: {
-        ...userInfo,
-      },
-      create: {
-        id: uid,
-        ...userInfo,
-      },
-    });
+    const user = await this.usersService.upsertUser({ ...userInfo, id: uid });
     return this.signToken(user.id);
   }
 
