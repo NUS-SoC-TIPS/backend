@@ -5,6 +5,12 @@
 
 <p align="center"><img src="https://github.com/CodeToGather/TIPS-Backend/workflows/Lint/badge.svg" alt="Lint" />&nbsp;<img src="https://github.com/CodeToGather/TIPS-Backend/workflows/Test/badge.svg" alt="Test" /></p>
 
+## Update TIPS for Upcoming Iteration
+
+To update TIPS for the coming iteration, you can simply configure the data at `src/data`.
+
+**NOTE:** DO NOT OVERWRITE past windows in `windows.json`. Instead, append new windows using an incremental `id`.
+
 ## Overview
 
 TIPS is a monolithic rewrite of Code2Gather to support the technical interview preparation for NUS SoC students. Its functionalities include:
