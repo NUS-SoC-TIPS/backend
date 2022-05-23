@@ -3,6 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 
 import { FirebaseService } from '../firebase/firebase.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { UsersService } from '../users/users.service';
 import { mocker } from '../utils/tests.util';
 
 import { AuthService } from './auth.service';
@@ -21,7 +22,7 @@ describe('AuthService', () => {
   describe('initialisation', () => {
     beforeEach(async () => {
       const module: TestingModule = await Test.createTestingModule({
-        providers: [AuthService],
+        providers: [AuthService, PrismaService, UsersService],
       })
         .useMocker(mocker)
         .compile();
@@ -39,16 +40,11 @@ describe('AuthService', () => {
     beforeEach(async () => {
       verifyToken = jest.fn().mockResolvedValue('1');
       const module: TestingModule = await Test.createTestingModule({
-        providers: [AuthService],
+        providers: [AuthService, PrismaService, UsersService],
       })
         .useMocker((token) => {
           if (token === FirebaseService) {
             return { verifyToken };
-          }
-          if (token === PrismaService) {
-            return {
-              user: { upsert: jest.fn().mockResolvedValue({ id: '1' }) },
-            };
           }
           return mocker(token);
         })
@@ -64,12 +60,12 @@ describe('AuthService', () => {
     });
   });
 
-  describe('integration with Prisma', () => {
+  describe('integration with UsersService', () => {
     let prisma: PrismaService;
 
     beforeEach(async () => {
       const module: TestingModule = await Test.createTestingModule({
-        providers: [AuthService, PrismaService],
+        providers: [AuthService, PrismaService, UsersService],
       })
         .useMocker((token) => {
           if (token === FirebaseService) {
@@ -83,7 +79,7 @@ describe('AuthService', () => {
       await prisma.cleanDb();
     });
 
-    it('should create user via prisma', async () => {
+    it('should create user via users service', async () => {
       await service.login(authDto);
       const user = await prisma.user.findUnique({
         where: {
@@ -108,16 +104,11 @@ describe('AuthService', () => {
             },
           }),
         ],
-        providers: [AuthService],
+        providers: [AuthService, PrismaService, UsersService],
       })
         .useMocker((token) => {
           if (token === FirebaseService) {
             return { verifyToken: jest.fn().mockResolvedValue('1') };
-          }
-          if (token === PrismaService) {
-            return {
-              user: { upsert: jest.fn().mockResolvedValue({ id: '1' }) },
-            };
           }
           return mocker(token);
         })

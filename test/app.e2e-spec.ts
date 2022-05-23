@@ -5,6 +5,7 @@ import helmet from 'helmet';
 import * as pactum from 'pactum';
 
 import { AppModule } from '../src/app.module';
+import appConfig from '../src/data/config.json';
 import { PrismaService } from '../src/prisma/prisma.service';
 import { createUserAndLogin } from '../src/utils/tests.util';
 
@@ -48,7 +49,11 @@ describe('Application (e2e)', () => {
           Authorization: `Bearer ${token}`,
         })
         .expectStatus(200)
-        .expectBody(JSON.parse(JSON.stringify(user)));
+        .expectBody(
+          JSON.parse(
+            JSON.stringify({ ...user, settings: null, config: appConfig }),
+          ),
+        );
     });
 
     it('should throw an error if user tries to get self without JWT', () => {
