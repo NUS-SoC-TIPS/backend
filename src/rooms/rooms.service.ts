@@ -4,7 +4,7 @@ import { generateSlug } from 'random-word-slugs';
 
 import { PrismaService } from '../prisma/prisma.service';
 
-import { CreateRoomUserDto } from './dtos/create-room-user.dto';
+import { CreateRoomUserDto } from './dtos';
 
 @Injectable()
 export class RoomsService {

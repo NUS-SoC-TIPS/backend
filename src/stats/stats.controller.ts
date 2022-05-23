@@ -3,8 +3,7 @@ import { Controller, Get, UseGuards } from '@nestjs/common';
 import { GetUserRest } from '../auth/decorators';
 import { JwtRestGuard } from '../auth/guards';
 
-import { QuestionStats } from './entities/question-stats.entity';
-import { TaskStats } from './entities/task-stats.entity';
+import { QuestionStats, TaskStats } from './entities';
 import { StatsService } from './stats.service';
 
 @UseGuards(JwtRestGuard)

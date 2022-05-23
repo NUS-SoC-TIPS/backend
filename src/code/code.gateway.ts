@@ -20,9 +20,9 @@ import { ISocket } from '../interfaces/socket';
 import { GetRoom } from '../rooms/decorators';
 import { InRoomGuard } from '../rooms/guards';
 
-import { CursorDto } from './dtos/cursor.dto';
 import { CODE_EVENTS } from './code.constants';
 import { CodeService } from './code.service';
+import { CursorDto } from './dtos';
 
 @WebSocketGateway({
   cors: {
