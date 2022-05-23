@@ -15,7 +15,7 @@ export class StatsController {
   async findQuestionStats(
     @GetUserRest('id') userId: string,
   ): Promise<QuestionStats> {
-    const numCompletedAllTime = await this.statsService.findNumCompletedAllTime(
+    const latestSubmission = await this.statsService.findLatestSubmission(
       userId,
     );
     const closestWindow = await this.statsService.findClosestWindow();
@@ -23,9 +23,9 @@ export class StatsController {
       await this.statsService.findNumCompletedThisWindow(userId, closestWindow);
 
     return {
-      numCompletedAllTime,
       numCompletedThisWindow,
       closestWindow,
+      latestSubmission,
     };
   }
 

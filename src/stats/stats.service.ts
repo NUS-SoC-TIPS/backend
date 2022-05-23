@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Window } from '@prisma/client';
+import { Question, QuestionSubmission, Window } from '@prisma/client';
 
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -13,12 +13,27 @@ export class StatsService {
     private readonly configService: ConfigService,
   ) {}
 
-  findNumCompletedAllTime(userId: string): Promise<number> {
-    return this.prismaService.questionSubmission.count({
-      where: {
-        userId,
-      },
-    });
+  async findLatestSubmission(
+    userId: string,
+  ): Promise<{ submission: QuestionSubmission; question: Question } | null> {
+    const latestSubmission =
+      await this.prismaService.questionSubmission.findFirst({
+        where: {
+          userId,
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+        take: 1,
+        include: {
+          question: true,
+        },
+      });
+    if (!latestSubmission) {
+      return null;
+    }
+    const { question, ...submission } = latestSubmission;
+    return { submission, question };
   }
 
   findNumCompletedThisWindow(
