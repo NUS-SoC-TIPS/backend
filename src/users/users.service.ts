@@ -1,9 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { Settings, User } from '@prisma/client';
 
+import appConfig from '../data/config.json';
 import { PrismaService } from '../prisma/prisma.service';
 
 import { UpdateSettingsDto, UpsertUserDto } from './dtos';
+import { AppConfig, UserSettingsConfig } from './entities';
 
 @Injectable()
 export class UsersService {
@@ -17,10 +19,14 @@ export class UsersService {
     });
   }
 
+  findAppConfig(): AppConfig {
+    return appConfig;
+  }
+
   async updateSettings(
     user: User,
     dto: UpdateSettingsDto,
-  ): Promise<User & { settings: Settings }> {
+  ): Promise<UserSettingsConfig> {
     const { name, photoUrl } = dto;
     const settings = await this.findSettings(user.id);
     const hasUpdatedName =
@@ -56,7 +62,11 @@ export class UsersService {
       });
     }
 
-    return { ...updatedUser, settings: updatedSettings };
+    return {
+      ...updatedUser,
+      settings: updatedSettings,
+      config: this.findAppConfig(),
+    };
   }
 
   async upsertUser(dto: UpsertUserDto): Promise<User> {
