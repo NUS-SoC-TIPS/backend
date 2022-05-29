@@ -151,12 +151,12 @@ export class StatsService {
     const windows = await this.prismaService.window.findMany({
       where: {
         iteration: Number(this.configService.get('CURRENT_ITERATION')),
-        endAt: {
-          gte: currentDate,
+        startAt: {
+          lte: currentDate,
         },
       },
       orderBy: {
-        startAt: 'asc',
+        startAt: 'desc',
       },
     });
     return Promise.all(
