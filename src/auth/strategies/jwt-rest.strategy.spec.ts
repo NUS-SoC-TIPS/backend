@@ -2,6 +2,7 @@ import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { User } from '@prisma/client';
 
+import { DataModule } from '../../data/data.module';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuthDto } from '../dtos';
 
@@ -21,6 +22,7 @@ describe('JwtRestStrategy', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [JwtRestStrategy, ConfigService, PrismaService],
+      imports: [DataModule],
     }).compile();
     strategy = module.get<JwtRestStrategy>(JwtRestStrategy);
     prisma = module.get<PrismaService>(PrismaService);
