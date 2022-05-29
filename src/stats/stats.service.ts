@@ -145,6 +145,7 @@ export class StatsService {
               roomRecordUsers: {
                 some: {
                   userId,
+                  // Querying for false handles both general and roleplay interviews
                   isInterviewer: false,
                 },
               },
@@ -167,14 +168,17 @@ export class StatsService {
               const { question, ...submission } = s;
               return { question, submission };
             }),
-            interviews: interviews.map((i) => {
-              const { roomRecordUsers, ...record } = i;
-              return {
-                record,
-                partner: roomRecordUsers.filter((u) => u.user.id !== userId)[0]
-                  .user,
-              };
-            }),
+            interviews: interviews
+              .filter((i) => i.roomRecordUsers.length === 2)
+              .map((i) => {
+                const { roomRecordUsers, ...record } = i;
+                return {
+                  record,
+                  partner: roomRecordUsers.filter(
+                    (u) => u.user.id !== userId,
+                  )[0].user,
+                };
+              }),
           };
         }),
       ),
