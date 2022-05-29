@@ -180,50 +180,56 @@ export class StatsService {
   private async computeAdminStatWindow(
     window: Window,
   ): Promise<AdminStatWindow> {
-    const students = this.dataService.getStudentData();
-    const githubUsernames = students.map((s) => s.githubUsername);
-    const studentMap = new Map(
-      students.map((s) => [s.githubUsername.toLowerCase(), s]),
-    );
+    const students = this.dataService.getStudentData().map((s) => ({
+      ...s,
+      githubUsernameLower: s.githubUsername.toLocaleLowerCase(),
+    }));
+    const githubUsernames = students.map((s) => s.githubUsernameLower);
+    const studentMap = new Map(students.map((s) => [s.githubUsernameLower, s]));
 
-    const studentsInSystem = await this.prismaService.user.findMany({
-      where: {
-        githubUsername: {
-          in: githubUsernames,
-          mode: 'insensitive',
+    const studentsInSystem = (
+      await this.prismaService.user.findMany({
+        where: {
+          githubUsername: {
+            in: githubUsernames,
+            mode: 'insensitive',
+          },
+          createdAt: {
+            lte: window.endAt,
+          },
+          role: UserRole.NORMAL,
         },
-        createdAt: {
-          lte: window.endAt,
-        },
-        role: UserRole.NORMAL,
-      },
-      include: {
-        questionSubmissions: {
-          where: {
-            createdAt: {
-              gte: window.startAt,
-              lte: window.endAt,
+        include: {
+          questionSubmissions: {
+            where: {
+              createdAt: {
+                gte: window.startAt,
+                lte: window.endAt,
+              },
             },
           },
-        },
-        roomRecordUsers: {
-          where: {
-            isInterviewer: false,
-            createdAt: {
-              gte: window.startAt,
-              lte: window.endAt,
+          roomRecordUsers: {
+            where: {
+              isInterviewer: false,
+              createdAt: {
+                gte: window.startAt,
+                lte: window.endAt,
+              },
             },
-          },
-          include: {
-            roomRecord: {
-              include: {
-                roomRecordUsers: true,
+            include: {
+              roomRecord: {
+                include: {
+                  roomRecordUsers: true,
+                },
               },
             },
           },
         },
-      },
-    });
+      })
+    ).map((s) => ({
+      ...s,
+      githubUsernameLower: s.githubUsername.toLocaleLowerCase(),
+    }));
 
     const numStudents = studentsInSystem.length;
     const totalQuestions = studentsInSystem
@@ -232,10 +238,10 @@ export class StatsService {
     const avgNumQuestions =
       numStudents === 0 ? 0 : totalQuestions / numStudents;
     const joinedStudentGithubUsernames = new Set(
-      studentsInSystem.map((s) => s.githubUsername.toLowerCase()),
+      studentsInSystem.map((s) => s.githubUsernameLower),
     );
     const studentsYetToJoin = students.filter(
-      (s) => !joinedStudentGithubUsernames.has(s.githubUsername.toLowerCase()),
+      (s) => !joinedStudentGithubUsernames.has(s.githubUsernameLower),
     );
     const studentsWithIncompleteWindow = studentsInSystem
       .map((s) => {
@@ -255,8 +261,8 @@ export class StatsService {
           numQuestions,
           hasCompletedSubmissions,
           hasCompletedInterview,
-          email: studentMap.get(s.githubUsername.toLowerCase()).email,
-          coursemologyProfile: studentMap.get(s.githubUsername.toLowerCase())
+          email: studentMap.get(s.githubUsernameLower).email,
+          coursemologyProfile: studentMap.get(s.githubUsernameLower)
             .coursemologyProfile,
         };
       })
