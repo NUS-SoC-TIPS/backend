@@ -18,6 +18,7 @@ model User {
   githubUsername String
   photoUrl       String // Provided by GitHub
   profileUrl     String // Also provided by GitHub
+  role           UserRole @default(NORMAL)
 
   // TODO: Look into supporting Telegram ID and verification
 
@@ -145,6 +146,13 @@ model Window {
   numQuestions     Int      @default(7)
 
   @@map("windows")
+}
+
+enum UserRole {
+  NORMAL
+  ADMIN
+
+  @@map("user_role")
 }
 
 enum RoomStatus {
