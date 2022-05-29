@@ -4,6 +4,7 @@ import { ConfigModule } from '@nestjs/config';
 import { AgoraModule } from './agora/agora.module';
 import { AuthModule } from './auth/auth.module';
 import { CodeModule } from './code/code.module';
+import { DataModule } from './data/data.module';
 import { FirebaseModule } from './firebase/firebase.module';
 import { NotesModule } from './notes/notes.module';
 import { PrismaModule } from './prisma/prisma.module';
@@ -18,6 +19,7 @@ import { UsersModule } from './users/users.module';
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     PrismaModule,
+    DataModule,
     FirebaseModule,
     AuthModule,
     UsersModule,

@@ -15,6 +15,7 @@ const Configuration = {
         'agora',
         'auth',
         'code',
+        'data',
         'firebase',
         'interfaces',
         'notes',

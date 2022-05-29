@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Settings, User } from '@prisma/client';
+import { DataService } from 'src/data/data.service';
 
-import appConfig from '../data/config.json';
 import { PrismaService } from '../prisma/prisma.service';
 
 import { UpdateSettingsDto, UpsertUserDto } from './dtos';
@@ -9,7 +9,10 @@ import { AppConfig, UserSettingsConfig } from './entities';
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(
+    private readonly prismaService: PrismaService,
+    private readonly dataService: DataService,
+  ) {}
 
   findSettings(userId: string): Promise<Settings | null> {
     return this.prismaService.settings.findUnique({
@@ -20,7 +23,7 @@ export class UsersService {
   }
 
   findAppConfig(): AppConfig {
-    return appConfig;
+    return this.dataService.getConfigData();
   }
 
   async updateSettings(

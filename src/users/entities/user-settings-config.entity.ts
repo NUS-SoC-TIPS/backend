@@ -1,8 +1,8 @@
 import { Settings, User } from '@prisma/client';
 
-export interface AppConfig {
-  coursemology: string;
-}
+import { ConfigData } from '../../data/entities';
+
+export type AppConfig = ConfigData;
 
 export interface UserSettingsConfig extends User {
   settings: Settings | null;
