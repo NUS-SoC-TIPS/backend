@@ -62,6 +62,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
       where: {
         githubUsername: {
           in: this.dataService.getAdminData(),
+          mode: 'insensitive',
         },
       },
       data: {

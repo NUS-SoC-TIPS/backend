@@ -188,6 +188,7 @@ export class StatsService {
       where: {
         githubUsername: {
           in: githubUsernames,
+          mode: 'insensitive',
         },
         createdAt: {
           lte: window.endAt,
