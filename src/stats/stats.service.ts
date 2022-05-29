@@ -1,11 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Question, QuestionSubmission, Window } from '@prisma/client';
+import { Question, QuestionSubmission, UserRole, Window } from '@prisma/client';
 
+import { DataService } from '../data/data.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { RecordsService } from '../records/records.service';
 import { SubmissionsService } from '../submissions/submissions.service';
 
+import { AdminStats, AdminStatWindow } from './entities/admin-stats.entity';
 import { TaskStats, TaskStatWindowStatus } from './entities/task-stats.entity';
 
 @Injectable()
@@ -15,6 +17,7 @@ export class StatsService {
     private readonly configService: ConfigService,
     private readonly submissionsService: SubmissionsService,
     private readonly recordsService: RecordsService,
+    private readonly dataService: DataService,
   ) {}
 
   findLatestSubmission(
@@ -142,6 +145,25 @@ export class StatsService {
     );
   }
 
+  async findAdminStats(): Promise<AdminStats> {
+    const currentDate = new Date();
+    // We will only consider current or past windows of current iteration
+    const windows = await this.prismaService.window.findMany({
+      where: {
+        iteration: Number(this.configService.get('CURRENT_ITERATION')),
+        endAt: {
+          gte: currentDate,
+        },
+      },
+      orderBy: {
+        startAt: 'asc',
+      },
+    });
+    return Promise.all(
+      windows.map((window) => this.computeAdminStatWindow(window)),
+    );
+  }
+
   // We won't handle much of timezones here. If it's slightly off, so be it.
   private getMonday(): Date {
     const date = new Date();
@@ -152,5 +174,97 @@ export class StatsService {
     } // Set the hours to day number minus 1
     date.setHours(0, 0, 0, 0);
     return date;
+  }
+
+  // TODO: Add redis caching for past windows
+  private async computeAdminStatWindow(
+    window: Window,
+  ): Promise<AdminStatWindow> {
+    const students = this.dataService.getStudentData();
+    const githubUsernames = students.map((s) => s.githubUsername);
+    const studentMap = new Map(students.map((s) => [s.githubUsername, s]));
+
+    const studentsInSystem = await this.prismaService.user.findMany({
+      where: {
+        id: {
+          in: githubUsernames,
+        },
+        createdAt: {
+          lte: window.endAt,
+        },
+        role: UserRole.NORMAL,
+      },
+      include: {
+        questionSubmissions: {
+          where: {
+            createdAt: {
+              gte: window.startAt,
+              lte: window.endAt,
+            },
+          },
+        },
+        roomRecordUsers: {
+          where: {
+            isInterviewer: false,
+            createdAt: {
+              gte: window.startAt,
+              lte: window.endAt,
+            },
+          },
+          include: {
+            roomRecord: {
+              include: {
+                roomRecordUsers: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    const numStudents = studentsInSystem.length;
+    const totalQuestions = studentsInSystem
+      .map((s) => s.questionSubmissions.length)
+      .reduce((acc, count) => acc + count, 0);
+    const avgNumQuestions = totalQuestions / numStudents;
+    const joinedStudentGithubUsernames = new Set(
+      studentsInSystem.map((s) => s.githubUsername),
+    );
+    const studentsYetToJoin = students.filter(
+      (s) => !joinedStudentGithubUsernames.has(s.githubUsername),
+    );
+    const studentsWithIncompleteWindow = studentsInSystem
+      .map((s) => {
+        const { questionSubmissions, roomRecordUsers, ...studentData } = s;
+        const numQuestions = questionSubmissions.length;
+        const hasCompletedSubmissions = numQuestions >= window.numQuestions;
+        const validRecords = roomRecordUsers
+          .map((u) => u.roomRecord)
+          .filter(
+            (r) => r.duration >= 900000 && r.roomRecordUsers.length === 2,
+          );
+        const hasCompletedInterview =
+          !window.requireInterview || validRecords.length >= 1;
+
+        return {
+          ...studentData,
+          numQuestions,
+          hasCompletedSubmissions,
+          hasCompletedInterview,
+          email: studentMap.get(s.githubUsername).email,
+          coursemologyProfile: studentMap.get(s.githubUsername)
+            .coursemologyProfile,
+        };
+      })
+      .filter((s) => !s.hasCompletedSubmissions || !s.hasCompletedInterview);
+
+    return {
+      ...window,
+      numStudents,
+      numStudentsCompleted: numStudents - studentsWithIncompleteWindow.length,
+      avgNumQuestions,
+      studentsYetToJoin,
+      studentsWithIncompleteWindow,
+    };
   }
 }

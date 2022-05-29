@@ -1,17 +1,18 @@
 import { Controller, Get, UseGuards } from '@nestjs/common';
 
 import { GetUserRest } from '../auth/decorators';
-import { JwtRestGuard } from '../auth/guards';
+import { JwtRestAdminGuard, JwtRestGuard } from '../auth/guards';
 
+import { AdminStats } from './entities/admin-stats.entity';
 import { QuestionStats, TaskStats } from './entities';
 import { StatsService } from './stats.service';
 
-@UseGuards(JwtRestGuard)
 @Controller('stats')
 export class StatsController {
   constructor(private readonly statsService: StatsService) {}
 
   @Get('questions')
+  @UseGuards(JwtRestGuard)
   async findQuestionStats(
     @GetUserRest('id') userId: string,
   ): Promise<QuestionStats> {
@@ -30,7 +31,14 @@ export class StatsController {
   }
 
   @Get('tasks')
+  @UseGuards(JwtRestGuard)
   async findTaskStats(@GetUserRest('id') userId: string): Promise<TaskStats> {
     return this.statsService.findTaskStats(userId);
+  }
+
+  @Get('admin')
+  @UseGuards(JwtRestAdminGuard)
+  async findAdminStats(): Promise<AdminStats> {
+    return this.statsService.findAdminStats();
   }
 }
