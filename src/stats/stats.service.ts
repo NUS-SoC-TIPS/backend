@@ -186,7 +186,7 @@ export class StatsService {
 
     const studentsInSystem = await this.prismaService.user.findMany({
       where: {
-        id: {
+        githubUsername: {
           in: githubUsernames,
         },
         createdAt: {
