@@ -5,8 +5,20 @@ import {
   QuestionType,
 } from '@prisma/client';
 
-import { AdminData, ConfigData, LeetCodeData, WindowData } from './entities';
-import { adminsJson, configJson, leetCodeJson, windowsJson } from './jsons';
+import {
+  AdminData,
+  ConfigData,
+  LeetCodeData,
+  StudentData,
+  WindowData,
+} from './entities';
+import {
+  adminsJson,
+  configJson,
+  leetCodeJson,
+  studentsJson,
+  windowsJson,
+} from './jsons';
 
 @Injectable()
 export class DataService {
@@ -14,6 +26,7 @@ export class DataService {
   private configData: ConfigData;
   private leetCodeData: LeetCodeData;
   private windowData: WindowData;
+  private studentData: StudentData;
 
   constructor() {
     this.adminData = adminsJson;
@@ -28,6 +41,10 @@ export class DataService {
       ...w,
       startAt: new Date(w.startAt),
       endAt: new Date(w.endAt),
+    }));
+    this.studentData = studentsJson.map((s) => ({
+      ...s,
+      coursemologyProfile: `${this.configData.coursemology}/users/${s.id}`,
     }));
   }
 
@@ -45,5 +62,9 @@ export class DataService {
 
   getWindowData(): WindowData {
     return this.windowData;
+  }
+
+  getStudentData(): StudentData {
+    return this.studentData;
   }
 }
