@@ -1,10 +1,17 @@
 import { INestApplication, Injectable, OnModuleInit } from '@nestjs/common';
-import { Prisma, PrismaClient } from '@prisma/client';
+import { Prisma, PrismaClient, Question, Window } from '@prisma/client';
+import { DataService } from 'src/data/data.service';
 
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit {
+  constructor(private readonly dataService: DataService) {
+    super();
+  }
+
   async onModuleInit(): Promise<void> {
     await this.$connect();
+    await this.seedWindows();
+    await this.seedLeetCode();
   }
 
   async enableShutdownHooks(app: INestApplication): Promise<void> {
@@ -35,5 +42,46 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
       deleteSettings,
       deleteUsers,
     ]);
+  }
+
+  private seedWindows(): Promise<Window[]> {
+    return Promise.all(
+      this.dataService.getWindowData().map((window) => {
+        const { id, ...windowData } = window;
+        return this.window.upsert({
+          create: {
+            ...window,
+          },
+          update: {
+            ...windowData,
+          },
+          where: {
+            id,
+          },
+        });
+      }),
+    );
+  }
+
+  private seedLeetCode(): Promise<Question[]> {
+    return Promise.all(
+      this.dataService.getLeetCodeData().map((question) => {
+        const { slug, source, ...questionData } = question;
+        return this.question.upsert({
+          create: {
+            ...question,
+          },
+          update: {
+            ...questionData,
+          },
+          where: {
+            slug_source: {
+              slug,
+              source,
+            },
+          },
+        });
+      }),
+    );
   }
 }
