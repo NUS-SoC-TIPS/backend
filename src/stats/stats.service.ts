@@ -182,7 +182,9 @@ export class StatsService {
   ): Promise<AdminStatWindow> {
     const students = this.dataService.getStudentData();
     const githubUsernames = students.map((s) => s.githubUsername);
-    const studentMap = new Map(students.map((s) => [s.githubUsername, s]));
+    const studentMap = new Map(
+      students.map((s) => [s.githubUsername.toLowerCase(), s]),
+    );
 
     const studentsInSystem = await this.prismaService.user.findMany({
       where: {
@@ -230,10 +232,10 @@ export class StatsService {
     const avgNumQuestions =
       numStudents === 0 ? 0 : totalQuestions / numStudents;
     const joinedStudentGithubUsernames = new Set(
-      studentsInSystem.map((s) => s.githubUsername),
+      studentsInSystem.map((s) => s.githubUsername.toLowerCase()),
     );
     const studentsYetToJoin = students.filter(
-      (s) => !joinedStudentGithubUsernames.has(s.githubUsername),
+      (s) => !joinedStudentGithubUsernames.has(s.githubUsername.toLowerCase()),
     );
     const studentsWithIncompleteWindow = studentsInSystem
       .map((s) => {
@@ -253,8 +255,8 @@ export class StatsService {
           numQuestions,
           hasCompletedSubmissions,
           hasCompletedInterview,
-          email: studentMap.get(s.githubUsername).email,
-          coursemologyProfile: studentMap.get(s.githubUsername)
+          email: studentMap.get(s.githubUsername.toLowerCase()).email,
+          coursemologyProfile: studentMap.get(s.githubUsername.toLowerCase())
             .coursemologyProfile,
         };
       })
