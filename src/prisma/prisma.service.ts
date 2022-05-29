@@ -44,7 +44,8 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
     ]);
   }
 
-  private seedWindows(): Promise<Window[]> {
+  private async seedWindows(): Promise<Window[]> {
+    await this.window.deleteMany();
     return Promise.all(
       this.dataService.getWindowData().map((window) => {
         const { id, ...windowData } = window;
