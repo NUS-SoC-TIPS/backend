@@ -226,7 +226,8 @@ export class StatsService {
     const totalQuestions = studentsInSystem
       .map((s) => s.questionSubmissions.length)
       .reduce((acc, count) => acc + count, 0);
-    const avgNumQuestions = totalQuestions / numStudents;
+    const avgNumQuestions =
+      numStudents === 0 ? 0 : totalQuestions / numStudents;
     const joinedStudentGithubUsernames = new Set(
       studentsInSystem.map((s) => s.githubUsername),
     );
