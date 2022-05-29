@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { QuestionSubmission } from '@prisma/client';
+import { Question, QuestionSubmission, Window } from '@prisma/client';
 
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -17,6 +17,50 @@ export class SubmissionsService {
       data: {
         ...createSubmissionDto,
         userId,
+      },
+    });
+  }
+
+  async findLatest(
+    userId,
+  ): Promise<(QuestionSubmission & { question: Question }) | null> {
+    return (
+      (await this.prismaService.questionSubmission.findFirst({
+        where: {
+          userId,
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+        take: 1,
+        include: {
+          question: true,
+        },
+      })) || null
+    );
+  }
+
+  findWithinWindow(
+    userId: string,
+    window: Window,
+  ): Promise<
+    (QuestionSubmission & {
+      question: Question;
+    })[]
+  > {
+    return this.prismaService.questionSubmission.findMany({
+      where: {
+        userId,
+        createdAt: {
+          gte: window.startAt,
+          lte: window.endAt,
+        },
+      },
+      include: {
+        question: true,
+      },
+      orderBy: {
+        createdAt: 'asc',
       },
     });
   }

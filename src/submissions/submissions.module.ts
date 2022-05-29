@@ -6,5 +6,6 @@ import { SubmissionsService } from './submissions.service';
 @Module({
   controllers: [SubmissionsController],
   providers: [SubmissionsService],
+  exports: [SubmissionsService],
 })
 export class SubmissionsModule {}
