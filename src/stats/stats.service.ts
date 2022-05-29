@@ -3,37 +3,24 @@ import { ConfigService } from '@nestjs/config';
 import { Question, QuestionSubmission, Window } from '@prisma/client';
 
 import { PrismaService } from '../prisma/prisma.service';
+import { RecordsService } from '../records/records.service';
+import { SubmissionsService } from '../submissions/submissions.service';
 
-import { TaskStats } from './entities/task-stats.entity';
+import { TaskStats, TaskStatWindowStatus } from './entities/task-stats.entity';
 
 @Injectable()
 export class StatsService {
   constructor(
     private readonly prismaService: PrismaService,
     private readonly configService: ConfigService,
+    private readonly submissionsService: SubmissionsService,
+    private readonly recordsService: RecordsService,
   ) {}
 
-  async findLatestSubmission(
+  findLatestSubmission(
     userId: string,
-  ): Promise<{ submission: QuestionSubmission; question: Question } | null> {
-    const latestSubmission =
-      await this.prismaService.questionSubmission.findFirst({
-        where: {
-          userId,
-        },
-        orderBy: {
-          createdAt: 'desc',
-        },
-        take: 1,
-        include: {
-          question: true,
-        },
-      });
-    if (!latestSubmission) {
-      return null;
-    }
-    const { question, ...submission } = latestSubmission;
-    return { submission, question };
+  ): Promise<(QuestionSubmission & { question: Question }) | null> {
+    return this.submissionsService.findLatest(userId);
   }
 
   findNumCompletedThisWindow(
@@ -120,69 +107,39 @@ export class StatsService {
         startAt: 'asc',
       },
     });
+    const currentDate = new Date();
 
-    return {
-      windows: await Promise.all(
-        windows.map(async (window) => {
-          const submissions =
-            await this.prismaService.questionSubmission.findMany({
-              where: {
-                userId,
-                createdAt: {
-                  gte: window.startAt,
-                  lte: window.endAt,
-                },
-              },
-              include: {
-                question: true,
-              },
-              orderBy: {
-                createdAt: 'asc',
-              },
-            });
-          const interviews = await this.prismaService.roomRecord.findMany({
-            where: {
-              roomRecordUsers: {
-                some: {
-                  userId,
-                  // Querying for false handles both general and roleplay interviews
-                  isInterviewer: false,
-                },
-              },
-            },
-            include: {
-              roomRecordUsers: {
-                include: {
-                  user: true,
-                },
-              },
-            },
-            orderBy: {
-              createdAt: 'asc',
-            },
-          });
+    return await Promise.all(
+      windows.map(async (window) => {
+        const submissions = await this.submissionsService.findWithinWindow(
+          userId,
+          window,
+        );
+        const interviews = await this.recordsService.findValidWithinWindow(
+          userId,
+          window,
+        );
+        const hasCompletedSubmissions =
+          submissions.length >= window.numQuestions;
+        const hasCompletedInterview =
+          !window.requireInterview || interviews.length > 0;
+        const status =
+          hasCompletedSubmissions && hasCompletedInterview
+            ? TaskStatWindowStatus.COMPLETED
+            : window.endAt < currentDate
+            ? TaskStatWindowStatus.FAILED
+            : TaskStatWindowStatus.NONE;
 
-          return {
-            window,
-            submissions: submissions.map((s) => {
-              const { question, ...submission } = s;
-              return { question, submission };
-            }),
-            interviews: interviews
-              .filter((i) => i.roomRecordUsers.length === 2)
-              .map((i) => {
-                const { roomRecordUsers, ...record } = i;
-                return {
-                  record,
-                  partner: roomRecordUsers.filter(
-                    (u) => u.user.id !== userId,
-                  )[0].user,
-                };
-              }),
-          };
-        }),
-      ),
-    };
+        return {
+          ...window,
+          submissions,
+          hasCompletedSubmissions,
+          interviews,
+          hasCompletedInterview,
+          status,
+        };
+      }),
+    );
   }
 
   // We won't handle much of timezones here. If it's slightly off, so be it.

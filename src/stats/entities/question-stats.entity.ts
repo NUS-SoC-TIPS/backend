@@ -5,10 +5,11 @@ export interface QuestionStats {
   // Else if not, it will be the number completed this week, with respect to SG time.
   numCompletedThisWindow: number;
 
-  latestSubmission: {
-    submission: QuestionSubmission;
-    question: Question;
-  } | null;
+  latestSubmission:
+    | (QuestionSubmission & {
+        question: Question;
+      })
+    | null;
 
   // Logic behind closest window:
   // - If currently in the middle of a window, that will be returned
