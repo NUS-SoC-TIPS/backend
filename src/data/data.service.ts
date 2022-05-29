@@ -5,16 +5,18 @@ import {
   QuestionType,
 } from '@prisma/client';
 
-import { ConfigData, LeetCodeData, WindowData } from './entities';
-import { configJson, leetCodeJson, windowsJson } from './jsons';
+import { AdminData, ConfigData, LeetCodeData, WindowData } from './entities';
+import { adminsJson, configJson, leetCodeJson, windowsJson } from './jsons';
 
 @Injectable()
 export class DataService {
+  private adminData: AdminData;
   private configData: ConfigData;
   private leetCodeData: LeetCodeData;
   private windowData: WindowData;
 
   constructor() {
+    this.adminData = adminsJson;
     this.configData = configJson;
     this.leetCodeData = leetCodeJson.map((l) => ({
       ...l,
@@ -27,6 +29,10 @@ export class DataService {
       startAt: new Date(w.startAt),
       endAt: new Date(w.endAt),
     }));
+  }
+
+  getAdminData(): AdminData {
+    return this.adminData;
   }
 
   getConfigData(): ConfigData {

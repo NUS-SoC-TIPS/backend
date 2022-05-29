@@ -1,5 +1,11 @@
 import { INestApplication, Injectable, OnModuleInit } from '@nestjs/common';
-import { Prisma, PrismaClient, Question, Window } from '@prisma/client';
+import {
+  Prisma,
+  PrismaClient,
+  Question,
+  UserRole,
+  Window,
+} from '@prisma/client';
 
 import { DataService } from '../data/data.service';
 
@@ -11,6 +17,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
 
   async onModuleInit(): Promise<void> {
     await this.$connect();
+    await this.seedAdmins();
     await this.seedWindows();
     await this.seedLeetCode();
   }
@@ -43,6 +50,24 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
       deleteSettings,
       deleteUsers,
     ]);
+  }
+
+  private async seedAdmins(): Promise<void> {
+    await this.user.updateMany({
+      data: {
+        role: UserRole.NORMAL,
+      },
+    });
+    await this.user.updateMany({
+      where: {
+        githubUsername: {
+          in: this.dataService.getAdminData(),
+        },
+      },
+      data: {
+        role: UserRole.ADMIN,
+      },
+    });
   }
 
   private async seedWindows(): Promise<Window[]> {
