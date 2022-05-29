@@ -4,7 +4,7 @@ import {
   QuestionType,
 } from '@prisma/client';
 
-export interface LeetCodeData {
+export type LeetCodeData = {
   id: number;
   name: string;
   difficulty: QuestionDifficulty;
@@ -12,4 +12,4 @@ export interface LeetCodeData {
   isPremium: boolean;
   type: QuestionType;
   source: QuestionSource;
-}
+}[];

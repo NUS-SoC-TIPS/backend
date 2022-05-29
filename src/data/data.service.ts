@@ -5,26 +5,24 @@ import {
   QuestionType,
 } from '@prisma/client';
 
-import config from './config.json';
 import { ConfigData, LeetCodeData, WindowData } from './entities';
-import leetcode from './leetcode.json';
-import windows from './windows.json';
+import { configJson, leetCodeJson, windowsJson } from './jsons';
 
 @Injectable()
 export class DataService {
   private configData: ConfigData;
-  private leetCodeData: LeetCodeData[];
-  private windowData: WindowData[];
+  private leetCodeData: LeetCodeData;
+  private windowData: WindowData;
 
   constructor() {
-    this.configData = config;
-    this.leetCodeData = leetcode.map((l) => ({
+    this.configData = configJson;
+    this.leetCodeData = leetCodeJson.map((l) => ({
       ...l,
       difficulty: QuestionDifficulty[l.difficulty],
       type: QuestionType[l.type],
       source: QuestionSource.LEETCODE,
     }));
-    this.windowData = windows.map((w) => ({
+    this.windowData = windowsJson.map((w) => ({
       ...w,
       startAt: new Date(w.startAt),
       endAt: new Date(w.endAt),
@@ -35,11 +33,11 @@ export class DataService {
     return this.configData;
   }
 
-  getLeetCodeData(): LeetCodeData[] {
+  getLeetCodeData(): LeetCodeData {
     return this.leetCodeData;
   }
 
-  getWindowData(): WindowData[] {
+  getWindowData(): WindowData {
     return this.windowData;
   }
 }
