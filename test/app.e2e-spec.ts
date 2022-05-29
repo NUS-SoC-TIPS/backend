@@ -5,7 +5,7 @@ import helmet from 'helmet';
 import * as pactum from 'pactum';
 
 import { AppModule } from '../src/app.module';
-import appConfig from '../src/data/config.json';
+import appConfig from '../src/data/jsons/config.json';
 import { PrismaService } from '../src/prisma/prisma.service';
 import { createUserAndLogin } from '../src/utils/tests.util';
 
