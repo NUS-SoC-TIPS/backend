@@ -184,16 +184,12 @@ export class StatsService {
       ...s,
       githubUsernameLower: s.githubUsername.toLocaleLowerCase(),
     }));
-    const githubUsernames = students.map((s) => s.githubUsernameLower);
+    const githubUsernames = new Set(students.map((s) => s.githubUsernameLower));
     const studentMap = new Map(students.map((s) => [s.githubUsernameLower, s]));
 
-    const studentsInSystem = (
+    const usersInSystem = (
       await this.prismaService.user.findMany({
         where: {
-          githubUsername: {
-            in: githubUsernames,
-            mode: 'insensitive',
-          },
           createdAt: {
             lte: window.endAt,
           },
@@ -231,6 +227,37 @@ export class StatsService {
       githubUsernameLower: s.githubUsername.toLocaleLowerCase(),
     }));
 
+    const usersInSystemWithWindowData = usersInSystem.map((user) => {
+      const { questionSubmissions, roomRecordUsers, ...userData } = user;
+      const numQuestions = questionSubmissions.length;
+      const hasCompletedSubmissions = numQuestions >= window.numQuestions;
+      const validRecords = roomRecordUsers
+        .map((u) => u.roomRecord)
+        .filter((r) => r.duration >= 900000 && r.roomRecordUsers.length === 2);
+      const hasCompletedInterview =
+        !window.requireInterview || validRecords.length >= 1;
+
+      return {
+        ...userData,
+        numQuestions,
+        hasCompletedSubmissions,
+        hasCompletedInterview,
+        email: studentMap.get(user.githubUsernameLower)?.email ?? '',
+        coursemologyProfile:
+          studentMap.get(user.githubUsernameLower)?.coursemologyProfile ?? '',
+      };
+    });
+
+    const studentsInSystem = [];
+    const nonStudentsInSystem = [];
+    usersInSystemWithWindowData.forEach((user) => {
+      if (githubUsernames.has(user.githubUsernameLower)) {
+        studentsInSystem.push(user);
+      } else {
+        nonStudentsInSystem.push(user);
+      }
+    });
+
     const numStudents = studentsInSystem.length;
     const totalQuestions = studentsInSystem
       .map((s) => s.questionSubmissions.length)
@@ -243,30 +270,13 @@ export class StatsService {
     const studentsYetToJoin = students.filter(
       (s) => !joinedStudentGithubUsernames.has(s.githubUsernameLower),
     );
-    const studentsWithIncompleteWindow = studentsInSystem
-      .map((s) => {
-        const { questionSubmissions, roomRecordUsers, ...studentData } = s;
-        const numQuestions = questionSubmissions.length;
-        const hasCompletedSubmissions = numQuestions >= window.numQuestions;
-        const validRecords = roomRecordUsers
-          .map((u) => u.roomRecord)
-          .filter(
-            (r) => r.duration >= 900000 && r.roomRecordUsers.length === 2,
-          );
-        const hasCompletedInterview =
-          !window.requireInterview || validRecords.length >= 1;
 
-        return {
-          ...studentData,
-          numQuestions,
-          hasCompletedSubmissions,
-          hasCompletedInterview,
-          email: studentMap.get(s.githubUsernameLower).email,
-          coursemologyProfile: studentMap.get(s.githubUsernameLower)
-            .coursemologyProfile,
-        };
-      })
-      .filter((s) => !s.hasCompletedSubmissions || !s.hasCompletedInterview);
+    const studentsWithIncompleteWindow = studentsInSystem.filter(
+      (s) => !s.hasCompletedSubmissions || !s.hasCompletedInterview,
+    );
+    const studentsWithCompletedWindow = studentsInSystem.filter(
+      (s) => s.hasCompletedSubmissions && s.hasCompletedInterview,
+    );
 
     return {
       ...window,
@@ -275,6 +285,8 @@ export class StatsService {
       avgNumQuestions,
       studentsYetToJoin,
       studentsWithIncompleteWindow,
+      studentsWithCompletedWindow,
+      nonStudents: nonStudentsInSystem,
     };
   }
 }
