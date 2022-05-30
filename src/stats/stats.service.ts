@@ -234,12 +234,14 @@ export class StatsService {
       const validRecords = roomRecordUsers
         .map((u) => u.roomRecord)
         .filter((r) => r.duration >= 900000 && r.roomRecordUsers.length === 2);
+      const numInterviews = validRecords.length;
       const hasCompletedInterview =
-        !window.requireInterview || validRecords.length >= 1;
+        !window.requireInterview || numInterviews >= 1;
 
       return {
         ...userData,
         numQuestions,
+        numInterviews,
         hasCompletedSubmissions,
         hasCompletedInterview,
         email: studentMap.get(user.githubUsernameLower)?.email ?? '',
@@ -260,7 +262,7 @@ export class StatsService {
 
     const numStudents = studentsInSystem.length;
     const totalQuestions = studentsInSystem
-      .map((s) => s.questionSubmissions.length)
+      .map((s) => s.numQuestions)
       .reduce((acc, count) => acc + count, 0);
     const avgNumQuestions =
       numStudents === 0 ? 0 : totalQuestions / numStudents;

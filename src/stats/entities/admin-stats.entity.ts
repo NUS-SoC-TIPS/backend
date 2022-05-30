@@ -11,6 +11,7 @@ export interface UserWithWindowData extends User {
   email: string;
   coursemologyProfile: string;
   numQuestions: number;
+  numInterviews: number;
   hasCompletedSubmissions: boolean;
   hasCompletedInterview: boolean;
 }
