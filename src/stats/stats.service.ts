@@ -7,7 +7,12 @@ import { PrismaService } from '../prisma/prisma.service';
 import { RecordsService } from '../records/records.service';
 import { SubmissionsService } from '../submissions/submissions.service';
 
-import { AdminStats, AdminStatWindow } from './entities/admin-stats.entity';
+import {
+  AdminStats,
+  AdminStatWindow,
+  UserThatHasYetToJoin,
+  UserWithWindowData,
+} from './entities/admin-stats.entity';
 import { TaskStats, TaskStatWindowStatus } from './entities/task-stats.entity';
 
 @Injectable()
@@ -177,6 +182,7 @@ export class StatsService {
   }
 
   // TODO: Add redis caching for past windows
+  // TODO: Clean up the code here
   private async computeAdminStatWindow(
     window: Window,
   ): Promise<AdminStatWindow> {
@@ -227,7 +233,9 @@ export class StatsService {
       githubUsernameLower: s.githubUsername.toLocaleLowerCase(),
     }));
 
-    const usersInSystemWithWindowData = usersInSystem.map((user) => {
+    const usersInSystemWithWindowData: (UserWithWindowData & {
+      githubUsernameLower: string;
+    })[] = usersInSystem.map((user) => {
       const { questionSubmissions, roomRecordUsers, ...userData } = user;
       const numQuestions = questionSubmissions.length;
       const hasCompletedSubmissions = numQuestions >= window.numQuestions;
@@ -244,8 +252,10 @@ export class StatsService {
         numInterviews,
         hasCompletedSubmissions,
         hasCompletedInterview,
-        email: studentMap.get(user.githubUsernameLower)?.email ?? '',
-        coursemologyProfile:
+        coursemologyName: studentMap.get(user.githubUsernameLower)?.name ?? '',
+        coursemologyEmail:
+          studentMap.get(user.githubUsernameLower)?.email ?? '',
+        coursemologyProfileLink:
           studentMap.get(user.githubUsernameLower)?.coursemologyProfile ?? '',
       };
     });
@@ -269,9 +279,14 @@ export class StatsService {
     const joinedStudentGithubUsernames = new Set(
       studentsInSystem.map((s) => s.githubUsernameLower),
     );
-    const studentsYetToJoin = students.filter(
-      (s) => !joinedStudentGithubUsernames.has(s.githubUsernameLower),
-    );
+    const studentsYetToJoin: UserThatHasYetToJoin[] = students
+      .filter((s) => !joinedStudentGithubUsernames.has(s.githubUsernameLower))
+      .map((s) => ({
+        coursemologyName: s.name,
+        coursemologyEmail: s.email,
+        coursemologyProfileLink: s.coursemologyProfile,
+        githubUsername: s.githubUsername,
+      }));
 
     const studentsWithIncompleteWindow = studentsInSystem.filter(
       (s) => !s.hasCompletedSubmissions || !s.hasCompletedInterview,

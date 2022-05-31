@@ -1,15 +1,16 @@
 import { User, Window } from '@prisma/client';
 
 export interface UserThatHasYetToJoin {
-  name: string;
+  coursemologyName: string;
+  coursemologyEmail: string;
+  coursemologyProfileLink: string;
   githubUsername: string;
-  email: string;
-  coursemologyProfile: string;
 }
 
 export interface UserWithWindowData extends User {
-  email: string;
-  coursemologyProfile: string;
+  coursemologyName: string;
+  coursemologyEmail: string;
+  coursemologyProfileLink: string;
   numQuestions: number;
   numInterviews: number;
   hasCompletedSubmissions: boolean;
