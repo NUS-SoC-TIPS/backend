@@ -4,6 +4,7 @@ import { GetUserRest } from '../auth/decorators';
 import { JwtRestAdminGuard, JwtRestGuard } from '../auth/guards';
 
 import { AdminStats } from './entities/admin-stats.entity';
+import { InterviewStats } from './entities/interview-stats.entity';
 import { QuestionStats, TaskStats } from './entities';
 import { StatsService } from './stats.service';
 
@@ -21,12 +22,35 @@ export class StatsController {
     );
     const closestWindow = await this.statsService.findClosestWindow();
     const numCompletedThisWindow =
-      await this.statsService.findNumCompletedThisWindow(userId, closestWindow);
+      await this.statsService.findNumQuestionsCompletedThisWindow(
+        userId,
+        closestWindow,
+      );
 
     return {
       numCompletedThisWindow,
       closestWindow,
       latestSubmission,
+    };
+  }
+
+  @Get('interviews')
+  @UseGuards(JwtRestGuard)
+  async findInterviewStats(
+    @GetUserRest('id') userId: string,
+  ): Promise<InterviewStats> {
+    const latestPartner = await this.statsService.findLatestPartner(userId);
+    const closestWindow = await this.statsService.findClosestWindow();
+    const numCompletedThisWindow =
+      await this.statsService.findNumQuestionsCompletedThisWindow(
+        userId,
+        closestWindow,
+      );
+
+    return {
+      numCompletedThisWindow,
+      closestWindow,
+      latestPartner,
     };
   }
 

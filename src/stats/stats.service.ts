@@ -1,6 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Question, QuestionSubmission, UserRole, Window } from '@prisma/client';
+import {
+  Question,
+  QuestionSubmission,
+  User,
+  UserRole,
+  Window,
+} from '@prisma/client';
 
 import { DataService } from '../data/data.service';
 import { PrismaService } from '../prisma/prisma.service';
@@ -31,36 +37,108 @@ export class StatsService {
     return this.submissionsService.findLatest(userId);
   }
 
-  findNumCompletedThisWindow(
+  findNumQuestionsCompletedThisWindow(
     userId: string,
     closestWindow: Window,
   ): Promise<number> {
     const currentDate = new Date();
+    let createdAtFilter;
     if (
       closestWindow.startAt <= currentDate &&
       closestWindow.endAt >= currentDate
     ) {
       // We're in the middle of a window, so we count using the window
-      return this.prismaService.questionSubmission.count({
-        where: {
-          userId,
-          createdAt: {
-            gte: closestWindow.startAt,
-            lte: closestWindow.endAt,
-          },
-        },
-      });
+      createdAtFilter = {
+        gte: closestWindow.startAt,
+        lte: closestWindow.endAt,
+      };
+    } else {
+      // Else we count the current week's submissions
+      createdAtFilter = { gte: this.getMonday() };
     }
 
-    // Else we count the current week's submissions
     return this.prismaService.questionSubmission.count({
       where: {
         userId,
-        createdAt: {
-          gte: this.getMonday(),
-        },
+        createdAt: createdAtFilter,
       },
     });
+  }
+
+  async findNumInterviewsCompletedThisWindow(
+    userId: string,
+    closestWindow: Window,
+  ): Promise<number> {
+    const currentDate = new Date();
+    let createdAtFilter;
+    if (
+      closestWindow.startAt <= currentDate &&
+      closestWindow.endAt >= currentDate
+    ) {
+      // We're in the middle of a window, so we count using the window
+      createdAtFilter = {
+        gte: closestWindow.startAt,
+        lte: closestWindow.endAt,
+      };
+    } else {
+      // Else we count the current week's submissions
+      createdAtFilter = { gte: this.getMonday() };
+    }
+    const interviews = await this.prismaService.roomRecord.findMany({
+      where: {
+        roomRecordUsers: {
+          some: {
+            userId,
+            // Querying for false handles both general and roleplay interviews
+            isInterviewer: false,
+          },
+        },
+        createdAt: createdAtFilter,
+        duration: {
+          gte: 900000, // 15 minutes in milliseconds
+        },
+      },
+      include: {
+        roomRecordUsers: true,
+      },
+    });
+    return interviews.filter((i) => i.roomRecordUsers.length === 2).length;
+  }
+
+  async findLatestPartner(userId: string): Promise<User | null> {
+    const interviews = await this.prismaService.roomRecord.findMany({
+      where: {
+        roomRecordUsers: {
+          some: {
+            userId,
+            // Querying for false handles both general and roleplay interviews
+            isInterviewer: false,
+          },
+        },
+        duration: {
+          gte: 900000, // 15 minutes in milliseconds
+        },
+      },
+      include: {
+        roomRecordUsers: {
+          include: {
+            user: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+    const validInterviews = interviews.filter(
+      (i) => i.roomRecordUsers.length === 2,
+    );
+    if (validInterviews.length === 0) {
+      return null;
+    }
+    return validInterviews[0].roomRecordUsers.filter(
+      (u) => u.userId !== userId,
+    )[0].user;
   }
 
   // Logic behind closest window:
