@@ -100,6 +100,7 @@ export class RoomsGateway implements OnGatewayDisconnect {
     const isPartnerInRoom = this.roomIdToSockets.get(room.id).length === 2;
 
     socket.emit(ROOM_EVENTS.JOIN_ROOM, {
+      id: room.id,
       partner,
       videoToken,
       code,
