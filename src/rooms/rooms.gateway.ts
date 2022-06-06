@@ -22,7 +22,7 @@ import { RecordsService } from '../records/records.service';
 
 import { GetRoom } from './decorators';
 import { InRoomGuard } from './guards';
-import { ROOM_EVENTS } from './rooms.constants';
+import { ROOM_AUTOCLOSE_DURATION, ROOM_EVENTS } from './rooms.constants';
 import { RoomsService } from './rooms.service';
 
 @WebSocketGateway({
@@ -172,12 +172,12 @@ export class RoomsGateway implements OnGatewayDisconnect {
     socket.room = undefined;
     socket.leave(`${room.id}`);
 
-    // If there's nobody left in the room, we set it to autoclose in 30 minutes
+    // If there's nobody left in the room, we set it to autoclose in ROOM_AUTOCLOSE_DURATION
     if (sockets.length === 0) {
       this.clearRoomTimeout(room.id);
       const timeout = setTimeout(() => {
         this.closeRoomHelper(room, true);
-      }, 1800000);
+      }, ROOM_AUTOCLOSE_DURATION);
       this.roomIdToTimeouts.set(room.id, timeout);
     }
   }

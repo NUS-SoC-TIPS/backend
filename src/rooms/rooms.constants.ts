@@ -18,3 +18,5 @@ export const ROOM_EVENTS = {
   // To inform the other user that one user has disconnected
   PARTNER_DISCONNECTED: 'partner_disconnected',
 };
+
+export const ROOM_AUTOCLOSE_DURATION = 300000; // 5 minutes
