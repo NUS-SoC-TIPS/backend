@@ -42,7 +42,7 @@ export class StatsController {
     const latestPartner = await this.statsService.findLatestPartner(userId);
     const closestWindow = await this.statsService.findClosestWindow();
     const numCompletedThisWindow =
-      await this.statsService.findNumQuestionsCompletedThisWindow(
+      await this.statsService.findNumInterviewsCompletedThisWindow(
         userId,
         closestWindow,
       );
