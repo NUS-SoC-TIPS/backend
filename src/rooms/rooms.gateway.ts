@@ -1,4 +1,4 @@
-import { UseGuards, ValidationPipe } from '@nestjs/common';
+import { OnModuleDestroy, UseGuards, ValidationPipe } from '@nestjs/common';
 import {
   ConnectedSocket,
   MessageBody,
@@ -30,7 +30,7 @@ import { RoomsService } from './rooms.service';
     origin: '*',
   },
 })
-export class RoomsGateway implements OnGatewayDisconnect {
+export class RoomsGateway implements OnGatewayDisconnect, OnModuleDestroy {
   @WebSocketServer()
   server: Server;
   private roomIdToSockets: Map<number, ISocket[]>;
@@ -123,6 +123,18 @@ export class RoomsGateway implements OnGatewayDisconnect {
     const { room } = socket;
     this.removeSocketFromRoomStructures(socket, room);
     this.server.to(`${room.id}`).emit(ROOM_EVENTS.PARTNER_DISCONNECTED);
+  }
+
+  onModuleDestroy(): Promise<void[]> {
+    return Promise.all(
+      [...this.roomIdToSockets.keys()].map((roomId) =>
+        this.roomsService.findById(roomId).then((room) => {
+          if (room) {
+            return this.closeRoomHelper(room, true);
+          }
+        }),
+      ),
+    );
   }
 
   private async closeRoomHelper(room: Room, isAuto: boolean): Promise<void> {

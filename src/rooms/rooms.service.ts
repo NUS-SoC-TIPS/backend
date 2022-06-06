@@ -73,6 +73,13 @@ export class RoomsService {
     });
   }
 
+  findById(roomId: number): Promise<Room | null> {
+    return this.prismaService.room.findFirst({
+      where: { id: roomId },
+      take: 1,
+    });
+  }
+
   closeRoom(roomId: number, isAuto: boolean): Promise<Room> {
     return this.prismaService.room.update({
       where: {
