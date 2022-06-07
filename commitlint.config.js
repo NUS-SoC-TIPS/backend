@@ -24,7 +24,6 @@ const Configuration = {
         'questions',
         'records',
         'rooms',
-        'stats',
         'submissions',
         'tasks',
         'users',
