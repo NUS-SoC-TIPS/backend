@@ -6,4 +6,5 @@ export interface SubmissionWithQuestion extends QuestionSubmission {
 
 export interface RecordWithPartner extends RoomRecord {
   partner: User;
+  notes: string;
 }

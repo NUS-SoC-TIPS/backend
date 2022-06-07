@@ -41,6 +41,7 @@ interface Include {
 interface RecordsQueryResult extends RoomRecord {
   roomRecordUsers: (RoomRecordUser & { user: User })[];
   partner?: User;
+  notes?: string;
 }
 
 @Injectable()
@@ -126,13 +127,14 @@ export class RecordsQueryBuilder {
     }
     return records.map((record) => {
       const { roomRecordUsers, ...recordData } = record;
-      const partner = roomRecordUsers.filter(
+      const partnerRoomUser = roomRecordUsers.filter(
         (recordUser) => recordUser.userId !== this.userId,
-      )[0].user;
+      )[0];
       return {
         ...recordData,
         roomRecordUsers,
-        partner,
+        partner: partnerRoomUser.user,
+        notes: partnerRoomUser.notes,
       };
     });
   }

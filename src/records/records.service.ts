@@ -47,10 +47,16 @@ export class RecordsService {
       .forUser(userId)
       .latest();
     const closestWindow = await this.windowsService.findClosestWindow();
+    const allRecords = await this.queryBuilder
+      .reset()
+      .forUser(userId)
+      .withLatestFirst()
+      .query();
     return {
       closestWindow,
       numberOfRecordsForThisWindowOrWeek,
       latestRecord: latestRecord as RecordStatsEntity['latestRecord'],
+      allRecords: allRecords as RecordStatsEntity['allRecords'],
     };
   }
 
