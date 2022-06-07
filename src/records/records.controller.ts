@@ -1,22 +1,18 @@
-import { Controller, Get, Param, ParseIntPipe } from '@nestjs/common';
-import { RoomRecord, User } from '@prisma/client';
+import { Controller, Get, UseGuards } from '@nestjs/common';
 
 import { GetUserRest } from '../auth/decorators';
+import { JwtRestGuard } from '../auth/guards';
 
+import { RecordStatsEntity } from './entities';
 import { RecordsService } from './records.service';
 
 @Controller('records')
 export class RecordsController {
   constructor(private readonly recordsService: RecordsService) {}
 
-  @Get()
-  findPageOfRecords(
-    @Param('page', ParseIntPipe) page: number,
-    @GetUserRest('id') userId: string,
-  ): Promise<{
-    records: (RoomRecord & { partner: User })[];
-    isLastPage: boolean;
-  }> {
-    return this.recordsService.findPage(page, userId);
+  @Get('stats')
+  @UseGuards(JwtRestGuard)
+  findStats(@GetUserRest('id') userId: string): Promise<RecordStatsEntity> {
+    return this.recordsService.findStats(userId);
   }
 }
