@@ -27,6 +27,7 @@ const Configuration = {
         'submissions',
         'users',
         'utils',
+        'windows',
       ],
     ],
     'type-enum': [
