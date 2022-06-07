@@ -12,6 +12,7 @@ const Configuration = {
       2,
       'always',
       [
+        'admin',
         'agora',
         'auth',
         'code',
