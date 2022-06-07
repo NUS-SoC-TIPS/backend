@@ -11,8 +11,6 @@ import {
 import { DataService } from '../data/data.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { MINIMUM_INTERVIEW_DURATION } from '../records/records.constants';
-import { RecordsService } from '../records/records.service';
-import { SubmissionsService } from '../submissions/submissions.service';
 import { WindowsService } from '../windows/windows.service';
 
 import {
@@ -26,13 +24,16 @@ export class AdminService {
   constructor(
     private readonly prismaService: PrismaService,
     private readonly windowsService: WindowsService,
-    private readonly submissionsService: SubmissionsService,
-    private readonly recordsService: RecordsService,
     private readonly dataService: DataService,
   ) {}
 
   async findStats(): Promise<AdminStatsEntity> {
+    const currentDate = new Date();
     const windows = await this.windowsService.findCurrentIterationWindows();
+    const pastWindows = windows.filter(
+      (window) => window.startAt <= currentDate,
+    );
+
     const studentData = this.dataService.getStudentData().map((s) => ({
       ...s,
       githubUsernameLower: s.githubUsername.toLocaleLowerCase(),
@@ -44,7 +45,7 @@ export class AdminService {
       studentData.map((s) => [s.githubUsernameLower, s]),
     );
     return await Promise.all(
-      windows.map(async (window) => {
+      pastWindows.map(async (window) => {
         const users = await this.findUsersWithWindowDataWithinWindow(window);
         const usersWithWindowData: (UserWithWindowData & {
           githubUsernameLower: string;
