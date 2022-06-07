@@ -155,8 +155,8 @@ export class RecordsQueryBuilder {
         ...(this.before || this.after
           ? {
               createdAt: {
-                ...(this.before ? { gte: this.before } : {}),
-                ...(this.after ? { lte: this.after } : {}),
+                ...(this.after ? { gte: this.after } : {}),
+                ...(this.before ? { lte: this.before } : {}),
               },
             }
           : {}),
