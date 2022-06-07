@@ -41,7 +41,7 @@ export class NotesService {
     const userIdToNotesMap = this.roomIdToUserIdToNotesMap.get(roomId);
     const result = [];
     for (const [userId, notes] of userIdToNotesMap.entries()) {
-      result.push({ userId, notes });
+      result.push({ userId, notes: notes.trim() });
     }
     this.roomIdToUserIdToNotesMap.delete(roomId);
     return result;
