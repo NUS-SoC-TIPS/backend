@@ -33,9 +33,9 @@ export class RecordsService {
 
   async findStats(userId: string): Promise<RecordStatsEntity> {
     const ongoingWindow = await this.windowsService.findOngoingWindow();
-    const before =
+    const before = ongoingWindow?.endAt;
+    const after =
       ongoingWindow?.startAt ?? this.windowsService.findStartOfWeek();
-    const after = ongoingWindow?.endAt;
     const numberOfRecordsForThisWindowOrWeek = await this.queryBuilder
       .reset()
       .forUser(userId)
