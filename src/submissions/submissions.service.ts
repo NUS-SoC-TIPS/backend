@@ -1,13 +1,21 @@
 import { Injectable } from '@nestjs/common';
-import { Question, QuestionSubmission, Window } from '@prisma/client';
+import { QuestionSubmission, Window } from '@prisma/client';
 
+import { SubmissionWithQuestion } from '../interfaces/interface';
 import { PrismaService } from '../prisma/prisma.service';
+import { WindowsService } from '../windows/windows.service';
 
 import { CreateSubmissionDto } from './dtos/create-submission.dto';
+import { SubmissionsQueryBuilder } from './builders';
+import { SubmissionStatsEntity } from './entities';
 
 @Injectable()
 export class SubmissionsService {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(
+    private readonly prismaService: PrismaService,
+    private readonly windowsService: WindowsService,
+    private readonly queryBuilder: SubmissionsQueryBuilder,
+  ) {}
 
   create(
     createSubmissionDto: CreateSubmissionDto,
@@ -21,47 +29,39 @@ export class SubmissionsService {
     });
   }
 
-  async findLatest(
-    userId,
-  ): Promise<(QuestionSubmission & { question: Question }) | null> {
-    return (
-      (await this.prismaService.questionSubmission.findFirst({
-        where: {
-          userId,
-        },
-        orderBy: {
-          createdAt: 'desc',
-        },
-        take: 1,
-        include: {
-          question: true,
-        },
-      })) || null
-    );
+  async findStats(userId: string): Promise<SubmissionStatsEntity> {
+    const ongoingWindow = await this.windowsService.findOngoingWindow();
+    const before = ongoingWindow?.endAt;
+    const after =
+      ongoingWindow?.startAt ?? this.windowsService.findStartOfWeek();
+    const numberOfSubmissionsForThisWindowOrWeek = await this.queryBuilder
+      .reset()
+      .forUser(userId)
+      .createdBefore(before)
+      .createdAfter(after)
+      .count();
+    const latestSubmission = await this.queryBuilder
+      .reset()
+      .forUser(userId)
+      .latest();
+    const closestWindow = await this.windowsService.findClosestWindow();
+    return {
+      closestWindow,
+      numberOfSubmissionsForThisWindowOrWeek,
+      latestSubmission,
+    };
   }
 
   findWithinWindow(
     userId: string,
     window: Window,
-  ): Promise<
-    (QuestionSubmission & {
-      question: Question;
-    })[]
-  > {
-    return this.prismaService.questionSubmission.findMany({
-      where: {
-        userId,
-        createdAt: {
-          gte: window.startAt,
-          lte: window.endAt,
-        },
-      },
-      include: {
-        question: true,
-      },
-      orderBy: {
-        createdAt: 'asc',
-      },
-    });
+  ): Promise<SubmissionWithQuestion[]> {
+    return this.queryBuilder
+      .reset()
+      .forUser(userId)
+      .createdBefore(window.endAt)
+      .createdAfter(window.startAt)
+      .withLatestFirst()
+      .query();
   }
 }
