@@ -25,6 +25,7 @@ const Configuration = {
         'rooms',
         'stats',
         'submissions',
+        'tasks',
         'users',
         'utils',
         'windows',
