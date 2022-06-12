@@ -1,12 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { QuestionSubmission, Window } from '@prisma/client';
 
 import { SubmissionWithQuestion } from '../interfaces/interface';
 import { PrismaService } from '../prisma/prisma.service';
 import { WindowsService } from '../windows/windows.service';
 
-import { CreateSubmissionDto } from './dtos/create-submission.dto';
 import { SubmissionsQueryBuilder } from './builders';
+import { CreateSubmissionDto, UpdateSubmissionDto } from './dtos';
 import { SubmissionStatsEntity } from './entities';
 
 @Injectable()
@@ -25,6 +25,29 @@ export class SubmissionsService {
       data: {
         ...createSubmissionDto,
         userId,
+      },
+    });
+  }
+
+  async update(
+    submissionId: number,
+    updateSubmissionDto: UpdateSubmissionDto,
+    userId: string,
+  ): Promise<QuestionSubmission> {
+    const submission = await this.prismaService.questionSubmission.findUnique({
+      where: {
+        id: submissionId,
+      },
+    });
+    if (submission.userId !== userId) {
+      throw new UnauthorizedException();
+    }
+    return this.prismaService.questionSubmission.update({
+      where: {
+        id: submissionId,
+      },
+      data: {
+        ...updateSubmissionDto,
       },
     });
   }
