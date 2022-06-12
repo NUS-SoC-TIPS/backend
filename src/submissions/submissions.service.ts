@@ -45,10 +45,16 @@ export class SubmissionsService {
       .forUser(userId)
       .latest();
     const closestWindow = await this.windowsService.findClosestWindow();
+    const allSubmissions = await this.queryBuilder
+      .reset()
+      .forUser(userId)
+      .withLatestFirst()
+      .query();
     return {
       closestWindow,
       numberOfSubmissionsForThisWindowOrWeek,
       latestSubmission,
+      allSubmissions,
     };
   }
 

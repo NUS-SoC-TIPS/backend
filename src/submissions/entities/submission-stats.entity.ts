@@ -9,4 +9,5 @@ export interface SubmissionStatsEntity {
   latestSubmission: SubmissionWithQuestion | null;
   // TODO: Look into replacing this with something more meaningful
   closestWindow: Window;
+  allSubmissions: SubmissionWithQuestion[];
 }
