@@ -14,6 +14,10 @@ export class UsersService {
     private readonly dataService: DataService,
   ) {}
 
+  find(userId: string): Promise<User | null> {
+    return this.prismaService.user.findUnique({ where: { id: userId } });
+  }
+
   findSettings(userId: string): Promise<Settings | null> {
     return this.prismaService.settings.findUnique({
       where: {
