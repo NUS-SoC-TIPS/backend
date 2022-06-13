@@ -11,6 +11,10 @@ export class WindowsService {
     private readonly configService: ConfigService,
   ) {}
 
+  find(windowId: number): Promise<Window | null> {
+    return this.prismaService.window.findUnique({ where: { id: windowId } });
+  }
+
   /**
    * Logic behind closest window:
    * - If currently in the middle of a window, that will be returned
