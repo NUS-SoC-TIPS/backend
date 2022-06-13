@@ -1,5 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import {
+  Exclusion,
   QuestionSubmission,
   RoomRecord,
   RoomRecordUser,
@@ -9,105 +10,173 @@ import {
 } from '@prisma/client';
 
 import { DataService } from '../data/data.service';
+import { StudentData } from '../data/entities';
 import { PrismaService } from '../prisma/prisma.service';
 import { MINIMUM_INTERVIEW_DURATION } from '../records/records.constants';
+import { UsersService } from '../users/users.service';
 import { WindowsService } from '../windows/windows.service';
 
+import { CreateExclusionDto } from './dtos';
 import {
   AdminStatsEntity,
   UserThatHasYetToJoin,
   UserWithWindowData,
 } from './entities';
 
+type StudentDataItem = StudentData[0];
+
+interface CustomStudentDataItem extends StudentDataItem {
+  githubUsernameLower: string;
+}
+
 @Injectable()
 export class AdminService {
+  private studentData: CustomStudentDataItem[];
+  private githubUsernames: Set<string>;
+  private studentMap: Map<string, CustomStudentDataItem>;
+
   constructor(
     private readonly prismaService: PrismaService,
     private readonly windowsService: WindowsService,
     private readonly dataService: DataService,
-  ) {}
-
-  async findStats(): Promise<AdminStatsEntity> {
-    const currentDate = new Date();
-    const windows = await this.windowsService.findCurrentIterationWindows();
-    const pastWindows = windows.filter(
-      (window) => window.startAt <= currentDate,
-    );
-
-    const studentData = this.dataService.getStudentData().map((s) => ({
+    private readonly usersService: UsersService,
+  ) {
+    this.studentData = this.dataService.getStudentData().map((s) => ({
       ...s,
       githubUsernameLower: s.githubUsername.toLocaleLowerCase(),
     }));
-    const githubUsernames = new Set(
-      studentData.map((s) => s.githubUsernameLower),
+    this.githubUsernames = new Set(
+      this.studentData.map((s) => s.githubUsernameLower),
     );
-    const studentMap = new Map(
-      studentData.map((s) => [s.githubUsernameLower, s]),
+    this.studentMap = new Map(
+      this.studentData.map((s) => [s.githubUsernameLower, s]),
     );
-    return await Promise.all(
-      pastWindows.map(async (window) => {
-        const users = await this.findUsersWithWindowDataWithinWindow(window);
-        const usersWithWindowData: (UserWithWindowData & {
-          githubUsernameLower: string;
-        })[] = users.map((user) =>
-          this.transformUserData(user, studentMap, window),
-        );
+  }
 
-        const students = [];
-        const nonStudents = [];
-        usersWithWindowData.forEach((user) => {
-          if (githubUsernames.has(user.githubUsernameLower)) {
-            students.push(user);
-          } else {
-            nonStudents.push(user);
-          }
-        });
+  async createExclusion(dto: CreateExclusionDto): Promise<Exclusion> {
+    const window = await this.windowsService.find(dto.windowId);
+    if (!window) {
+      throw new BadRequestException();
+    }
+    const user = await this.usersService.find(dto.userId);
+    if (!user || !this.githubUsernames.has(user.githubUsername.toLowerCase())) {
+      throw new BadRequestException();
+    }
 
-        const numberOfStudents = students.length;
-        const totalNumberOfQuestions = students
-          .map((student) => student.numberOfQuestions)
-          .reduce((acc, count) => acc + count, 0);
-        const averageNumberOfQuestions =
-          numberOfStudents === 0
-            ? 0
-            : totalNumberOfQuestions / numberOfStudents;
-        const joinedStudentGithubUsernames = new Set(
-          students.map((student) => student.githubUsernameLower),
-        );
-        const studentsYetToJoin: UserThatHasYetToJoin[] = studentData
-          .filter(
-            (student) =>
-              !joinedStudentGithubUsernames.has(student.githubUsernameLower),
-          )
-          .map((student) => ({
-            coursemologyName: student.name,
-            coursemologyEmail: student.email,
-            coursemologyProfileLink: student.coursemologyProfile,
-            githubUsername: student.githubUsername,
-          }));
+    const existingExclusion = await this.prismaService.exclusion.findFirst({
+      where: {
+        userId: dto.userId,
+        window: {
+          iteration: {
+            equals: window.iteration,
+          },
+        },
+      },
+      include: {
+        window: true,
+      },
+    });
+    if (
+      existingExclusion &&
+      existingExclusion.window.startAt <= window.startAt
+    ) {
+      return existingExclusion;
+    }
+    if (existingExclusion) {
+      // Update if we're going for an earlier exclusion than the existing one for
+      // the same iteration.
+      return this.prismaService.exclusion.update({
+        data: {
+          windowId: dto.windowId,
+        },
+        where: {
+          id: existingExclusion.id,
+        },
+      });
+    }
+    return await this.prismaService.exclusion.create({
+      data: {
+        ...dto,
+      },
+    });
+  }
 
-        const studentsWithIncompleteWindow = students.filter(
-          (student) =>
-            !student.hasCompletedQuestions || !student.hasCompletedInterview,
-        );
-        const studentsWithCompletedWindow = students.filter(
-          (student) =>
-            student.hasCompletedQuestions && student.hasCompletedInterview,
-        );
+  async removeExclusion(exclusionId: number): Promise<void> {
+    await this.prismaService.exclusion.delete({ where: { id: exclusionId } });
+  }
 
-        return {
-          ...window,
-          numberOfStudents,
-          numberOfCompletedStudents:
-            numberOfStudents - studentsWithIncompleteWindow.length,
-          averageNumberOfQuestions,
-          studentsYetToJoin,
-          studentsWithIncompleteWindow,
-          studentsWithCompletedWindow,
-          nonStudents,
-        };
-      }),
+  async findWindows(): Promise<Window[]> {
+    const currentDate = new Date();
+    const windows = await this.windowsService.findCurrentIterationWindows();
+    return windows.filter((window) => window.startAt <= currentDate);
+  }
+
+  async findStats(windowId: number): Promise<AdminStatsEntity> {
+    const window = await this.windowsService.find(windowId);
+    const users = await this.findUsersWithWindowDataWithinWindow(window);
+    const usersWithWindowData: (UserWithWindowData & {
+      githubUsernameLower: string;
+      isExcluded: boolean;
+    })[] = users.map((user) => this.transformUserData(user, window));
+
+    const students = [];
+    const nonStudents = [];
+    const excludedStudents = [];
+    usersWithWindowData.forEach((user) => {
+      if (this.githubUsernames.has(user.githubUsernameLower)) {
+        if (user.isExcluded) {
+          excludedStudents.push(user);
+        } else {
+          students.push(user);
+        }
+      } else {
+        nonStudents.push(user);
+      }
+    });
+
+    const allStudents = [...students, ...excludedStudents];
+    const numberOfStudents = allStudents.length;
+    const totalNumberOfQuestions = allStudents
+      .map((student) => student.numberOfQuestions)
+      .reduce((acc, count) => acc + count, 0);
+    const averageNumberOfQuestions =
+      numberOfStudents === 0 ? 0 : totalNumberOfQuestions / numberOfStudents;
+    const joinedStudentGithubUsernames = new Set(
+      allStudents.map((student) => student.githubUsernameLower),
     );
+    const studentsYetToJoin: UserThatHasYetToJoin[] = this.studentData
+      .filter(
+        (student) =>
+          !joinedStudentGithubUsernames.has(student.githubUsernameLower),
+      )
+      .map((student) => ({
+        coursemologyName: student.name,
+        coursemologyEmail: student.email,
+        coursemologyProfileLink: student.coursemologyProfile,
+        githubUsername: student.githubUsername,
+      }));
+
+    const studentsWithIncompleteWindow = students.filter(
+      (student) =>
+        !student.hasCompletedQuestions || !student.hasCompletedInterview,
+    );
+    const studentsWithCompletedWindow = students.filter(
+      (student) =>
+        student.hasCompletedQuestions && student.hasCompletedInterview,
+    );
+
+    return {
+      ...window,
+      numberOfStudents,
+      numberOfCompletedStudents:
+        numberOfStudents - studentsWithIncompleteWindow.length,
+      averageNumberOfQuestions,
+      studentsYetToJoin,
+      studentsWithIncompleteWindow,
+      studentsWithCompletedWindow,
+      nonStudents,
+      excludedStudents,
+    };
   }
 
   private async findUsersWithWindowDataWithinWindow(window: Window): Promise<
@@ -117,6 +186,7 @@ export class AdminService {
       roomRecordUsers: (RoomRecordUser & {
         roomRecord: RoomRecord & { roomRecordUsers: RoomRecordUser[] };
       })[];
+      exclusions: (Exclusion & { window: Window })[];
     })[]
   > {
     return (
@@ -152,12 +222,25 @@ export class AdminService {
               },
             },
           },
+          exclusions: {
+            include: {
+              window: true,
+            },
+          },
         },
       })
-    ).map((user) => ({
-      ...user,
-      githubUsernameLower: user.githubUsername.toLocaleLowerCase(),
-    }));
+    )
+      .filter((user) =>
+        user.exclusions.every(
+          (e) =>
+            e.window.iteration !== window.iteration ||
+            e.window.startAt > window.startAt,
+        ),
+      )
+      .map((user) => ({
+        ...user,
+        githubUsernameLower: user.githubUsername.toLocaleLowerCase(),
+      }));
   }
 
   private transformUserData(
@@ -167,19 +250,10 @@ export class AdminService {
       roomRecordUsers: (RoomRecordUser & {
         roomRecord: RoomRecord & { roomRecordUsers: RoomRecordUser[] };
       })[];
+      exclusions: (Exclusion & { window: Window })[];
     },
-    studentMap: Map<
-      string,
-      {
-        githubUsernameLower: string;
-        name: string;
-        githubUsername: string;
-        email: string;
-        coursemologyProfile: string;
-      }
-    >,
     window: Window,
-  ): UserWithWindowData & { githubUsernameLower: string } {
+  ): UserWithWindowData & { githubUsernameLower: string; isExcluded: boolean } {
     const { questionSubmissions, roomRecordUsers, ...userData } = user;
     const numberOfQuestions = questionSubmissions.length;
     const hasCompletedQuestions = numberOfQuestions >= window.numQuestions;
@@ -193,6 +267,7 @@ export class AdminService {
     const numberOfInterviews = validRecords.length;
     const hasCompletedInterview =
       !window.requireInterview || numberOfInterviews >= 1;
+    const isExcluded = user.exclusions.some((e) => e.windowId === window.id);
 
     return {
       ...userData,
@@ -200,10 +275,14 @@ export class AdminService {
       numberOfInterviews,
       hasCompletedQuestions,
       hasCompletedInterview,
-      coursemologyName: studentMap.get(user.githubUsernameLower)?.name ?? '',
-      coursemologyEmail: studentMap.get(user.githubUsernameLower)?.email ?? '',
+      coursemologyName:
+        this.studentMap.get(user.githubUsernameLower)?.name ?? '',
+      coursemologyEmail:
+        this.studentMap.get(user.githubUsernameLower)?.email ?? '',
       coursemologyProfileLink:
-        studentMap.get(user.githubUsernameLower)?.coursemologyProfile ?? '',
+        this.studentMap.get(user.githubUsernameLower)?.coursemologyProfile ??
+        '',
+      isExcluded,
     };
   }
 }
