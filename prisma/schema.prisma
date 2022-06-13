@@ -27,6 +27,7 @@ model User {
   questionSubmissions QuestionSubmission[]
   settings            Settings?
 
+  exclusions Exclusion[]
   @@map("users")
 }
 
@@ -145,7 +146,22 @@ model Window {
   requireInterview Boolean
   numQuestions     Int      @default(7)
 
+  exclusions Exclusion[]
   @@map("windows")
+}
+
+model Exclusion {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  reason    String
+
+  userId   String
+  user     User   @relation(fields: [userId], references: [id])
+  windowId Int
+  window   Window @relation(fields: [windowId], references: [id])
+
+  @@map("exclusions")
 }
 
 enum UserRole {

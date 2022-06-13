@@ -30,6 +30,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
 
   // Sequencing matters here!
   cleanDb(): Promise<Prisma.BatchPayload[]> {
+    const deleteExclusions = this.exclusion.deleteMany();
     const deleteWindows = this.window.deleteMany();
     const deleteRoomRecordUsers = this.roomRecordUser.deleteMany();
     const deleteQuestionSubmissions = this.questionSubmission.deleteMany();
@@ -40,6 +41,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
     const deleteSettings = this.settings.deleteMany();
     const deleteUsers = this.user.deleteMany();
     return this.$transaction([
+      deleteExclusions,
       deleteWindows,
       deleteRoomRecordUsers,
       deleteQuestionSubmissions,
@@ -72,7 +74,6 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
   }
 
   private async seedWindows(): Promise<Window[]> {
-    await this.window.deleteMany();
     return Promise.all(
       this.dataService.getWindowData().map((window) => {
         const { id, ...windowData } = window;
