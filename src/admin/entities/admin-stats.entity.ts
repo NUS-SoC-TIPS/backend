@@ -13,8 +13,7 @@ export interface UserWithWindowData extends User {
   coursemologyProfileLink: string;
   numberOfQuestions: number;
   numberOfInterviews: number;
-  hasCompletedQuestions: boolean;
-  hasCompletedInterview: boolean;
+  hasCompletedWindow: boolean;
 }
 
 export interface ExcludedUserWithWindowData extends UserWithWindowData {
@@ -27,9 +26,8 @@ export interface AdminStatsEntity extends Window {
   numberOfStudents: number; // Number of students who are on the platform by the end of the window
   numberOfCompletedStudents: number; // Number of students who have completed the targets
   averageNumberOfQuestions: number; // Average number of questions attempted by the students
-  studentsYetToJoin: UserThatHasYetToJoin[];
-  studentsWithIncompleteWindow: UserWithWindowData[];
-  studentsWithCompletedWindow: UserWithWindowData[];
-  nonStudents: UserWithWindowData[];
+  students: UserWithWindowData[];
   excludedStudents: ExcludedUserWithWindowData[];
+  studentsYetToJoin: UserThatHasYetToJoin[];
+  nonStudents: UserWithWindowData[];
 }

@@ -116,7 +116,7 @@ export class AdminService {
     const users = await this.findUsersWithWindowDataWithinWindow(window);
     const usersWithWindowData: (UserWithWindowData & {
       githubUsernameLower: string;
-      isExcluded: boolean;
+      exclusion?: Exclusion;
     })[] = users.map((user) => this.transformUserData(user, window));
 
     const students = [];
@@ -124,7 +124,7 @@ export class AdminService {
     const excludedStudents = [];
     usersWithWindowData.forEach((user) => {
       if (this.githubUsernames.has(user.githubUsernameLower)) {
-        if (user.isExcluded) {
+        if (user.exclusion) {
           excludedStudents.push(user);
         } else {
           students.push(user);
@@ -156,24 +156,14 @@ export class AdminService {
         githubUsername: student.githubUsername,
       }));
 
-    const studentsWithIncompleteWindow = students.filter(
-      (student) =>
-        !student.hasCompletedQuestions || !student.hasCompletedInterview,
-    );
-    const studentsWithCompletedWindow = students.filter(
-      (student) =>
-        student.hasCompletedQuestions && student.hasCompletedInterview,
-    );
-
     return {
       ...window,
       numberOfStudents,
-      numberOfCompletedStudents:
-        numberOfStudents - studentsWithIncompleteWindow.length,
+      numberOfCompletedStudents: allStudents.filter((s) => s.hasCompletedWindow)
+        .length,
       averageNumberOfQuestions,
       studentsYetToJoin,
-      studentsWithIncompleteWindow,
-      studentsWithCompletedWindow,
+      students,
       nonStudents,
       excludedStudents,
     };
@@ -234,7 +224,7 @@ export class AdminService {
         user.exclusions.every(
           (e) =>
             e.window.iteration !== window.iteration ||
-            e.window.startAt > window.startAt,
+            e.window.startAt >= window.startAt,
         ),
       )
       .map((user) => ({
@@ -253,7 +243,10 @@ export class AdminService {
       exclusions: (Exclusion & { window: Window })[];
     },
     window: Window,
-  ): UserWithWindowData & { githubUsernameLower: string; isExcluded: boolean } {
+  ): UserWithWindowData & {
+    githubUsernameLower: string;
+    exclusion?: Exclusion;
+  } {
     const { questionSubmissions, roomRecordUsers, ...userData } = user;
     const numberOfQuestions = questionSubmissions.length;
     const hasCompletedQuestions = numberOfQuestions >= window.numQuestions;
@@ -267,14 +260,14 @@ export class AdminService {
     const numberOfInterviews = validRecords.length;
     const hasCompletedInterview =
       !window.requireInterview || numberOfInterviews >= 1;
-    const isExcluded = user.exclusions.some((e) => e.windowId === window.id);
+    const hasCompletedWindow = hasCompletedQuestions && hasCompletedInterview;
+    const exclusion = user.exclusions.find((e) => e.windowId === window.id);
 
     return {
       ...userData,
       numberOfQuestions,
       numberOfInterviews,
-      hasCompletedQuestions,
-      hasCompletedInterview,
+      hasCompletedWindow,
       coursemologyName:
         this.studentMap.get(user.githubUsernameLower)?.name ?? '',
       coursemologyEmail:
@@ -282,7 +275,7 @@ export class AdminService {
       coursemologyProfileLink:
         this.studentMap.get(user.githubUsernameLower)?.coursemologyProfile ??
         '',
-      isExcluded,
+      exclusion,
     };
   }
 }
