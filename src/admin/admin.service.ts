@@ -17,11 +17,7 @@ import { UsersService } from '../users/users.service';
 import { WindowsService } from '../windows/windows.service';
 
 import { CreateExclusionDto } from './dtos';
-import {
-  AdminStatsEntity,
-  UserThatHasYetToJoin,
-  UserWithWindowData,
-} from './entities';
+import { AdminStatsEntity, UserWithWindowData } from './entities';
 
 type StudentDataItem = StudentData[0];
 
@@ -141,20 +137,6 @@ export class AdminService {
       .reduce((acc, count) => acc + count, 0);
     const averageNumberOfQuestions =
       numberOfStudents === 0 ? 0 : totalNumberOfQuestions / numberOfStudents;
-    const joinedStudentGithubUsernames = new Set(
-      allStudents.map((student) => student.githubUsernameLower),
-    );
-    const studentsYetToJoin: UserThatHasYetToJoin[] = this.studentData
-      .filter(
-        (student) =>
-          !joinedStudentGithubUsernames.has(student.githubUsernameLower),
-      )
-      .map((student) => ({
-        coursemologyName: student.name,
-        coursemologyEmail: student.email,
-        coursemologyProfileLink: student.coursemologyProfile,
-        githubUsername: student.githubUsername,
-      }));
 
     return {
       ...window,
@@ -162,7 +144,6 @@ export class AdminService {
       numberOfCompletedStudents: allStudents.filter((s) => s.hasCompletedWindow)
         .length,
       averageNumberOfQuestions,
-      studentsYetToJoin,
       students,
       nonStudents,
       excludedStudents,
