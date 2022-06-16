@@ -17,7 +17,11 @@ import { UsersService } from '../users/users.service';
 import { WindowsService } from '../windows/windows.service';
 
 import { CreateExclusionDto } from './dtos';
-import { AdminStatsEntity, UserWithWindowData } from './entities';
+import {
+  AdminStatsEntity,
+  ExcludedUserWithWindowData,
+  UserWithWindowData,
+} from './entities';
 
 type StudentDataItem = StudentData[0];
 
@@ -115,13 +119,13 @@ export class AdminService {
       exclusion?: Exclusion;
     })[] = users.map((user) => this.transformUserData(user, window));
 
-    const students = [];
-    const nonStudents = [];
-    const excludedStudents = [];
+    const students: UserWithWindowData[] = [];
+    const nonStudents: UserWithWindowData[] = [];
+    const excludedStudents: ExcludedUserWithWindowData[] = [];
     usersWithWindowData.forEach((user) => {
       if (this.githubUsernames.has(user.githubUsernameLower)) {
         if (user.exclusion) {
-          excludedStudents.push(user);
+          excludedStudents.push(user as ExcludedUserWithWindowData);
         } else {
           students.push(user);
         }
@@ -198,6 +202,9 @@ export class AdminService {
               window: true,
             },
           },
+        },
+        orderBy: {
+          name: 'asc',
         },
       })
     )
