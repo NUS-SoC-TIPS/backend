@@ -1,13 +1,16 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import {
   Exclusion,
-  QuestionSubmission,
   RoomRecord,
   RoomRecordUser,
   User,
   UserRole,
   Window,
 } from '@prisma/client';
+import {
+  RecordWithPartner,
+  SubmissionWithQuestion,
+} from 'src/interfaces/interface';
 
 import { DataService } from '../data/data.service';
 import { StudentData } from '../data/entities';
@@ -28,6 +31,17 @@ type StudentDataItem = StudentData[0];
 interface CustomStudentDataItem extends StudentDataItem {
   githubUsernameLower: string;
 }
+
+type UserFromQuery = User & {
+  githubUsernameLower: string;
+  questionSubmissions: SubmissionWithQuestion[];
+  roomRecordUsers: (RoomRecordUser & {
+    roomRecord: RoomRecord & {
+      roomRecordUsers: (RoomRecordUser & { user: User })[];
+    };
+  })[];
+  exclusions: (Exclusion & { window: Window })[];
+};
 
 @Injectable()
 export class AdminService {
@@ -137,7 +151,7 @@ export class AdminService {
     const allStudents = [...students, ...excludedStudents];
     const numberOfStudents = allStudents.length;
     const totalNumberOfQuestions = allStudents
-      .map((student) => student.numberOfQuestions)
+      .map((student) => student.submissions.length)
       .reduce((acc, count) => acc + count, 0);
     const averageNumberOfQuestions =
       numberOfStudents === 0 ? 0 : totalNumberOfQuestions / numberOfStudents;
@@ -154,16 +168,9 @@ export class AdminService {
     };
   }
 
-  private async findUsersWithWindowDataWithinWindow(window: Window): Promise<
-    (User & {
-      githubUsernameLower: string;
-      questionSubmissions: QuestionSubmission[];
-      roomRecordUsers: (RoomRecordUser & {
-        roomRecord: RoomRecord & { roomRecordUsers: RoomRecordUser[] };
-      })[];
-      exclusions: (Exclusion & { window: Window })[];
-    })[]
-  > {
+  private async findUsersWithWindowDataWithinWindow(
+    window: Window,
+  ): Promise<UserFromQuery[]> {
     return (
       await this.prismaService.user.findMany({
         where: {
@@ -180,6 +187,9 @@ export class AdminService {
                 lte: window.endAt,
               },
             },
+            include: {
+              question: true,
+            },
           },
           roomRecordUsers: {
             where: {
@@ -192,7 +202,11 @@ export class AdminService {
             include: {
               roomRecord: {
                 include: {
-                  roomRecordUsers: true,
+                  roomRecordUsers: {
+                    include: {
+                      user: true,
+                    },
+                  },
                 },
               },
             },
@@ -222,39 +236,41 @@ export class AdminService {
   }
 
   private transformUserData(
-    user: User & {
-      githubUsernameLower: string;
-      questionSubmissions: QuestionSubmission[];
-      roomRecordUsers: (RoomRecordUser & {
-        roomRecord: RoomRecord & { roomRecordUsers: RoomRecordUser[] };
-      })[];
-      exclusions: (Exclusion & { window: Window })[];
-    },
+    user: UserFromQuery,
     window: Window,
   ): UserWithWindowData & {
     githubUsernameLower: string;
     exclusion?: Exclusion;
   } {
     const { questionSubmissions, roomRecordUsers, ...userData } = user;
-    const numberOfQuestions = questionSubmissions.length;
-    const hasCompletedQuestions = numberOfQuestions >= window.numQuestions;
-    const validRecords = roomRecordUsers
+    const hasCompletedQuestions =
+      questionSubmissions.length >= window.numQuestions;
+    const validRecords: RecordWithPartner[] = roomRecordUsers
       .map((u) => u.roomRecord)
       .filter(
         (r) =>
           r.duration >= MINIMUM_INTERVIEW_DURATION &&
           r.roomRecordUsers.length === 2,
-      );
-    const numberOfInterviews = validRecords.length;
+      )
+      .map((r) => {
+        const partnerRoomUser = r.roomRecordUsers.filter(
+          (u) => u.userId !== user.id,
+        )[0];
+        return {
+          ...r,
+          notes: partnerRoomUser.notes,
+          partner: partnerRoomUser.user,
+        };
+      });
     const hasCompletedInterview =
-      !window.requireInterview || numberOfInterviews >= 1;
+      !window.requireInterview || validRecords.length >= 1;
     const hasCompletedWindow = hasCompletedQuestions && hasCompletedInterview;
     const exclusion = user.exclusions.find((e) => e.windowId === window.id);
 
     return {
       ...userData,
-      numberOfQuestions,
-      numberOfInterviews,
+      submissions: questionSubmissions,
+      records: validRecords,
       hasCompletedWindow,
       coursemologyName:
         this.studentMap.get(user.githubUsernameLower)?.name ?? '',

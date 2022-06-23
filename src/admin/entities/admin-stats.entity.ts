@@ -1,11 +1,15 @@
 import { Exclusion, User, Window } from '@prisma/client';
+import {
+  RecordWithPartner,
+  SubmissionWithQuestion,
+} from 'src/interfaces/interface';
 
 export interface UserWithWindowData extends User {
   coursemologyName: string;
   coursemologyEmail: string;
   coursemologyProfileLink: string;
-  numberOfQuestions: number;
-  numberOfInterviews: number;
+  submissions: SubmissionWithQuestion[];
+  records: RecordWithPartner[];
   hasCompletedWindow: boolean;
 }
 
