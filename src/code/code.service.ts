@@ -30,7 +30,7 @@ export class CodeService {
     if (!this.roomIdToCode.has(roomId)) {
       this.roomIdToCode.set(roomId, {
         doc: initDocWithText(''),
-        language: Language.PYTHON,
+        language: Language.PYTHON_THREE,
       });
     }
     const { doc, language } = this.roomIdToCode.get(roomId);
