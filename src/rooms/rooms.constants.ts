@@ -19,4 +19,4 @@ export const ROOM_EVENTS = {
   PARTNER_DISCONNECTED: 'partner_disconnected',
 };
 
-export const ROOM_AUTOCLOSE_DURATION = 300000; // 5 minutes
+export const ROOM_AUTOCLOSE_DURATION = 300000; // 5 minutes in milliseconds
