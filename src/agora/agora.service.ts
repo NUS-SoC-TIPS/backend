@@ -15,7 +15,7 @@ export class AgoraService {
       `${roomId}`,
       userId,
       RtcRole.PUBLISHER,
-      Math.floor(Date.now() / 1000) + AGORA_TOKEN_DURATION,
+      Math.floor(Date.now() / 1000) + AGORA_TOKEN_DURATION, // This is when the token will expire
     );
   }
 }
