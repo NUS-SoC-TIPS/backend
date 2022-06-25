@@ -2,6 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { RtcRole, RtcTokenBuilder } from 'agora-access-token';
 
+import { AGORA_TOKEN_DURATION } from './agora.constants';
+
 @Injectable()
 export class AgoraService {
   constructor(private readonly configService: ConfigService) {}
@@ -13,7 +15,7 @@ export class AgoraService {
       `${roomId}`,
       userId,
       RtcRole.PUBLISHER,
-      Math.floor(Date.now() / 1000) + 3600, // User will use this token within 1 hour from now
+      Math.floor(Date.now() / 1000) + AGORA_TOKEN_DURATION,
     );
   }
 }
