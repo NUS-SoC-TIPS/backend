@@ -21,6 +21,7 @@ export class SubmissionsService {
     createSubmissionDto: CreateSubmissionDto,
     userId: string,
   ): Promise<QuestionSubmission> {
+    createSubmissionDto.codeWritten = createSubmissionDto.codeWritten.trim();
     return this.prismaService.questionSubmission.create({
       data: {
         ...createSubmissionDto,
@@ -41,6 +42,9 @@ export class SubmissionsService {
     });
     if (submission.userId !== userId) {
       throw new UnauthorizedException();
+    }
+    if (updateSubmissionDto.codeWritten) {
+      updateSubmissionDto.codeWritten = updateSubmissionDto.codeWritten.trim();
     }
     return this.prismaService.questionSubmission.update({
       where: {

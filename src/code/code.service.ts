@@ -78,7 +78,7 @@ export class CodeService {
       return { code: '', language: Language.PYTHON };
     }
     const { doc, language } = this.roomIdToCode.get(roomId);
-    const code = doc.text.toString();
+    const code = doc.text.toString().trim();
     this.roomIdToCode.delete(roomId);
     return { code, language };
   }

@@ -96,12 +96,16 @@ export class AdminService {
     ) {
       return existingExclusion;
     }
+
+    dto.reason = dto.reason.trim();
+
     if (existingExclusion) {
       // Update if we're going for an earlier exclusion than the existing one for
       // the same iteration.
       return this.prismaService.exclusion.update({
         data: {
           windowId: dto.windowId,
+          reason: dto.reason,
         },
         where: {
           id: existingExclusion.id,

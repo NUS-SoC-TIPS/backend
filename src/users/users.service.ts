@@ -60,7 +60,7 @@ export class UsersService {
     if (name !== user.name || photoUrl !== user.photoUrl) {
       updatedUser = await this.prismaService.user.update({
         data: {
-          name: name ?? user.name,
+          name: name?.trim() ?? user.name,
           photoUrl: photoUrl ?? user.photoUrl,
         },
         where: {
