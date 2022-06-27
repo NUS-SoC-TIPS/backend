@@ -1,20 +1,17 @@
 import { Injectable } from '@nestjs/common';
 import { Language } from '@prisma/client';
 import Automerge from 'automerge';
+import { encoding } from 'lib0';
+import * as syncProtocol from 'y-protocols/sync';
 
-import { TextDoc } from '../interfaces/automerge';
-import {
-  base64StringToBinaryChange,
-  binaryChangeToBase64String,
-  initDocWithText,
-} from '../utils/automerge.util';
+import { base64StringToBinaryChange } from '../utils/automerge.util';
+
+import { MESSAGE_SYNC } from './code.constants';
+import { SharedDoc } from './code.yjs';
 
 @Injectable()
 export class CodeService {
-  private roomIdToCode: Map<
-    number,
-    { doc: Automerge.Doc<TextDoc>; language: Language }
-  >;
+  private roomIdToCode: Map<number, { doc: SharedDoc; language: Language }>;
 
   constructor() {
     this.roomIdToCode = new Map();
@@ -26,15 +23,17 @@ export class CodeService {
    * Assumption: If this method is called, then the room should be open and "fetchable".
    * It will not handle cases such as when the room is already in the midst of closing.
    */
-  findCode(roomId: number): { code: string[]; language: Language } {
+  findCode(roomId: number): { code: Uint8Array; language: Language } {
     if (!this.roomIdToCode.has(roomId)) {
       this.roomIdToCode.set(roomId, {
-        doc: initDocWithText(''),
+        doc: new SharedDoc(`${roomId}`),
         language: Language.PYTHON_THREE,
       });
     }
     const { doc, language } = this.roomIdToCode.get(roomId);
-    const code = binaryChangeToBase64String(Automerge.getAllChanges(doc));
+    const encoder = encoding.createEncoder();
+    encoding.writeVarUint(encoder, MESSAGE_SYNC);
+    syncProtocol.writeSyncStep1(encoder, doc);
     return { code, language };
   }
 

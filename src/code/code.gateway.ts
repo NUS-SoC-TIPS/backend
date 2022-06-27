@@ -1,9 +1,4 @@
-import {
-  ParseArrayPipe,
-  ParseEnumPipe,
-  UseGuards,
-  ValidationPipe,
-} from '@nestjs/common';
+import { ParseArrayPipe, ParseEnumPipe, UseGuards } from '@nestjs/common';
 import {
   ConnectedSocket,
   MessageBody,
@@ -22,7 +17,6 @@ import { InRoomGuard } from '../rooms/guards';
 
 import { CODE_EVENTS } from './code.constants';
 import { CodeService } from './code.service';
-import { CursorDto } from './dtos';
 
 @WebSocketGateway({
   cors: {
@@ -58,15 +52,5 @@ export class CodeGateway {
     socket.broadcast
       .to(`${roomId}`)
       .emit(CODE_EVENTS.UPDATE_LANGUAGE, language);
-  }
-
-  @UseGuards(AuthWsGuard, InRoomGuard)
-  @SubscribeMessage(CODE_EVENTS.UPDATE_CURSOR)
-  updateCursor(
-    @MessageBody(new ValidationPipe()) cursor: CursorDto,
-    @ConnectedSocket() socket: ISocket,
-    @GetRoom('id') roomId: number,
-  ): void {
-    socket.broadcast.to(`${roomId}`).emit(CODE_EVENTS.UPDATE_CURSOR, cursor);
   }
 }

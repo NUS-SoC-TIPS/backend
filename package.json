@@ -49,12 +49,15 @@
     "class-validator": "^0.13.2",
     "firebase-admin": "^10.2.0",
     "helmet": "^5.1.0",
+    "lib0": "^0.2.51",
     "passport": "^0.6.0",
     "passport-jwt": "^4.0.0",
     "random-word-slugs": "^0.1.6",
     "reflect-metadata": "^0.1.13",
     "rimraf": "^3.0.2",
-    "rxjs": "^7.2.0"
+    "rxjs": "^7.2.0",
+    "y-protocols": "^1.0.5",
+    "yjs": "^13.5.39"
   },
   "devDependencies": {
     "@commitlint/cli": "^17.0.2",
