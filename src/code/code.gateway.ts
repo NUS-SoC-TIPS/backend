@@ -1,4 +1,4 @@
-import { ParseArrayPipe, ParseEnumPipe, UseGuards } from '@nestjs/common';
+import { ParseEnumPipe, UseGuards } from '@nestjs/common';
 import {
   ConnectedSocket,
   MessageBody,
@@ -6,7 +6,7 @@ import {
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets';
-import { Language } from '@prisma/client';
+import { Language, Room } from '@prisma/client';
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { Server } from 'socket.io';
 
@@ -30,14 +30,27 @@ export class CodeGateway {
   constructor(private readonly codeService: CodeService) {}
 
   @UseGuards(AuthWsGuard, InRoomGuard)
-  @SubscribeMessage(CODE_EVENTS.UPDATE_CODE)
-  updateCode(
-    @MessageBody(new ParseArrayPipe({ items: String })) code: string[],
+  @SubscribeMessage(CODE_EVENTS.CONNECT_YJS)
+  connectYjs(@ConnectedSocket() socket: ISocket, @GetRoom() room: Room): void {
+    socket.emit(CODE_EVENTS.CONNECT_YJS);
+    const { sync, awareness } = this.codeService.joinOrInitDoc(room, socket);
+    socket.emit(CODE_EVENTS.UPDATE_YJS, sync);
+    if (awareness) {
+      socket.emit(CODE_EVENTS.UPDATE_YJS, awareness);
+    }
+  }
+
+  @UseGuards(AuthWsGuard, InRoomGuard)
+  @SubscribeMessage(CODE_EVENTS.UPDATE_YJS)
+  updateYjs(
+    @MessageBody() data: any,
     @ConnectedSocket() socket: ISocket,
     @GetRoom('id') roomId: number,
   ): void {
-    this.codeService.updateCode(roomId, code);
-    socket.broadcast.to(`${roomId}`).emit(CODE_EVENTS.UPDATE_CODE, code);
+    const response = this.codeService.updateDoc(roomId, socket, data);
+    if (response) {
+      socket.emit(CODE_EVENTS.UPDATE_YJS, response);
+    }
   }
 
   @UseGuards(AuthWsGuard, InRoomGuard)
