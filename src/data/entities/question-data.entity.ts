@@ -4,7 +4,7 @@ import {
   QuestionType,
 } from '@prisma/client';
 
-export type LeetCodeData = {
+export type QuestionData = {
   id: number;
   name: string;
   difficulty: QuestionDifficulty;

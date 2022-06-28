@@ -8,13 +8,14 @@ import {
 import {
   AdminData,
   ConfigData,
-  LeetCodeData,
+  QuestionData,
   StudentData,
   WindowData,
 } from './entities';
 import {
   adminsJson,
   configJson,
+  kattisJson,
   leetCodeJson,
   studentsJson,
   windowsJson,
@@ -24,7 +25,8 @@ import {
 export class DataService {
   private adminData: AdminData;
   private configData: ConfigData;
-  private leetCodeData: LeetCodeData;
+  private leetCodeData: QuestionData;
+  private kattisData: QuestionData;
   private windowData: WindowData;
   private studentData: StudentData;
 
@@ -36,6 +38,12 @@ export class DataService {
       difficulty: QuestionDifficulty[l.difficulty],
       type: QuestionType[l.type],
       source: QuestionSource.LEETCODE,
+    }));
+    this.kattisData = kattisJson.map((k) => ({
+      ...k,
+      difficulty: QuestionDifficulty[k.difficulty],
+      type: QuestionType[k.type],
+      source: QuestionSource.KATTIS,
     }));
     this.windowData = windowsJson.map((w) => ({
       ...w,
@@ -56,8 +64,12 @@ export class DataService {
     return this.configData;
   }
 
-  getLeetCodeData(): LeetCodeData {
+  getLeetCodeData(): QuestionData {
     return this.leetCodeData;
+  }
+
+  getKattisData(): QuestionData {
+    return this.kattisData;
   }
 
   getWindowData(): WindowData {
