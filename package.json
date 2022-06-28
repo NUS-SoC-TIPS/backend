@@ -43,7 +43,6 @@
     "@prisma/client": "^3.14.0",
     "agora-access-token": "^2.0.4",
     "atob": "^2.1.2",
-    "automerge": "1.0.1-preview.5",
     "btoa": "^1.2.1",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.13.2",
