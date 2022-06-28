@@ -20,6 +20,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
     await this.seedAdmins();
     await this.seedWindows();
     await this.seedLeetCode();
+    await this.seedKattis();
   }
 
   async enableShutdownHooks(app: INestApplication): Promise<void> {
@@ -32,8 +33,8 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
   cleanDb(): Promise<Prisma.BatchPayload[]> {
     const deleteExclusions = this.exclusion.deleteMany();
     const deleteWindows = this.window.deleteMany();
-    const deleteRoomRecordUsers = this.roomRecordUser.deleteMany();
     const deleteQuestionSubmissions = this.questionSubmission.deleteMany();
+    const deleteRoomRecordUsers = this.roomRecordUser.deleteMany();
     const deleteQuestions = this.question.deleteMany();
     const deleteRoomRecords = this.roomRecord.deleteMany();
     const deleteRoomUsers = this.roomUser.deleteMany();
@@ -43,8 +44,8 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
     return this.$transaction([
       deleteExclusions,
       deleteWindows,
-      deleteRoomRecordUsers,
       deleteQuestionSubmissions,
+      deleteRoomRecordUsers,
       deleteQuestions,
       deleteRoomRecords,
       deleteRoomUsers,
@@ -95,6 +96,28 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
   private seedLeetCode(): Promise<Question[]> {
     return Promise.all(
       this.dataService.getLeetCodeData().map((question) => {
+        const { slug, source, ...questionData } = question;
+        return this.question.upsert({
+          create: {
+            ...question,
+          },
+          update: {
+            ...questionData,
+          },
+          where: {
+            slug_source: {
+              slug,
+              source,
+            },
+          },
+        });
+      }),
+    );
+  }
+
+  private seedKattis(): Promise<Question[]> {
+    return Promise.all(
+      this.dataService.getKattisData().map((question) => {
         const { slug, source, ...questionData } = question;
         return this.question.upsert({
           create: {

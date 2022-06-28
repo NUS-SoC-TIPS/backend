@@ -207,6 +207,17 @@ enum Language {
   MS_SQL_SERVER
   ORACLE
 
+  // For Kattis
+  COBOL
+  LISP
+  F_SHARP
+  FORTRAN
+  HASKELL
+  OBJECTIVE_C
+  OCAML
+  PASCAL
+  PROLOG
+
   @@map("language")
 }
 
