@@ -93,7 +93,7 @@ export class RoomsGateway implements OnGatewayDisconnect, OnModuleDestroy {
       .to(`${room.id}`)
       .emit(ROOM_EVENTS.JOINED_ROOM, { partner: user });
 
-    const { code, language } = this.codeService.findCode(room.id);
+    const language = this.codeService.findOrInitLanguage(room.id);
     const notes = this.notesService.findForUserInRoom(room.id, user.id);
     const videoToken = this.agoraService.generateAccessToken(room.id, user.id);
     const partner = room.roomUsers.filter((u) => u.userId !== user.id)[0]?.user;
@@ -103,7 +103,6 @@ export class RoomsGateway implements OnGatewayDisconnect, OnModuleDestroy {
       id: room.id,
       partner,
       videoToken,
-      code,
       language,
       notes,
       isPartnerInRoom,
@@ -122,6 +121,7 @@ export class RoomsGateway implements OnGatewayDisconnect, OnModuleDestroy {
     }
     const { room } = socket;
     this.removeSocketFromRoomStructures(socket, room);
+    this.codeService.leaveDoc(room.id, socket);
     this.server.to(`${room.id}`).emit(ROOM_EVENTS.PARTNER_DISCONNECTED);
   }
 
@@ -138,7 +138,7 @@ export class RoomsGateway implements OnGatewayDisconnect, OnModuleDestroy {
   }
 
   private async closeRoomHelper(room: Room, isAuto: boolean): Promise<void> {
-    const { code, language } = this.codeService.closeRoom(room.id);
+    const { code, language } = this.codeService.closeRoom(room);
     const userNotes = this.notesService.closeRoom(room.id);
     const recordData: CreateRecordDto = {
       isRoleplay: false,
