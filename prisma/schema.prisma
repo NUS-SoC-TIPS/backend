@@ -118,6 +118,7 @@ model RoomRecordUser {
   roomRecordId  Int
   roomRecord    RoomRecord @relation(fields: [roomRecordId], references: [id])
 
+  @@unique([roomRecordId, userId])
   @@map("room_record_users")
 }
 
@@ -161,6 +162,7 @@ model Exclusion {
   windowId Int
   window   Window @relation(fields: [windowId], references: [id])
 
+  @@unique([userId, windowId])
   @@map("exclusions")
 }
 
