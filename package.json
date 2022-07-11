@@ -6,8 +6,9 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
-    "prisma:dev:migrate": "prisma migrate dev",
-    "prisma:dev:deploy": "prisma migrate deploy && prisma generate",
+    "prisma:dev:migrate": "dotenv -e .env.development -- prisma migrate dev",
+    "prisma:dev:deploy": "dotenv -e .env.development -- prisma migrate deploy && prisma generate",
+    "prisma:prod:deploy": "dotenv -e .env.production -- prisma migrate deploy && prisma generate",
     "db:dev:rm": "docker compose rm dev-db -s -f -v",
     "db:dev:up": "docker compose up dev-db -d",
     "db:dev:restart": "yarn db:dev:rm && yarn db:dev:up && sleep 1 && yarn prisma:dev:deploy",
