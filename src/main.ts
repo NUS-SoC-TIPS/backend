@@ -9,7 +9,7 @@ import { AppModule } from './app.module';
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule, {
     cors: {
-      origin: '*',
+      origin: process.env.NODE_ENV === 'production' ? /soc-tips\.com$/ : '*',
     },
   });
   app.use(helmet());
@@ -17,7 +17,7 @@ async function bootstrap(): Promise<void> {
   const prismaService = app.get(PrismaService);
   const configService = app.get(ConfigService);
   await prismaService.enableShutdownHooks(app);
-  // app.enableCors();
+  app.enableCors();
   await app.listen(configService.get('PORT'));
 }
 bootstrap();
