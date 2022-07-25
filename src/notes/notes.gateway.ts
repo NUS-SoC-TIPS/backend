@@ -15,7 +15,7 @@ import { NotesService } from './notes.service';
 
 @WebSocketGateway({
   cors: {
-    origin: '*',
+    origin: process.env.NODE_ENV === 'production' ? /soc-tips\.com$/ : '*',
   },
 })
 export class NotesGateway {

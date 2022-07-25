@@ -17,7 +17,7 @@ import { JsonWebTokenExceptionFilter } from './filters';
 
 @WebSocketGateway({
   cors: {
-    origin: '*',
+    origin: process.env.NODE_ENV === 'production' ? /soc-tips\.com$/ : '*',
   },
 })
 export class AuthGateway implements OnGatewayConnection {

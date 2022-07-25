@@ -20,7 +20,7 @@ import { CodeService } from './code.service';
 
 @WebSocketGateway({
   cors: {
-    origin: '*',
+    origin: process.env.NODE_ENV === 'production' ? /soc-tips\.com$/ : '*',
   },
 })
 export class CodeGateway {
