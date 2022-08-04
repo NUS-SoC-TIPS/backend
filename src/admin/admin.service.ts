@@ -120,7 +120,11 @@ export class AdminService {
   }
 
   async removeExclusion(exclusionId: number): Promise<void> {
-    await this.prismaService.exclusion.delete({ where: { id: exclusionId } });
+    await this.prismaService.exclusion
+      .delete({ where: { id: exclusionId } })
+      // Empty catch to handle the case where the exclusion is not found.
+      // TODO: Figure out why attempts to delete a non-existing exclusion were made.
+      .catch();
   }
 
   async findWindows(): Promise<Window[]> {

@@ -139,7 +139,10 @@ export class CodeService {
     this.roomToLanguage.delete(room.id);
     const doc = this.roomToDoc.get(room.id);
     this.roomToDoc.delete(room.id);
-    const code = doc?.getText(room.slug)?.toJSON();
+    if (!doc) {
+      return { code: '', language };
+    }
+    const code = doc.getText(room.slug).toJSON();
     doc.destroy();
     return { code, language };
   }
