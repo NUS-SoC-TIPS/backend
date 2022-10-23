@@ -142,7 +142,7 @@ export class CodeService {
     if (!doc) {
       return { code: '', language };
     }
-    const code = doc.getText(room.slug).toJSON();
+    const code = doc.getText(room.slug).toJSON().trim();
     doc.destroy();
     return { code, language };
   }
