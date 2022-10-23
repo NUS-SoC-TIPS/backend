@@ -34,7 +34,7 @@ export class UsersService {
     user: User,
     dto: UpdateSettingsDto,
   ): Promise<UserSettingsConfig> {
-    const { name, photoUrl } = dto;
+    const { name, photoUrl, preferredInterviewLanguage } = dto;
     const settings = await this.findSettings(user.id);
     const hasUpdatedName =
       settings?.hasUpdatedName || (name && name !== user.name);
@@ -46,10 +46,12 @@ export class UsersService {
         userId: user.id,
         hasUpdatedName,
         hasUpdatedPhoto,
+        preferredInterviewLanguage,
       },
       update: {
         hasUpdatedName,
         hasUpdatedPhoto,
+        preferredInterviewLanguage,
       },
       where: {
         userId: user.id,

@@ -1,4 +1,5 @@
-import { IsOptional, IsString } from 'class-validator';
+import { Language } from '@prisma/client';
+import { IsEnum, IsOptional, IsString } from 'class-validator';
 
 export class UpdateSettingsDto {
   @IsString()
@@ -8,4 +9,8 @@ export class UpdateSettingsDto {
   @IsString()
   @IsOptional()
   photoUrl?: string;
+
+  @IsEnum(Language)
+  @IsOptional()
+  preferredInterviewLanguage?: Language;
 }
