@@ -6,6 +6,8 @@ import { ISocket } from 'src/interfaces/socket';
 import * as awarenessProtocol from 'y-protocols/awareness';
 import * as syncProtocol from 'y-protocols/sync';
 
+import { UsersService } from '../users/users.service';
+
 import { MESSAGE_AWARENESS, MESSAGE_SYNC } from './code.constants';
 import { YjsDoc } from './code.yjs';
 
@@ -14,7 +16,7 @@ export class CodeService {
   private roomToLanguage: Map<number, Language>;
   private roomToDoc: Map<number, YjsDoc>;
 
-  constructor() {
+  constructor(private readonly usersService: UsersService) {
     this.roomToLanguage = new Map();
     this.roomToDoc = new Map();
   }
@@ -111,9 +113,13 @@ export class CodeService {
    * Assumption: If this method is called, then the room should be open and "fetchable".
    * It will not handle cases such as when the room is already in the midst of closing.
    */
-  findOrInitLanguage(roomId: number): Language {
+  async findOrInitLanguage(roomId: number, userId: string): Promise<Language> {
     if (!this.roomToLanguage.has(roomId)) {
-      this.roomToLanguage.set(roomId, Language.PYTHON_THREE);
+      const userSettings = await this.usersService.findSettings(userId);
+      this.roomToLanguage.set(
+        roomId,
+        userSettings.preferredInterviewLanguage ?? Language.PYTHON_THREE,
+      );
     }
     return this.roomToLanguage.get(roomId);
   }

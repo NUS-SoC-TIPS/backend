@@ -93,7 +93,10 @@ export class RoomsGateway implements OnGatewayDisconnect, OnModuleDestroy {
       .to(`${room.id}`)
       .emit(ROOM_EVENTS.JOINED_ROOM, { partner: user });
 
-    const language = this.codeService.findOrInitLanguage(room.id);
+    const language = await this.codeService.findOrInitLanguage(
+      room.id,
+      user.id,
+    );
     const notes = this.notesService.findForUserInRoom(room.id, user.id);
     const videoToken = this.agoraService.generateAccessToken(room.id, user.id);
     const partner = room.roomUsers.filter((u) => u.userId !== user.id)[0]?.user;
@@ -160,8 +163,8 @@ export class RoomsGateway implements OnGatewayDisconnect, OnModuleDestroy {
     this.removeRoomFromRoomStructures(room.id);
   }
 
-  // This is the only method that needs to take in Room instead of just id,
-  // because we need to link it to the socket.
+  // This method needs to take in Room instead of just id, because we need
+  // to link it to the socket.
   private addSocketToRoomStructures(socket: ISocket, room: Room): void {
     if (!this.roomIdToSockets.has(room.id)) {
       this.roomIdToSockets.set(room.id, []);
