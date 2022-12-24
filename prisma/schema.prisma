@@ -6,7 +6,8 @@ generator client {
   // filteredRelationCount: Allows you to do e.g. select: { _count: { select: { posts: { where: { title: 'Hello!' } } } } } -> returns count
   // extendedWhereUnique: Allows you to include non-unique fields in `where` in addition to min. one unique field.
   // orderByNulls: Allows you to do e.g. `orderBy: { updatedAt: { sort: 'asc', nulls: 'last' } }`
-  previewFeatures = ["postgresqlExtensions", "fieldReference", "filteredRelationCount", "extendedWhereUnique", "orderByNulls"]
+  // clientExtensions: Allows client extensions, see https://www.prisma.io/docs/concepts/components/prisma-client/client-extensions
+  previewFeatures = ["postgresqlExtensions", "fieldReference", "filteredRelationCount", "extendedWhereUnique", "orderByNulls", "clientExtensions"]
 }
 
 datasource db {
