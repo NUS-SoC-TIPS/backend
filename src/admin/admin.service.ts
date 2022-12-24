@@ -135,6 +135,9 @@ export class AdminService {
 
   async findStats(windowId: number): Promise<AdminStatsEntity> {
     const window = await this.windowsService.find(windowId);
+    if (window == null) {
+      throw new BadRequestException();
+    }
     const users = await this.findUsersWithWindowDataWithinWindow(window);
     const usersWithWindowData: (UserWithWindowData & {
       githubUsernameLower: string;

@@ -45,7 +45,7 @@ export class RoomsService {
   }
 
   async findCurrent(userId: string): Promise<Room | null> {
-    return (await this.findCurrentRoomUser(userId))?.room;
+    return (await this.findCurrentRoomUser(userId))?.room ?? null;
   }
 
   /**

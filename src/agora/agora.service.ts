@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { RtcRole, RtcTokenBuilder } from 'agora-access-token';
 
@@ -9,9 +9,15 @@ export class AgoraService {
   constructor(private readonly configService: ConfigService) {}
 
   generateAccessToken(roomId: number, userId: string): string {
+    const agoraAppId = this.configService.get('AGORA_APP_ID');
+    const agoraAppCertificate = this.configService.get('AGORA_APP_CERTIFICATE');
+    if (agoraAppId == null || agoraAppCertificate == null) {
+      throw new BadRequestException();
+    }
+
     return RtcTokenBuilder.buildTokenWithAccount(
-      this.configService.get('AGORA_APP_ID'),
-      this.configService.get('AGORA_APP_CERTIFICATE'),
+      agoraAppId,
+      agoraAppCertificate,
       `${roomId}`,
       userId,
       RtcRole.PUBLISHER,

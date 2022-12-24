@@ -43,7 +43,6 @@ describe('JwtRestAdminStrategy', () => {
 
   describe('validation', () => {
     let admin: User;
-    let normal: User;
 
     beforeAll(async () => {
       await prisma.cleanDb();
@@ -52,13 +51,11 @@ describe('JwtRestAdminStrategy', () => {
           ...adminData,
         },
       });
-      delete admin.updatedAt;
-      normal = await prisma.user.create({
+      await prisma.user.create({
         data: {
           ...normalData,
         },
       });
-      delete normal.updatedAt;
     });
 
     it('should return the user if they exist and is admin', async () => {

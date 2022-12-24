@@ -18,6 +18,7 @@ async function bootstrap(): Promise<void> {
   const configService = app.get(ConfigService);
   await prismaService.enableShutdownHooks(app);
   app.enableCors();
-  await app.listen(configService.get('PORT'));
+  await app.listen(configService.get('PORT') ?? 3001);
 }
+
 bootstrap();

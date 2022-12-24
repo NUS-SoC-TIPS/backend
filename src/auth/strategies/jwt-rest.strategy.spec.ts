@@ -44,7 +44,6 @@ describe('JwtRestStrategy', () => {
           ...userData,
         },
       });
-      delete user.updatedAt;
     });
 
     it('should return the user if they exist', async () => {

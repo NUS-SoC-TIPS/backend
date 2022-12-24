@@ -1,4 +1,8 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { QuestionSubmission, Window } from '@prisma/client';
 
 import { SubmissionWithQuestion } from '../interfaces/interface';
@@ -40,6 +44,9 @@ export class SubmissionsService {
         id: submissionId,
       },
     });
+    if (submission == null) {
+      throw new BadRequestException();
+    }
     if (submission.userId !== userId) {
       throw new UnauthorizedException();
     }

@@ -15,31 +15,36 @@ export class NotesService {
    * have initialised the room and user. If the room doesn't exist, then the room must have been closed.
    */
   updateNotes(roomId: number, userId: string, notes: string): void {
-    if (!this.roomIdToUserIdToNotesMap.has(roomId)) {
+    const notesMap = this.roomIdToUserIdToNotesMap.get(roomId);
+    if (notesMap == null) {
       return;
     }
-    this.roomIdToUserIdToNotesMap.get(roomId).set(userId, notes);
+    notesMap.set(userId, notes);
   }
 
   findForUserInRoom(roomId: number, userId: string): string {
-    if (!this.roomIdToUserIdToNotesMap.has(roomId)) {
-      this.roomIdToUserIdToNotesMap.set(roomId, new Map());
+    let notesMap = this.roomIdToUserIdToNotesMap.get(roomId);
+    if (notesMap == null) {
+      notesMap = new Map();
+      this.roomIdToUserIdToNotesMap.set(roomId, notesMap);
     }
-    if (!this.roomIdToUserIdToNotesMap.get(roomId).has(userId)) {
-      this.roomIdToUserIdToNotesMap.get(roomId).set(userId, '');
+    let notes = notesMap.get(userId);
+    if (!notes) {
+      notes = '';
+      notesMap.set(userId, notes);
     }
-    return this.roomIdToUserIdToNotesMap.get(roomId).get(userId);
+    return notes;
   }
 
   /**
    * Closes the room and returns the notes taken by the users in the room.
    */
   closeRoom(roomId: number): { userId: string; notes: string }[] {
-    if (!this.roomIdToUserIdToNotesMap.has(roomId)) {
+    const userIdToNotesMap = this.roomIdToUserIdToNotesMap.get(roomId);
+    if (userIdToNotesMap == null) {
       return [];
     }
-    const userIdToNotesMap = this.roomIdToUserIdToNotesMap.get(roomId);
-    const result = [];
+    const result: { userId: string; notes: string }[] = [];
     for (const [userId, notes] of userIdToNotesMap.entries()) {
       result.push({ userId, notes: notes.trim() });
     }

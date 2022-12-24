@@ -100,7 +100,7 @@ export class RoomsGateway implements OnGatewayDisconnect, OnModuleDestroy {
     const notes = this.notesService.findForUserInRoom(room.id, user.id);
     const videoToken = this.agoraService.generateAccessToken(room.id, user.id);
     const partner = room.roomUsers.filter((u) => u.userId !== user.id)[0]?.user;
-    const isPartnerInRoom = this.roomIdToSockets.get(room.id).length === 2;
+    const isPartnerInRoom = this.roomIdToSockets.get(room.id)?.length === 2;
 
     socket.emit(ROOM_EVENTS.JOIN_ROOM, {
       id: room.id,
@@ -166,29 +166,30 @@ export class RoomsGateway implements OnGatewayDisconnect, OnModuleDestroy {
   // This method needs to take in Room instead of just id, because we need
   // to link it to the socket.
   private addSocketToRoomStructures(socket: ISocket, room: Room): void {
-    if (!this.roomIdToSockets.has(room.id)) {
-      this.roomIdToSockets.set(room.id, []);
+    let sockets = this.roomIdToSockets.get(room.id);
+    if (sockets == null) {
+      sockets = [];
+      this.roomIdToSockets.set(room.id, sockets);
     }
-    this.roomIdToSockets.get(room.id).push(socket);
+    sockets.push(socket);
     this.clearRoomTimeout(room.id);
     socket.join(`${room.id}`);
     socket.room = room;
   }
 
   private removeSocketFromRoomStructures(socket: ISocket, room: Room): void {
-    if (!this.roomIdToSockets.has(room.id)) {
+    const sockets = this.roomIdToSockets.get(room.id);
+    if (sockets == null) {
       // Invariant violated
       return;
     }
-    const sockets = this.roomIdToSockets
-      .get(room.id)
-      .filter((s) => s.id !== socket.id);
-    this.roomIdToSockets.set(room.id, sockets);
+    const updatedSockets = sockets.filter((s) => s.id !== socket.id);
+    this.roomIdToSockets.set(room.id, updatedSockets);
     socket.room = undefined;
     socket.leave(`${room.id}`);
 
     // If there's nobody left in the room, we set it to autoclose in ROOM_AUTOCLOSE_DURATION
-    if (sockets.length === 0) {
+    if (updatedSockets.length === 0) {
       this.clearRoomTimeout(room.id);
       const timeout = setTimeout(() => {
         this.closeRoomHelper(room, true);
@@ -198,10 +199,11 @@ export class RoomsGateway implements OnGatewayDisconnect, OnModuleDestroy {
   }
 
   private removeRoomFromRoomStructures(roomId: number): void {
-    if (!this.roomIdToSockets.has(roomId)) {
+    const sockets = this.roomIdToSockets.get(roomId);
+    if (sockets == null) {
       return;
     }
-    this.roomIdToSockets.get(roomId).forEach((s) => {
+    sockets.forEach((s) => {
       s.room = undefined;
       s.leave(`${roomId}`);
     });

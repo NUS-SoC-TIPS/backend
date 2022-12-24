@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Window } from '@prisma/client';
 
@@ -43,13 +43,17 @@ export class WindowsService {
       return upcomingWindow;
     }
 
-    // Most recent past window
-    return this.prismaService.window.findFirst({
+    const mostRecentPastWindow = await this.prismaService.window.findFirst({
       orderBy: {
         startAt: 'desc',
       },
       take: 1,
     });
+    if (mostRecentPastWindow == null) {
+      throw new BadRequestException();
+    }
+
+    return mostRecentPastWindow;
   }
 
   findOngoingWindow(): Promise<Window | null> {

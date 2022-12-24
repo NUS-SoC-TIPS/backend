@@ -8,7 +8,7 @@ import { PrismaService } from '../prisma/prisma.service';
 
 const moduleMocker = new ModuleMocker(global);
 
-export const mocker = (token: InjectionToken): Mock | undefined => {
+export const mocker = (token: InjectionToken | undefined): Mock | undefined => {
   if (typeof token === 'function') {
     const mockMetadata = moduleMocker.getMetadata(
       token,

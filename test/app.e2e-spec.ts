@@ -42,7 +42,7 @@ describe('Application (e2e)', () => {
 
   describe('Users', () => {
     it('should allow user to get self if JWT is defined', () => {
-      return pactum
+      pactum
         .spec()
         .get('/users/self')
         .withHeaders({
@@ -57,13 +57,13 @@ describe('Application (e2e)', () => {
     });
 
     it('should throw an error if user tries to get self without JWT', () => {
-      return pactum.spec().get('/users/self').expectStatus(401);
+      pactum.spec().get('/users/self').expectStatus(401);
     });
   });
 
   describe('Rooms', () => {
     it('should return null when user who is not in room checks for current room', () => {
-      return pactum
+      pactum
         .spec()
         .get('/rooms')
         .withHeaders({
@@ -74,7 +74,7 @@ describe('Application (e2e)', () => {
     });
 
     it('should allow a user who is not in room to create a new room', () => {
-      return pactum
+      pactum
         .spec()
         .post('/rooms')
         .withHeaders({
@@ -86,7 +86,7 @@ describe('Application (e2e)', () => {
     });
 
     it('should return current room for user in room', () => {
-      return pactum
+      pactum
         .spec()
         .get('/rooms')
         .withHeaders({
@@ -98,7 +98,7 @@ describe('Application (e2e)', () => {
     });
 
     it('should not allow a user who is already in room to create a new room', () => {
-      return pactum
+      pactum
         .spec()
         .post('/rooms')
         .withHeaders({

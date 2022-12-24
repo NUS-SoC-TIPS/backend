@@ -37,9 +37,10 @@ export class UsersService {
     const { name, photoUrl, preferredInterviewLanguage } = dto;
     const settings = await this.findSettings(user.id);
     const hasUpdatedName =
-      settings?.hasUpdatedName || (name && name !== user.name);
+      settings?.hasUpdatedName || (name != null && name !== user.name);
     const hasUpdatedPhoto =
-      settings?.hasUpdatedPhoto || (photoUrl && photoUrl !== user.photoUrl);
+      settings?.hasUpdatedPhoto ||
+      (photoUrl != null && photoUrl !== user.photoUrl);
 
     const updatedSettings = await this.prismaService.settings.upsert({
       create: {

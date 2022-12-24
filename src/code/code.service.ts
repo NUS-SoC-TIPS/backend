@@ -2,10 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { Language, Room } from '@prisma/client';
 import * as decoding from 'lib0/decoding';
 import * as encoding from 'lib0/encoding';
-import { ISocket } from 'src/interfaces/socket';
 import * as awarenessProtocol from 'y-protocols/awareness';
 import * as syncProtocol from 'y-protocols/sync';
 
+import { ISocket } from '../interfaces/socket';
 import { UsersService } from '../users/users.service';
 
 import { MESSAGE_AWARENESS, MESSAGE_SYNC } from './code.constants';
@@ -25,10 +25,11 @@ export class CodeService {
     room: Room,
     socket: ISocket,
   ): { sync: Uint8Array; awareness?: Uint8Array } {
-    if (!this.roomToDoc.has(room.id)) {
-      this.roomToDoc.set(room.id, new YjsDoc(room.slug));
+    let doc = this.roomToDoc.get(room.id);
+    if (doc == null) {
+      doc = new YjsDoc(room.slug);
+      this.roomToDoc.set(room.id, doc);
     }
-    const doc = this.roomToDoc.get(room.id);
     doc.connections.set(socket, new Set());
 
     // Handle sync
@@ -61,7 +62,7 @@ export class CodeService {
     data: any,
   ): Uint8Array | undefined {
     const doc = this.roomToDoc.get(roomId);
-    if (!doc) {
+    if (doc == null) {
       return;
     }
 
@@ -94,10 +95,10 @@ export class CodeService {
 
   leaveDoc(roomId: number, socket: ISocket): void {
     const doc = this.roomToDoc.get(roomId);
-    if (!doc || !doc.connections.has(socket)) {
+    const controlledIds = doc?.connections?.get(socket);
+    if (doc == null || controlledIds == null) {
       return;
     }
-    const controlledIds = doc.connections.get(socket);
     doc.connections.delete(socket);
     awarenessProtocol.removeAwarenessStates(
       doc.awareness,
@@ -114,14 +115,14 @@ export class CodeService {
    * It will not handle cases such as when the room is already in the midst of closing.
    */
   async findOrInitLanguage(roomId: number, userId: string): Promise<Language> {
-    if (!this.roomToLanguage.has(roomId)) {
+    let language = this.roomToLanguage.get(roomId);
+    if (language == null) {
       const userSettings = await this.usersService.findSettings(userId);
-      this.roomToLanguage.set(
-        roomId,
-        userSettings?.preferredInterviewLanguage ?? Language.PYTHON_THREE,
-      );
+      language =
+        userSettings?.preferredInterviewLanguage ?? Language.PYTHON_THREE;
+      this.roomToLanguage.set(roomId, language);
     }
-    return this.roomToLanguage.get(roomId);
+    return language;
   }
 
   /**
@@ -145,7 +146,7 @@ export class CodeService {
     this.roomToLanguage.delete(room.id);
     const doc = this.roomToDoc.get(room.id);
     this.roomToDoc.delete(room.id);
-    if (!doc) {
+    if (doc == null) {
       return { code: '', language };
     }
     const code = doc.getText(room.slug).toJSON().trim();
