@@ -118,7 +118,7 @@ export class CodeService {
       const userSettings = await this.usersService.findSettings(userId);
       this.roomToLanguage.set(
         roomId,
-        userSettings.preferredInterviewLanguage ?? Language.PYTHON_THREE,
+        userSettings?.preferredInterviewLanguage ?? Language.PYTHON_THREE,
       );
     }
     return this.roomToLanguage.get(roomId);
