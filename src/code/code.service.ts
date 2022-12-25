@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Language, Room } from '@prisma/client';
 import * as decoding from 'lib0/decoding';
 import * as encoding from 'lib0/encoding';
@@ -16,7 +17,10 @@ export class CodeService {
   private roomToLanguage: Map<number, Language>;
   private roomToDoc: Map<number, YjsDoc>;
 
-  constructor(private readonly usersService: UsersService) {
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly usersService: UsersService,
+  ) {
     this.roomToLanguage = new Map();
     this.roomToDoc = new Map();
   }
@@ -152,5 +156,16 @@ export class CodeService {
     const code = doc.getText(room.slug).toJSON().trim();
     doc.destroy();
     return { code, language };
+  }
+
+  executeCode(room: Room): boolean {
+    const doc = this.roomToDoc.get(room.id);
+    if (doc == null) {
+      return false;
+    }
+    const _code = doc.getText(room.slug).toJSON().trim();
+    // TODO: Post code over to Judge0 endpoint
+    // TODO: Think about how to handle the token
+    return true;
   }
 }

@@ -1,4 +1,4 @@
-import { ParseEnumPipe, UseGuards } from '@nestjs/common';
+import { OnModuleDestroy, ParseEnumPipe, UseGuards } from '@nestjs/common';
 import {
   ConnectedSocket,
   MessageBody,
@@ -15,7 +15,10 @@ import { ISocket } from '../interfaces/socket';
 import { GetRoom } from '../rooms/decorators';
 import { InRoomGuard } from '../rooms/guards';
 
-import { CODE_EVENTS } from './code.constants';
+import {
+  CODE_EVENTS,
+  CODE_EXECUTION_AUTO_CANCEL_DURATION,
+} from './code.constants';
 import { CodeService } from './code.service';
 
 @WebSocketGateway({
@@ -23,11 +26,14 @@ import { CodeService } from './code.service';
     origin: process.env.NODE_ENV === 'production' ? /soc-tips\.com$/ : '*',
   },
 })
-export class CodeGateway {
+export class CodeGateway implements OnModuleDestroy {
   @WebSocketServer()
   server: Server;
+  private roomIdToCodeExecutionTimeouts: Map<number, NodeJS.Timeout>;
 
-  constructor(private readonly codeService: CodeService) {}
+  constructor(private readonly codeService: CodeService) {
+    this.roomIdToCodeExecutionTimeouts = new Map();
+  }
 
   @UseGuards(AuthWsGuard, InRoomGuard)
   @SubscribeMessage(CODE_EVENTS.CONNECT_YJS)
@@ -69,8 +75,36 @@ export class CodeGateway {
 
   @UseGuards(AuthWsGuard, InRoomGuard)
   @SubscribeMessage(CODE_EVENTS.EXECUTE_CODE)
-  executeCode(@GetRoom('id') roomId: number): void {
-    this.server.to(`${roomId}`).emit(CODE_EVENTS.EXECUTE_CODE);
-    // TODO: Implement code execution
+  executeCode(@GetRoom() room: Room): void {
+    if (this.roomIdToCodeExecutionTimeouts.has(room.id)) {
+      // Do nothing, since someone is already executing code
+      return;
+    }
+    this.server.to(`${room.id}`).emit(CODE_EVENTS.EXECUTE_CODE);
+    const hasStartedExecution = this.codeService.executeCode(room);
+    if (!hasStartedExecution) {
+      this.server.to(`${room.id}`).emit(CODE_EVENTS.FAILED_TO_START_EXECUTION);
+      return;
+    }
+    this.clearRoomTimeout(room.id);
+    const timeout = setTimeout(() => {
+      this.cancelExecution(room.id);
+    }, CODE_EXECUTION_AUTO_CANCEL_DURATION);
+    this.roomIdToCodeExecutionTimeouts.set(room.id, timeout);
+  }
+
+  onModuleDestroy(): void {
+    [...this.roomIdToCodeExecutionTimeouts.keys()].map((roomId) =>
+      this.clearRoomTimeout(roomId),
+    );
+  }
+
+  private cancelExecution(roomId: number): void {
+    this.server.to(`${roomId}`).emit(CODE_EVENTS.EXECUTION_TIMED_OUT);
+  }
+
+  private clearRoomTimeout(roomId: number): void {
+    clearTimeout(this.roomIdToCodeExecutionTimeouts.get(roomId));
+    this.roomIdToCodeExecutionTimeouts.delete(roomId);
   }
 }
