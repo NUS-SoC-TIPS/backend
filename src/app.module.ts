@@ -7,6 +7,7 @@ import { AuthModule } from './auth/auth.module';
 import { CodeModule } from './code/code.module';
 import { DataModule } from './data/data.module';
 import { FirebaseModule } from './firebase/firebase.module';
+import { Judge0Module } from './judge0/judge0.module';
 import { NotesModule } from './notes/notes.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { QuestionsModule } from './questions/questions.module';
@@ -27,6 +28,7 @@ import { WindowsModule } from './windows/windows.module';
     UsersModule,
     RoomsModule,
     AgoraModule,
+    Judge0Module,
     CodeModule,
     RecordsModule,
     NotesModule,
