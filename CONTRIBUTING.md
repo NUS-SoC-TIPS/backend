@@ -8,7 +8,7 @@ We would love for you to contribute to Code2Gather and help make it even better 
 
 ## Commit Message Format
 
-_This specification is inspired by and supersedes the [AngularJS commit message format][commit-message-format]._
+_This specification is inspired by and supersedes the AngularJS commit message format._
 
 We have very precise rules over how our Git commit messages must be formatted. This format leads to **easier to read commit history**.
 
@@ -67,17 +67,24 @@ The scope should be the name of the subdirectory affected (as perceived by the p
 
 The following is the list of supported scopes (to be extended as new subdirectories are added):
 
+- `admin`
 - `agora`
 - `auth`
 - `code`
+- `data`
 - `firebase`
 - `interfaces`
+- `judge0`
 - `notes`
 - `prisma`
+- `questions`
 - `records`
 - `rooms`
+- `submissions`
+- `tasks`
 - `users`
 - `utils`
+- `windows`
 
 There are currently a few exceptions to the "use package name" rule:
 

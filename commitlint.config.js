@@ -19,6 +19,7 @@ const Configuration = {
         'data',
         'firebase',
         'interfaces',
+        'judge0',
         'notes',
         'prisma',
         'questions',
