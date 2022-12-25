@@ -6,11 +6,11 @@ import axios, { AxiosRequestConfig } from 'axios';
 export class Judge0Service {
   constructor(private readonly configService: ConfigService) {}
 
-  createSubmission(): Promise<string | null> | null {
+  createSubmission(): Promise<string | null> {
     const judge0Key = this.configService.get('JUDGE0_KEY');
     const judge0Host = this.configService.get('JUDGE0_HOST');
     if (judge0Key == null || judge0Host == null) {
-      return null;
+      return Promise.resolve(null);
     }
     const options: AxiosRequestConfig = {
       method: 'POST',
