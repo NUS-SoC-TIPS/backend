@@ -1,8 +1,9 @@
 import { Exclusion, User, Window } from '@prisma/client';
+
 import {
   RecordWithPartner,
   SubmissionWithQuestion,
-} from 'src/interfaces/interface';
+} from '../../interfaces/interface';
 
 export interface UserWithWindowData extends User {
   coursemologyName: string;

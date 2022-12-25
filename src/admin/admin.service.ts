@@ -7,13 +7,13 @@ import {
   UserRole,
   Window,
 } from '@prisma/client';
-import {
-  RecordWithPartner,
-  SubmissionWithQuestion,
-} from 'src/interfaces/interface';
 
 import { DataService } from '../data/data.service';
 import { StudentData } from '../data/entities';
+import {
+  RecordWithPartner,
+  SubmissionWithQuestion,
+} from '../interfaces/interface';
 import { PrismaService } from '../prisma/prisma.service';
 import { MINIMUM_INTERVIEW_DURATION } from '../records/records.constants';
 import { UsersService } from '../users/users.service';

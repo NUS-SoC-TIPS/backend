@@ -1,8 +1,9 @@
 import * as encoding from 'lib0/encoding';
-import { ISocket } from 'src/interfaces/socket';
 import * as awarenessProtocol from 'y-protocols/awareness';
 import * as syncProtocol from 'y-protocols/sync';
 import * as Y from 'yjs';
+
+import { ISocket } from '../interfaces/socket';
 
 import { CODE_EVENTS, MESSAGE_AWARENESS, MESSAGE_SYNC } from './code.constants';
 
