@@ -2,6 +2,7 @@ export const CODE_EVENTS = {
   CONNECT_YJS: 'connect_yjs',
   UPDATE_YJS: 'update_yjs',
   UPDATE_LANGUAGE: 'update_language',
+  EXECUTE_CODE: 'execute_code',
 };
 
 export const MESSAGE_SYNC = 0;

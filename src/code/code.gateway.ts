@@ -66,4 +66,11 @@ export class CodeGateway {
       .to(`${roomId}`)
       .emit(CODE_EVENTS.UPDATE_LANGUAGE, language);
   }
+
+  @UseGuards(AuthWsGuard, InRoomGuard)
+  @SubscribeMessage(CODE_EVENTS.EXECUTE_CODE)
+  executeCode(@GetRoom('id') roomId: number): void {
+    this.server.to(`${roomId}`).emit(CODE_EVENTS.EXECUTE_CODE);
+    // TODO: Implement code execution
+  }
 }
