@@ -212,9 +212,7 @@ export class RoomsGateway implements OnGatewayDisconnect, OnModuleDestroy {
   }
 
   private clearRoomTimeout(roomId: number): void {
-    if (this.roomIdToTimeouts.has(roomId)) {
-      clearTimeout(this.roomIdToTimeouts.get(roomId));
-      this.roomIdToTimeouts.delete(roomId);
-    }
+    clearTimeout(this.roomIdToTimeouts.get(roomId));
+    this.roomIdToTimeouts.delete(roomId);
   }
 }
