@@ -4,23 +4,29 @@ import axios, { AxiosRequestConfig } from 'axios';
 
 @Injectable()
 export class Judge0Service {
-  constructor(private readonly configService: ConfigService) {}
+  private statusIdToDescription: Map<number, string>;
+  private judge0Key: string | undefined;
+  private judge0Host: string | undefined;
+
+  constructor(private readonly configService: ConfigService) {
+    this.statusIdToDescription = new Map();
+    this.judge0Key = this.configService.get('JUDGE0_KEY');
+    this.judge0Host = this.configService.get('JUDGE0_HOST');
+  }
 
   createSubmission(): Promise<string | null> {
-    const judge0Key = this.configService.get('JUDGE0_KEY');
-    const judge0Host = this.configService.get('JUDGE0_HOST');
-    if (judge0Key == null || judge0Host == null) {
+    if (this.judge0Key == null || this.judge0Host == null) {
       return Promise.resolve(null);
     }
     const options: AxiosRequestConfig = {
       method: 'POST',
-      url: `https://${judge0Host}/submissions`,
+      url: `https://${this.judge0Host}/submissions`,
       params: { base64_encoded: 'true', wait: 'false', fields: '*' },
       headers: {
         'content-type': 'application/json',
         'Content-Type': 'application/json',
-        'X-RapidAPI-Key': judge0Key,
-        'X-RapidAPI-Host': judge0Host,
+        'X-RapidAPI-Key': this.judge0Key,
+        'X-RapidAPI-Host': this.judge0Host,
       },
       data: {},
     };
@@ -32,6 +38,42 @@ export class Judge0Service {
       })
       .catch(() => {
         return null;
+      });
+  }
+
+  private async getStatusDescription(statusId: number): Promise<string> {
+    if (this.statusIdToDescription.size === 0) {
+      await this.refreshStatuses();
+    }
+    return this.statusIdToDescription.get(statusId) ?? 'Unknown Error';
+  }
+
+  private async refreshStatuses(): Promise<void> {
+    if (this.judge0Key == null || this.judge0Host == null) {
+      return;
+    }
+
+    const options = {
+      method: 'GET',
+      url: `https://${this.judge0Host}/statuses`,
+      headers: {
+        'X-RapidAPI-Key': this.judge0Key,
+        'X-RapidAPI-Host': this.judge0Host,
+      },
+    };
+
+    axios
+      .request(options)
+      .then((response) => {
+        this.statusIdToDescription.clear();
+        const data: { id: number; description: string }[] = response.data;
+        data.forEach(({ id, description }) => {
+          this.statusIdToDescription.set(id, description);
+        });
+      })
+      .catch(() => {
+        // no-op, failed to refresh
+        // TODO: Look into whether there's a need to handle this error
       });
   }
 }
