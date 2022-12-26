@@ -1,3 +1,4 @@
+import { Transform } from 'class-transformer';
 import {
   IsNotEmpty,
   IsNumber,
@@ -8,9 +9,11 @@ import {
 
 class CallbackStatusDto {
   @IsNumber()
+  @IsNotEmpty()
   id: number;
 
   @IsString()
+  @IsNotEmpty()
   description: string;
 }
 
@@ -37,10 +40,16 @@ export class CallbackDto {
   @ValidateIf((_, value) => value !== null)
   message: string | null;
 
+  @Transform((params) =>
+    params.value !== null ? parseFloat(params.value) : null,
+  )
   @IsNumber()
   @ValidateIf((_, value) => value !== null)
   time: number | null;
 
+  @Transform((params) =>
+    params.value !== null ? parseFloat(params.value) : null,
+  )
   @IsNumber()
   @ValidateIf((_, value) => value !== null)
   memory: number | null;

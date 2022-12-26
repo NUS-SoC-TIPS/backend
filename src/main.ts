@@ -21,7 +21,9 @@ async function bootstrap(): Promise<void> {
     cors: corsOptionsDelegate,
   });
   app.use(helmet());
-  app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
+  app.useGlobalPipes(
+    new ValidationPipe({ whitelist: true, forbidUnknownValues: false }),
+  );
   const prismaService = app.get(PrismaService);
   const configService = app.get(ConfigService);
   await prismaService.enableShutdownHooks(app);
