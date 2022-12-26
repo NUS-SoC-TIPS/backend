@@ -103,7 +103,7 @@ export class RoomsGateway implements OnGatewayDisconnect, OnModuleDestroy {
     const videoToken = this.agoraService.generateAccessToken(room.id, user.id);
     const partner = room.roomUsers.filter((u) => u.userId !== user.id)[0]?.user;
     const isPartnerInRoom = this.roomIdToSockets.get(room.id)?.length === 2;
-    const executableLanguages =
+    const executableLanguageToVersionMap =
       await this.judge0service.getExecutableLanguages();
 
     socket.emit(ROOM_EVENTS.JOIN_ROOM, {
@@ -113,7 +113,7 @@ export class RoomsGateway implements OnGatewayDisconnect, OnModuleDestroy {
       language,
       notes,
       isPartnerInRoom,
-      executableLanguages,
+      executableLanguageToVersionMap,
     });
   }
 
