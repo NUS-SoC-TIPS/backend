@@ -18,4 +18,4 @@ export const MESSAGE_AWARENESS = 1;
 export const MESSAGE_AUTH = 2;
 export const MESSAGE_QUERY_AWARENESS = 3;
 
-export const CODE_EXECUTION_AUTO_CANCEL_DURATION = 20000; // 20s in milliseconds
+export const CODE_EXECUTION_AUTO_CANCEL_DURATION = 15000; // 15s in milliseconds
