@@ -43,7 +43,7 @@ export class RoomsGateway implements OnGatewayDisconnect, OnModuleDestroy {
     private readonly codeService: CodeService,
     private readonly notesService: NotesService,
     private readonly recordsService: RecordsService,
-    private readonly judge0service: Judge0Service,
+    private readonly judge0Service: Judge0Service,
   ) {
     this.roomIdToSockets = new Map();
     this.roomIdToTimeouts = new Map();
@@ -104,7 +104,7 @@ export class RoomsGateway implements OnGatewayDisconnect, OnModuleDestroy {
     const partner = room.roomUsers.filter((u) => u.userId !== user.id)[0]?.user;
     const isPartnerInRoom = this.roomIdToSockets.get(room.id)?.length === 2;
     const executableLanguageToVersionMap =
-      await this.judge0service.getExecutableLanguages();
+      await this.judge0Service.getExecutableLanguages();
 
     socket.emit(ROOM_EVENTS.JOIN_ROOM, {
       id: room.id,
