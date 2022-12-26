@@ -1,7 +1,8 @@
 import { Body, Controller, Put } from '@nestjs/common';
 
+import { CallbackDto } from '../judge0/dtos';
+
 import { CodeGateway } from './code.gateway';
-import { CallbackDto } from './dtos';
 
 @Controller('code')
 export class CodeController {
