@@ -10,6 +10,7 @@ export const CODE_EVENTS = {
   EXECUTE_CODE: 'execute_code',
   FAILED_TO_START_EXECUTION: 'failed_to_start_execution',
   EXECUTION_TIMED_OUT: 'execution_timed_out',
+  EXECUTION_COMPLETED: 'execution_completed',
 };
 
 export const MESSAGE_SYNC = 0;

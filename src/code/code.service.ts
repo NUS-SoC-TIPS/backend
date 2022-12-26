@@ -11,6 +11,8 @@ import { UsersService } from '../users/users.service';
 
 import { MESSAGE_AWARENESS, MESSAGE_SYNC } from './code.constants';
 import { YjsDoc } from './code.yjs';
+import { CallbackDto } from './dtos';
+import { ExecutionResultEntity } from './entities';
 
 @Injectable()
 export class CodeService {
@@ -158,18 +160,37 @@ export class CodeService {
     return { code, language };
   }
 
-  async executeCode(room: Room): Promise<boolean> {
+  async executeCode(room: Room): Promise<string | null> {
     const doc = this.roomToDoc.get(room.id);
     const language = this.roomToLanguage.get(room.id);
     if (doc == null || language == null) {
-      return false;
+      return null;
     }
     const code = doc.getText(room.slug).toJSON().trim();
-    const submissionId = this.judge0Service.createSubmission(code, language);
-    if (submissionId == null) {
-      return false;
+    return this.judge0Service.createSubmission(code, language);
+  }
+
+  interpretResults(dto: CallbackDto): ExecutionResultEntity {
+    const statusDescription = dto.status.description;
+    let output = '';
+    switch (statusDescription) {
+      case 'Accepted':
+        output = dto.stdout ?? '';
+        break;
+      case 'Compilation Error':
+        output = dto.compile_output ?? '';
+        break;
+      case 'Internal Error':
+        output = dto.message ?? '';
+        break;
+      default:
+        output = dto.stderr ?? '';
     }
-    // TODO: Think about how to handle the token
-    return true;
+    output = Buffer.from(output, 'base64').toString('utf-8');
+    return {
+      statusDescription,
+      output,
+      isError: statusDescription !== 'Accepted',
+    };
   }
 }
