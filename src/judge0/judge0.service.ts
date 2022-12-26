@@ -12,6 +12,7 @@ import {
 export class Judge0Service {
   private judge0Key: string | undefined;
   private judge0Host: string | undefined;
+  private judge0CallbackUrl: string | undefined;
   private statusIdToDescription: Map<number, string>;
   private prismaLanguageToJudge0Language: Map<
     Language,
@@ -21,6 +22,7 @@ export class Judge0Service {
   constructor(private readonly configService: ConfigService) {
     this.judge0Key = this.configService.get('JUDGE0_KEY');
     this.judge0Host = this.configService.get('JUDGE0_HOST');
+    this.judge0CallbackUrl = this.configService.get('JUDGE0_CALLBACK_URL');
     this.statusIdToDescription = new Map();
     this.prismaLanguageToJudge0Language = new Map();
   }
@@ -30,13 +32,18 @@ export class Judge0Service {
     code: string,
     language: Language,
   ): Promise<string | null> {
-    if (this.judge0Key == null || this.judge0Host == null) {
+    if (
+      this.judge0Key == null ||
+      this.judge0Host == null ||
+      this.judge0CallbackUrl == null
+    ) {
       return Promise.resolve(null);
     }
+
     const options: AxiosRequestConfig = {
       method: 'POST',
       url: `https://${this.judge0Host}/submissions`,
-      params: { base64_encoded: false, wait: false, fields: '*' },
+      params: { base64_encoded: true, wait: false, fields: '*' },
       headers: {
         'content-type': 'application/json',
         'Content-Type': 'application/json',
@@ -45,7 +52,8 @@ export class Judge0Service {
       },
       data: {
         language_id: await this.getLanguageId(language),
-        source_code: code,
+        source_code: Buffer.from(code, 'utf8').toString('base64'),
+        callback_url: this.judge0CallbackUrl,
       },
     };
 
