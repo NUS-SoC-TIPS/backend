@@ -6,6 +6,7 @@ import * as awarenessProtocol from 'y-protocols/awareness';
 import * as syncProtocol from 'y-protocols/sync';
 
 import { ISocket } from '../interfaces/socket';
+import { Judge0Service } from '../judge0/judge0.service';
 import { UsersService } from '../users/users.service';
 
 import { MESSAGE_AWARENESS, MESSAGE_SYNC } from './code.constants';
@@ -16,7 +17,10 @@ export class CodeService {
   private roomToLanguage: Map<number, Language>;
   private roomToDoc: Map<number, YjsDoc>;
 
-  constructor(private readonly usersService: UsersService) {
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly judge0Service: Judge0Service,
+  ) {
     this.roomToLanguage = new Map();
     this.roomToDoc = new Map();
   }
@@ -154,13 +158,17 @@ export class CodeService {
     return { code, language };
   }
 
-  executeCode(room: Room): boolean {
+  async executeCode(room: Room): Promise<boolean> {
     const doc = this.roomToDoc.get(room.id);
-    if (doc == null) {
+    const language = this.roomToLanguage.get(room.id);
+    if (doc == null || language == null) {
       return false;
     }
-    const _code = doc.getText(room.slug).toJSON().trim();
-    // TODO: Post code over to Judge0 endpoint
+    const code = doc.getText(room.slug).toJSON().trim();
+    const submissionId = this.judge0Service.createSubmission(code, language);
+    if (submissionId == null) {
+      return false;
+    }
     // TODO: Think about how to handle the token
     return true;
   }
