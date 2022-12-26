@@ -3,7 +3,7 @@ import { Language } from '@prisma/client';
 // If the language is not inside, it means it's not supported
 export const PRISMA_LANGUAGE_TO_JUDGE0_NAME_PREFIX = {
   [Language.C_PLUS_PLUS]: 'C++ (GCC',
-  [Language.JAVA]: 'Java',
+  [Language.JAVA]: 'Java (',
   [Language.PYTHON]: 'Python (2',
   [Language.PYTHON_THREE]: 'Python (3',
   [Language.C]: 'C (GCC',
