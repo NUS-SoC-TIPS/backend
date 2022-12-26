@@ -1,4 +1,4 @@
-import { Transform } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import {
   IsNotEmpty,
   IsNumber,
@@ -55,5 +55,6 @@ export class CallbackDto {
   memory: number | null;
 
   @ValidateNested()
+  @Type(() => CallbackStatusDto)
   status: CallbackStatusDto;
 }
