@@ -7,8 +7,8 @@ import { PrismaService } from './prisma/prisma.service';
 import { AppModule } from './app.module';
 
 const corsOptionsDelegate = (req, callback): void => {
-  if (req.baseUrl + req.path === '/code/callback') {
-    callback(null, { origin: true });
+  if (req.originalUrl === '/code/callback' && req.method === 'PUT') {
+    callback(null, { origin: '*' });
     return;
   }
   callback(null, {
