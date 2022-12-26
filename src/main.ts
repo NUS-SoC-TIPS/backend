@@ -6,19 +6,11 @@ import helmet from 'helmet';
 import { PrismaService } from './prisma/prisma.service';
 import { AppModule } from './app.module';
 
-const corsOptionsDelegate = (req, callback): void => {
-  if (req.originalUrl === '/code/callback' && req.method === 'PUT') {
-    callback(null, { origin: '*' });
-    return;
-  }
-  callback(null, {
-    origin: process.env.NODE_ENV === 'production' ? /soc-tips\.com$/ : '*',
-  });
-};
-
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule, {
-    cors: corsOptionsDelegate,
+    cors: {
+      origin: process.env.NODE_ENV === 'production' ? /soc-tips\.com$/ : '*',
+    },
   });
   app.use(helmet());
   app.useGlobalPipes(
