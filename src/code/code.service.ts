@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { Language, Room } from '@prisma/client';
 import * as decoding from 'lib0/decoding';
 import * as encoding from 'lib0/encoding';
@@ -17,10 +16,7 @@ export class CodeService {
   private roomToLanguage: Map<number, Language>;
   private roomToDoc: Map<number, YjsDoc>;
 
-  constructor(
-    private readonly configService: ConfigService,
-    private readonly usersService: UsersService,
-  ) {
+  constructor(private readonly usersService: UsersService) {
     this.roomToLanguage = new Map();
     this.roomToDoc = new Map();
   }
