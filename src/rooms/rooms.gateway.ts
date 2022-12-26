@@ -16,6 +16,7 @@ import { GetUserWs } from '../auth/decorators';
 import { AuthWsGuard } from '../auth/guards';
 import { CodeService } from '../code/code.service';
 import { ISocket } from '../interfaces/socket';
+import { Judge0Service } from '../judge0/judge0.service';
 import { NotesService } from '../notes/notes.service';
 import { CreateRecordDto } from '../records/dtos';
 import { RecordsService } from '../records/records.service';
@@ -42,6 +43,7 @@ export class RoomsGateway implements OnGatewayDisconnect, OnModuleDestroy {
     private readonly codeService: CodeService,
     private readonly notesService: NotesService,
     private readonly recordsService: RecordsService,
+    private readonly judge0service: Judge0Service,
   ) {
     this.roomIdToSockets = new Map();
     this.roomIdToTimeouts = new Map();
@@ -101,6 +103,8 @@ export class RoomsGateway implements OnGatewayDisconnect, OnModuleDestroy {
     const videoToken = this.agoraService.generateAccessToken(room.id, user.id);
     const partner = room.roomUsers.filter((u) => u.userId !== user.id)[0]?.user;
     const isPartnerInRoom = this.roomIdToSockets.get(room.id)?.length === 2;
+    const executableLanguages =
+      await this.judge0service.getExecutableLanguages();
 
     socket.emit(ROOM_EVENTS.JOIN_ROOM, {
       id: room.id,
@@ -109,6 +113,7 @@ export class RoomsGateway implements OnGatewayDisconnect, OnModuleDestroy {
       language,
       notes,
       isPartnerInRoom,
+      executableLanguages,
     });
   }
 
