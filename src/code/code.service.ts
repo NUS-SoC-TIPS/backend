@@ -6,13 +6,12 @@ import * as awarenessProtocol from 'y-protocols/awareness';
 import * as syncProtocol from 'y-protocols/sync';
 
 import { ISocket } from '../interfaces/socket';
+import { ExecutionResultEntity } from '../judge0/entities';
 import { Judge0Service } from '../judge0/judge0.service';
 import { UsersService } from '../users/users.service';
 
 import { MESSAGE_AWARENESS, MESSAGE_SYNC } from './code.constants';
 import { YjsDoc } from './code.yjs';
-import { CallbackDto } from './dtos';
-import { ExecutionResultEntity } from './entities';
 
 @Injectable()
 export class CodeService {
@@ -160,37 +159,24 @@ export class CodeService {
     return { code, language };
   }
 
-  async executeCode(room: Room): Promise<string | null> {
+  // Sends the code over to Judge0 for execution and returns the submission token
+  async executeCodeAsync(room: Room): Promise<string | null> {
     const doc = this.roomToDoc.get(room.id);
     const language = this.roomToLanguage.get(room.id);
     if (doc == null || language == null) {
       return null;
     }
     const code = doc.getText(room.slug).toJSON().trim();
-    return this.judge0Service.createSubmission(code, language);
+    return this.judge0Service.createAsyncSubmission(code, language);
   }
 
-  interpretResults(dto: CallbackDto): ExecutionResultEntity {
-    const statusDescription = dto.status.description;
-    let output = '';
-    switch (statusDescription) {
-      case 'Accepted':
-        output = dto.stdout ?? '';
-        break;
-      case 'Compilation Error':
-        output = dto.compile_output ?? '';
-        break;
-      case 'Internal Error':
-        output = dto.message ?? '';
-        break;
-      default:
-        output = dto.stderr ?? '';
+  async executeCodeSync(room: Room): Promise<ExecutionResultEntity | null> {
+    const doc = this.roomToDoc.get(room.id);
+    const language = this.roomToLanguage.get(room.id);
+    if (doc == null || language == null) {
+      return null;
     }
-    output = Buffer.from(output, 'base64').toString('utf-8');
-    return {
-      statusDescription,
-      output,
-      isError: statusDescription !== 'Accepted',
-    };
+    const code = doc.getText(room.slug).toJSON().trim();
+    return this.judge0Service.createSyncSubmission(code, language);
   }
 }

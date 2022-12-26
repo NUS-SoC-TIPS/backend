@@ -1,4 +1,5 @@
 import { OnModuleDestroy, ParseEnumPipe, UseGuards } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import {
   ConnectedSocket,
   MessageBody,
@@ -12,6 +13,8 @@ import { Server } from 'socket.io';
 
 import { AuthWsGuard } from '../auth/guards';
 import { ISocket } from '../interfaces/socket';
+import { CallbackDto } from '../judge0/dtos';
+import { Judge0Service } from '../judge0/judge0.service';
 import { GetRoom } from '../rooms/decorators';
 import { InRoomGuard } from '../rooms/guards';
 
@@ -20,7 +23,6 @@ import {
   CODE_EXECUTION_AUTO_CANCEL_DURATION,
 } from './code.constants';
 import { CodeService } from './code.service';
-import { CallbackDto } from './dtos';
 
 @WebSocketGateway({
   cors: {
@@ -33,7 +35,11 @@ export class CodeGateway implements OnModuleDestroy {
   private roomIdToCodeExecutionTimeouts: Map<number, NodeJS.Timeout>;
   private submissionTokenToRoomId: Map<string, number>;
 
-  constructor(private readonly codeService: CodeService) {
+  constructor(
+    private readonly codeService: CodeService,
+    private readonly judge0Service: Judge0Service,
+    private readonly configService: ConfigService,
+  ) {
     this.roomIdToCodeExecutionTimeouts = new Map();
     this.submissionTokenToRoomId = new Map();
   }
@@ -86,7 +92,24 @@ export class CodeGateway implements OnModuleDestroy {
 
     // Let the frontend know the code is executing
     this.server.to(`${room.id}`).emit(CODE_EVENTS.EXECUTE_CODE);
-    const submissionToken = await this.codeService.executeCode(room);
+
+    // If we're in development, we want to skip the use of webhooks, so we'll execute the code synchronously
+    if (this.configService.get('NODE_ENV') === 'development') {
+      const result = await this.codeService.executeCodeSync(room);
+      if (result == null) {
+        this.server
+          .to(`${room.id}`)
+          .emit(CODE_EVENTS.FAILED_TO_START_EXECUTION);
+        return;
+      }
+      this.server
+        .to(`${room.id}`)
+        .emit(CODE_EVENTS.EXECUTION_COMPLETED, result);
+      return;
+    }
+
+    // Else, we'll make use of webhooks to execute the code asynchronously
+    const submissionToken = await this.codeService.executeCodeAsync(room);
     if (submissionToken == null) {
       this.server.to(`${room.id}`).emit(CODE_EVENTS.FAILED_TO_START_EXECUTION);
       return;
@@ -113,7 +136,7 @@ export class CodeGateway implements OnModuleDestroy {
     }
     clearTimeout(timeout);
     this.roomIdToCodeExecutionTimeouts.delete(roomId);
-    const result = this.codeService.interpretResults(dto);
+    const result = this.judge0Service.interpretResults(dto);
     this.server.to(`${roomId}`).emit(CODE_EVENTS.EXECUTION_COMPLETED, result);
   }
 
