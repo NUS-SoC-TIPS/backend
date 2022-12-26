@@ -6,6 +6,14 @@ import {
   ValidateNested,
 } from 'class-validator';
 
+class CallbackStatusDto {
+  @IsNumber()
+  id: number;
+
+  @IsString()
+  description: string;
+}
+
 export class CallbackDto {
   @IsString()
   @IsNotEmpty()
@@ -39,12 +47,4 @@ export class CallbackDto {
 
   @ValidateNested()
   status: CallbackStatusDto;
-}
-
-class CallbackStatusDto {
-  @IsNumber()
-  id: number;
-
-  @IsString()
-  description: string;
 }
