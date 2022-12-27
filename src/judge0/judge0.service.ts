@@ -4,7 +4,7 @@ import { Language } from '@prisma/client';
 import axios, { AxiosRequestConfig } from 'axios';
 
 import { CallbackDto } from './dtos';
-import { ExecutionResultEntity } from './entities';
+import { ExecutionResultEntity, Judge0Submission } from './entities';
 import {
   PRISMA_LANGUAGE_TO_JUDGE0_NAME_PREFIX,
   VERSION_NUMBER_REGEX,
@@ -19,6 +19,7 @@ export class Judge0Service {
     Language,
     { id: number; name: string }
   >;
+  private useBatchSubmission = true;
 
   constructor(private readonly configService: ConfigService) {
     this.judge0Key = this.configService.get('JUDGE0_KEY');
@@ -32,11 +33,16 @@ export class Judge0Service {
     code: string,
     language: Language,
   ): Promise<string | null> {
-    const data = await this.createSubmissionHelper(code, language, false);
-    if (data == null) {
-      return null;
+    if (!this.isFullyInitialised()) {
+      return Promise.resolve(null);
     }
-    return data.token as string;
+    const submission = await this.createSubmissionObject(code, language);
+    this.useBatchSubmission = !this.useBatchSubmission;
+    if (this.useBatchSubmission) {
+      return this.createBatchedSubmission(submission);
+    } else {
+      return this.createSingleSubmission(submission);
+    }
   }
 
   // Used only in development to skip usage of webhooks
@@ -44,11 +50,23 @@ export class Judge0Service {
     code: string,
     language: Language,
   ): Promise<ExecutionResultEntity | null> {
-    const data = await this.createSubmissionHelper(code, language, true);
-    if (data == null) {
+    if (!this.isFullyInitialised()) {
+      return Promise.resolve(null);
+    }
+    const submission = await this.createSubmissionObject(code, language);
+    try {
+      const response = await axios.post(
+        `https://${this.judge0Host}/submissions`,
+        submission,
+        {
+          params: { base64_encoded: true, wait: true, fields: '*' },
+          headers: this.getDefaultHeaders(),
+        },
+      );
+      return this.interpretResults(response.data as CallbackDto);
+    } catch {
       return null;
     }
-    return this.interpretResults(data as CallbackDto);
   }
 
   // Returns a map of language to Judge0 language name
@@ -87,39 +105,51 @@ export class Judge0Service {
     };
   }
 
-  private async createSubmissionHelper(
+  private async createSubmissionObject(
     code: string,
     language: Language,
-    wait: boolean,
-  ): Promise<any> {
-    if (
-      this.judge0Key == null ||
-      this.judge0Host == null ||
-      this.judge0CallbackUrl == null
-    ) {
-      return Promise.resolve(null);
-    }
-
-    const options: AxiosRequestConfig = {
-      method: 'POST',
-      url: `https://${this.judge0Host}/submissions`,
-      params: { base64_encoded: true, wait, fields: '*' },
-      headers: {
-        'content-type': 'application/json',
-        'Content-Type': 'application/json',
-        'X-RapidAPI-Key': this.judge0Key,
-        'X-RapidAPI-Host': this.judge0Host,
-      },
-      data: {
-        language_id: await this.getLanguageId(language),
-        source_code: Buffer.from(code, 'utf8').toString('base64'),
-        callback_url: this.judge0CallbackUrl,
-      },
+  ): Promise<Judge0Submission> {
+    return {
+      language_id: await this.getLanguageId(language),
+      source_code: Buffer.from(code, 'utf8').toString('base64'),
+      callback_url: this.judge0CallbackUrl,
     };
+  }
 
+  private async createSingleSubmission(
+    submission: Judge0Submission,
+  ): Promise<string | null> {
     try {
-      const response = await axios.request(options);
-      return response.data;
+      const response = await axios.post(
+        `https://${this.judge0Host}/submissions`,
+        submission,
+        {
+          params: { base64_encoded: true, wait: false, fields: '*' },
+          headers: this.getDefaultHeaders(),
+        },
+      );
+      return response.data.token;
+    } catch {
+      return null;
+    }
+  }
+
+  private async createBatchedSubmission(
+    submission: Judge0Submission,
+  ): Promise<string | null> {
+    try {
+      const response = await axios.post(
+        `https://${this.judge0Host}/submissions/batch`,
+        { submissions: [submission] },
+        {
+          params: { base64_encoded: true, wait: false, fields: '*' },
+          headers: this.getDefaultHeaders(),
+        },
+      );
+      if (!Array.isArray(response.data) || response.data.length !== 1) {
+        return null;
+      }
+      return response.data[0].token;
     } catch {
       return null;
     }
@@ -140,10 +170,7 @@ export class Judge0Service {
     const options: AxiosRequestConfig = {
       method: 'GET',
       url: `https://${this.judge0Host}/languages`,
-      headers: {
-        'X-RapidAPI-Key': this.judge0Key,
-        'X-RapidAPI-Host': this.judge0Host,
-      },
+      headers: this.getDefaultHeaders(),
     };
 
     try {
@@ -163,6 +190,11 @@ export class Judge0Service {
     }
   }
 
+  // Matches based on the following logic:
+  // 1. First, it finds all Judge0 languages with names starting with the prefix defined
+  //    in PRISMA_LANGUAGE_TO_JUDGE0_NAME_PREFIX.
+  // 2. Second, of the languages from step 1, it selects the one with the highest version
+  //    number.
   private matchPrismaLanguageToJudge0Language(
     data: { id: number; name: string }[],
   ): { [language: string]: { id: number; name: string } } {
@@ -207,5 +239,22 @@ export class Judge0Service {
     });
 
     return matchings;
+  }
+
+  private getDefaultHeaders(): AxiosRequestConfig['headers'] {
+    return {
+      'content-type': 'application/json',
+      'Content-Type': 'application/json',
+      'X-RapidAPI-Key': this.judge0Key,
+      'X-RapidAPI-Host': this.judge0Host,
+    };
+  }
+
+  private isFullyInitialised(): boolean {
+    return (
+      this.judge0Key != null &&
+      this.judge0Host != null &&
+      this.judge0CallbackUrl != null
+    );
   }
 }
