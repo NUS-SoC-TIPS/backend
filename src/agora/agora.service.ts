@@ -12,6 +12,7 @@ export class AgoraService {
   ) {}
 
   generateAccessToken(roomId: number, userId: string): string | null {
+    this.logger.debug('Generating Agora access token...', AgoraService.name);
     const agoraAppId = this.configService.get('AGORA_APP_ID');
     const agoraAppCertificate = this.configService.get('AGORA_APP_CERTIFICATE');
     if (agoraAppId == null || agoraAppCertificate == null) {
@@ -22,6 +23,7 @@ export class AgoraService {
       return null;
     }
 
+    this.logger.debug('Agora access token generated!', AgoraService.name);
     return RtcTokenBuilder.buildTokenWithAccount(
       agoraAppId,
       agoraAppCertificate,
