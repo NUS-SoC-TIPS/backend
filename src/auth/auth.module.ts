@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Logger, Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 
@@ -22,7 +22,13 @@ import { JwtRestAdminStrategy, JwtRestStrategy } from './strategies';
     }),
     UsersModule,
   ],
-  providers: [AuthService, AuthGateway, JwtRestStrategy, JwtRestAdminStrategy],
+  providers: [
+    AuthService,
+    AuthGateway,
+    JwtRestStrategy,
+    JwtRestAdminStrategy,
+    Logger,
+  ],
   controllers: [AuthController],
 })
 export class AuthModule {}

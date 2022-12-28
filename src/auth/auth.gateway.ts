@@ -1,4 +1,4 @@
-import { UseFilters } from '@nestjs/common';
+import { Logger, UseFilters } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import {
   ConnectedSocket,
@@ -12,7 +12,7 @@ import {
 import { ISocket } from '../interfaces/socket';
 import { PrismaService } from '../prisma/prisma.service';
 
-import { AUTH_EVENTS } from './auth.constants';
+import { AUTH_EVENTS, AUTO_KICK_WAIT_TIME_MS } from './auth.constants';
 import { JsonWebTokenExceptionFilter } from './filters';
 
 @WebSocketGateway({
@@ -24,6 +24,7 @@ export class AuthGateway implements OnGatewayConnection {
   constructor(
     private readonly jwtService: JwtService,
     private readonly prismaService: PrismaService,
+    private readonly logger: Logger,
   ) {}
 
   @SubscribeMessage(AUTH_EVENTS.AUTHENTICATE)
@@ -32,15 +33,33 @@ export class AuthGateway implements OnGatewayConnection {
     @MessageBody('bearerToken') token: string,
     @ConnectedSocket() socket: ISocket,
   ): Promise<void> {
-    const payload = await this.jwtService.verifyAsync(token);
+    this.logger.log('Authenticating socket...', AuthGateway.name);
+    const payload = await this.jwtService
+      .verifyAsync(token)
+      .catch((e: Error) => {
+        this.logger.error(
+          'Failed to verify token async',
+          e.stack,
+          AuthGateway.name,
+        );
+        throw new WsException('Invalid token');
+      });
+
     const user = await this.prismaService.user.findUnique({
       where: {
         id: payload.sub,
       },
     });
     if (!user) {
+      this.logger.error(
+        'No user found with given token',
+        undefined,
+        AuthGateway.name,
+      );
       throw new WsException('Invalid token');
     }
+
+    this.logger.log('Socket authenticated!', AuthGateway.name);
     socket.user = user;
     socket.emit(AUTH_EVENTS.AUTHENTICATE, { user });
   }
@@ -49,8 +68,13 @@ export class AuthGateway implements OnGatewayConnection {
     setTimeout(() => {
       // If after 1 second, the socket still hasn't authenticated itself, then we will kick.
       if (socket.user == null) {
+        this.logger.error(
+          `Socket is not authenticated even after ${AUTO_KICK_WAIT_TIME_MS}ms`,
+          undefined,
+          AuthGateway.name,
+        );
         socket.disconnect();
       }
-    }, 1000);
+    }, AUTO_KICK_WAIT_TIME_MS);
   }
 }
