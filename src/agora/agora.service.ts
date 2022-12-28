@@ -24,10 +24,7 @@ export class AgoraService {
       throw new BadRequestException();
     }
 
-    this.logger.log(
-      'Successfully generated Agora access token!',
-      AgoraService.name,
-    );
+    this.logger.log('Agora access token generated!', AgoraService.name);
     return RtcTokenBuilder.buildTokenWithAccount(
       agoraAppId,
       agoraAppCertificate,
