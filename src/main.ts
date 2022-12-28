@@ -34,6 +34,7 @@ const errorTransport = new DailyRotateFile({
 });
 
 const combinedTransport = new DailyRotateFile({
+  level: 'info',
   filename: 'logs/combined-%DATE%.log',
   datePattern: 'YYYY-MM-DD-HH',
   zippedArchive: true,
@@ -53,6 +54,7 @@ async function bootstrap(): Promise<void> {
         combinedTransport,
         new winston.transports.Console({
           format: getWinstonFormat(true),
+          level: process.env.NODE_ENV === 'production' ? 'info' : 'debug',
         }),
       ],
       exceptionHandlers: [
