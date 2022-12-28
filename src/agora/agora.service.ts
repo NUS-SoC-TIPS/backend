@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { RtcRole, RtcTokenBuilder } from 'agora-access-token';
 
@@ -11,20 +11,17 @@ export class AgoraService {
     private readonly logger: Logger,
   ) {}
 
-  generateAccessToken(roomId: number, userId: string): string {
-    this.logger.log('Generating Agora access token...', AgoraService.name);
+  generateAccessToken(roomId: number, userId: string): string | null {
     const agoraAppId = this.configService.get('AGORA_APP_ID');
     const agoraAppCertificate = this.configService.get('AGORA_APP_CERTIFICATE');
     if (agoraAppId == null || agoraAppCertificate == null) {
-      this.logger.error(
-        'Agora app ID or certificate not defined, failed to generate access token.',
-        undefined,
+      this.logger.warn(
+        'Agora app ID or certificate not defined, could not generate access token.',
         AgoraService.name,
       );
-      throw new BadRequestException();
+      return null;
     }
 
-    this.logger.log('Agora access token generated!', AgoraService.name);
     return RtcTokenBuilder.buildTokenWithAccount(
       agoraAppId,
       agoraAppCertificate,
