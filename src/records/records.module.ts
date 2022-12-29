@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Logger, Module } from '@nestjs/common';
 
 import { WindowsModule } from '../windows/windows.module';
 
@@ -7,7 +7,7 @@ import { RecordsController } from './records.controller';
 import { RecordsService } from './records.service';
 
 @Module({
-  providers: [RecordsService, RecordsQueryBuilder],
+  providers: [RecordsService, RecordsQueryBuilder, Logger],
   controllers: [RecordsController],
   imports: [WindowsModule],
   exports: [RecordsService],

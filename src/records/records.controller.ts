@@ -1,4 +1,5 @@
-import { Controller, Get, UseGuards } from '@nestjs/common';
+import { Controller, Get, Logger, UseGuards } from '@nestjs/common';
+import { handleRestError } from 'src/utils/error.util';
 
 import { GetUserRest } from '../auth/decorators';
 import { JwtRestGuard } from '../auth/guards';
@@ -8,11 +9,15 @@ import { RecordsService } from './records.service';
 
 @Controller('records')
 export class RecordsController {
-  constructor(private readonly recordsService: RecordsService) {}
+  constructor(
+    private readonly recordsService: RecordsService,
+    private readonly logger: Logger,
+  ) {}
 
   @Get('stats')
   @UseGuards(JwtRestGuard)
   findStats(@GetUserRest('id') userId: string): Promise<RecordStatsEntity> {
-    return this.recordsService.findStats(userId);
+    this.logger.log('GET /records/stats', RecordsController.name);
+    return this.recordsService.findStats(userId).catch(handleRestError());
   }
 }
