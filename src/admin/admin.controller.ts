@@ -3,11 +3,13 @@ import {
   Controller,
   Delete,
   Get,
+  Logger,
   Param,
   Post,
   UseGuards,
 } from '@nestjs/common';
 import { Exclusion, Window } from '@prisma/client';
+import { handleRestError } from 'src/utils/error.util';
 
 import { JwtRestAdminGuard } from '../auth/guards';
 
@@ -18,25 +20,37 @@ import { AdminStatsEntity } from './entities';
 @UseGuards(JwtRestAdminGuard)
 @Controller('admin')
 export class AdminController {
-  constructor(private readonly adminService: AdminService) {}
+  constructor(
+    private readonly adminService: AdminService,
+    private readonly logger: Logger,
+  ) {}
 
   @Get('windows')
   findWindows(): Promise<Window[]> {
-    return this.adminService.findWindows();
+    this.logger.log('GET /admin/windows', AdminController.name);
+    return this.adminService.findWindows().catch(handleRestError());
   }
 
   @Get('stats/:id')
   findStats(@Param('id') windowId: string): Promise<AdminStatsEntity> {
-    return this.adminService.findStats(+windowId);
+    this.logger.log(`GET /admin/stats/${windowId}`, AdminController.name);
+    return this.adminService.findStats(+windowId).catch(handleRestError());
   }
 
   @Post('exclusions')
   createExclusion(@Body() dto: CreateExclusionDto): Promise<Exclusion> {
-    return this.adminService.createExclusion(dto);
+    this.logger.log('POST /admin/exclusions', AdminController.name);
+    return this.adminService.createExclusion(dto).catch(handleRestError());
   }
 
   @Delete('exclusions/:id')
   removeExclusion(@Param('id') exclusionId: string): Promise<void> {
-    return this.adminService.removeExclusion(+exclusionId);
+    this.logger.log(
+      `DELETE /admin/exclusions/${exclusionId}`,
+      AdminController.name,
+    );
+    return this.adminService
+      .removeExclusion(+exclusionId)
+      .catch(handleRestError());
   }
 }

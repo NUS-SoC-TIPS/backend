@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import {
   Exclusion,
   RoomRecord,
@@ -54,6 +54,7 @@ export class AdminService {
     private readonly windowsService: WindowsService,
     private readonly dataService: DataService,
     private readonly usersService: UsersService,
+    private readonly logger: Logger,
   ) {
     this.studentData = this.dataService.getStudentData().map((s) => ({
       ...s,
@@ -68,28 +69,39 @@ export class AdminService {
   }
 
   async createExclusion(dto: CreateExclusionDto): Promise<Exclusion> {
-    const window = await this.windowsService.find(dto.windowId);
-    if (!window) {
-      throw new BadRequestException();
-    }
-    const user = await this.usersService.find(dto.userId);
-    if (!user || !this.githubUsernames.has(user.githubUsername.toLowerCase())) {
-      throw new BadRequestException();
+    const window = await this.windowsService.findOrThrow(dto.windowId);
+    const user = await this.usersService.findOrThrow(dto.userId);
+    if (!this.githubUsernames.has(user.githubUsername.toLowerCase())) {
+      this.logger.error(
+        `Failed to find user within student list, ID: ${dto.userId}`,
+        undefined,
+        AdminService.name,
+      );
+      throw new Error('User is not a student');
     }
 
-    const existingExclusion = await this.prismaService.exclusion.findFirst({
-      where: {
-        userId: dto.userId,
-        window: {
-          iteration: {
-            equals: window.iteration,
+    const existingExclusion = await this.prismaService.exclusion
+      .findFirst({
+        where: {
+          userId: dto.userId,
+          window: {
+            iteration: {
+              equals: window.iteration,
+            },
           },
         },
-      },
-      include: {
-        window: true,
-      },
-    });
+        include: {
+          window: true,
+        },
+      })
+      .catch((e) => {
+        this.logger.error(
+          'Failed to find nullable existing exclusion',
+          e instanceof Error ? e.stack : undefined,
+          AdminService.name,
+        );
+        throw e;
+      });
     if (
       existingExclusion &&
       existingExclusion.window.startAt <= window.startAt
@@ -102,29 +114,52 @@ export class AdminService {
     if (existingExclusion) {
       // Update if we're going for an earlier exclusion than the existing one for
       // the same iteration.
-      return this.prismaService.exclusion.update({
-        data: {
-          windowId: dto.windowId,
-          reason: dto.reason,
-        },
-        where: {
-          id: existingExclusion.id,
-        },
-      });
+      return this.prismaService.exclusion
+        .update({
+          data: {
+            windowId: dto.windowId,
+            reason: dto.reason,
+          },
+          where: {
+            id: existingExclusion.id,
+          },
+        })
+        .catch((e) => {
+          this.logger.error(
+            'Failed to shift exclusion',
+            e instanceof Error ? e.stack : undefined,
+            AdminService.name,
+          );
+          throw e;
+        });
     }
-    return await this.prismaService.exclusion.create({
-      data: {
-        ...dto,
-      },
-    });
+    return await this.prismaService.exclusion
+      .create({
+        data: {
+          ...dto,
+        },
+      })
+      .catch((e) => {
+        this.logger.error(
+          'Failed to create exclusion',
+          e instanceof Error ? e.stack : undefined,
+          AdminService.name,
+        );
+        throw e;
+      });
   }
 
   async removeExclusion(exclusionId: number): Promise<void> {
     await this.prismaService.exclusion
       .delete({ where: { id: exclusionId } })
-      // Empty catch to handle the case where the exclusion is not found.
-      // TODO: Figure out why attempts to delete a non-existing exclusion were made.
-      .catch();
+      .catch((e) => {
+        this.logger.error(
+          'Attempted to delete non-existing exclusion',
+          e instanceof Error ? e.stack : undefined,
+          AdminService.name,
+        );
+        throw e;
+      });
   }
 
   async findWindows(): Promise<Window[]> {
@@ -134,10 +169,7 @@ export class AdminService {
   }
 
   async findStats(windowId: number): Promise<AdminStatsEntity> {
-    const window = await this.windowsService.find(windowId);
-    if (window == null) {
-      throw new BadRequestException();
-    }
+    const window = await this.windowsService.findOrThrow(windowId);
     const users = await this.findUsersWithWindowDataWithinWindow(window);
     const usersWithWindowData: (UserWithWindowData & {
       githubUsernameLower: string;
@@ -182,8 +214,8 @@ export class AdminService {
   private async findUsersWithWindowDataWithinWindow(
     window: Window,
   ): Promise<UserFromQuery[]> {
-    return (
-      await this.prismaService.user.findMany({
+    const users = await this.prismaService.user
+      .findMany({
         where: {
           createdAt: {
             lte: window.endAt,
@@ -232,7 +264,16 @@ export class AdminService {
           name: 'asc',
         },
       })
-    )
+      .catch((e) => {
+        this.logger.error(
+          'Failed to find users with window data',
+          e instanceof Error ? e.stack : undefined,
+          AdminService.name,
+        );
+        throw e;
+      });
+
+    return users
       .filter((user) =>
         user.exclusions.every(
           (e) =>
