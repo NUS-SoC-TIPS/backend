@@ -1,4 +1,4 @@
-import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 
 import { FirebaseService } from '../firebase/firebase.service';
@@ -17,28 +17,22 @@ export class AuthService {
 
   async login(dto: AuthDto): Promise<string> {
     const { token, ...userInfo } = dto;
-    const uid = await this.firebaseService
-      .verifyToken(token)
-      .catch((e: Error) => {
-        this.logger.error(
-          'Firebase token verification failed',
-          e.stack,
-          AuthService.name,
-        );
-        throw new UnauthorizedException();
-      });
-
+    // The following operations all may throw an error. We will not catch the errors
+    // here and instead let the controller handle it.
+    const uid = await this.firebaseService.verifyToken(token);
     const user = await this.usersService.upsertUser({ ...userInfo, id: uid });
-    const signedToken = await this.signToken(user.id).catch((e: Error) => {
-      this.logger.error('JWT token signing failed', e.stack, AuthService.name);
-      throw new UnauthorizedException();
-    });
-
-    return signedToken;
+    return this.signToken(user.id);
   }
 
   private signToken(userId: string): Promise<string> {
     const payload = { sub: userId };
-    return this.jwt.signAsync(payload);
+    return this.jwt.signAsync(payload).catch((e: Error) => {
+      this.logger.error(
+        'JWT token async signing failed',
+        e.stack,
+        AuthService.name,
+      );
+      throw e;
+    });
   }
 }

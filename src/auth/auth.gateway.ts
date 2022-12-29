@@ -33,7 +33,7 @@ export class AuthGateway implements OnGatewayConnection {
     @MessageBody('bearerToken') token: string,
     @ConnectedSocket() socket: ISocket,
   ): Promise<void> {
-    this.logger.log('Authenticating socket...', AuthGateway.name);
+    this.logger.debug('Authenticating socket...', AuthGateway.name);
     const payload = await this.jwtService
       .verifyAsync(token)
       .catch((e: Error) => {
@@ -59,7 +59,7 @@ export class AuthGateway implements OnGatewayConnection {
       throw new WsException('Invalid token');
     }
 
-    this.logger.log('Socket authenticated!', AuthGateway.name);
+    this.logger.debug('Socket authenticated!', AuthGateway.name);
     socket.user = user;
     socket.emit(AUTH_EVENTS.AUTHENTICATE, { user });
   }
