@@ -7,7 +7,7 @@ import * as pactum from 'pactum';
 import { AppModule } from '../src/app.module';
 import appConfig from '../src/data/jsons/config.json';
 import { PrismaService } from '../src/prisma/prisma.service';
-import { createUserAndLogin } from '../src/utils/tests.util';
+import { createUserAndLogin } from '../src/utils';
 
 // Tests all main user flows
 describe('Application (e2e)', () => {

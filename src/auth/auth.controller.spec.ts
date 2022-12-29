@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { mocker } from '../utils/tests.util';
+import { mocker } from '../utils';
 
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
