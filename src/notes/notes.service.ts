@@ -38,13 +38,13 @@ export class NotesService {
   }
 
   /**
-   * Closes the room and returns the notes taken by the users in the room.
+   * Returns the notes taken by the users in the room.
    */
-  closeRoom(roomId: number): { userId: string; notes: string }[] {
+  getNotes(roomId: number): { userId: string; notes: string }[] {
     const userIdToNotesMap = this.roomIdToUserIdToNotesMap.get(roomId);
     if (userIdToNotesMap == null) {
       this.logger.warn(
-        'Failed to find notes for room closing, returning default values',
+        'Failed to find notes for room, returning default values',
         NotesService.name,
       );
       return [];
@@ -53,7 +53,13 @@ export class NotesService {
     for (const [userId, notes] of userIdToNotesMap.entries()) {
       result.push({ userId, notes: notes.trim() });
     }
-    this.roomIdToUserIdToNotesMap.delete(roomId);
     return result;
+  }
+
+  /**
+   * Cleans up the notes for the room.
+   */
+  closeRoom(roomId: number): void {
+    this.roomIdToUserIdToNotesMap.delete(roomId);
   }
 }
