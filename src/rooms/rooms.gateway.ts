@@ -1,4 +1,9 @@
-import { OnModuleDestroy, UseGuards, ValidationPipe } from '@nestjs/common';
+import {
+  Logger,
+  OnModuleDestroy,
+  UseGuards,
+  ValidationPipe,
+} from '@nestjs/common';
 import {
   ConnectedSocket,
   MessageBody,
@@ -10,18 +15,17 @@ import {
 import { Room, RoomStatus, User } from '@prisma/client';
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { Server } from 'socket.io';
+import { handleWsError } from 'src/utils/error.util';
 
 import { AgoraService } from '../agora/agora.service';
 import { GetUserWs } from '../auth/decorators';
 import { AuthWsGuard } from '../auth/guards';
 import { CodeService } from '../code/code.service';
 import { ISocket } from '../interfaces/socket';
-import { Judge0Service } from '../judge0/judge0.service';
 import { NotesService } from '../notes/notes.service';
-import { CreateRecordDto } from '../records/dtos';
-import { RecordsService } from '../records/records.service';
 
 import { GetRoom } from './decorators';
+import { CreateRecordDto } from './dtos';
 import { InRoomGuard } from './guards';
 import { ROOM_AUTOCLOSE_DURATION, ROOM_EVENTS } from './rooms.constants';
 import { RoomsService } from './rooms.service';
@@ -42,8 +46,7 @@ export class RoomsGateway implements OnGatewayDisconnect, OnModuleDestroy {
     private readonly agoraService: AgoraService,
     private readonly codeService: CodeService,
     private readonly notesService: NotesService,
-    private readonly recordsService: RecordsService,
-    private readonly judge0Service: Judge0Service,
+    private readonly logger: Logger,
   ) {
     this.roomIdToSockets = new Map();
     this.roomIdToTimeouts = new Map();
@@ -56,14 +59,19 @@ export class RoomsGateway implements OnGatewayDisconnect, OnModuleDestroy {
     @GetUserWs() user: User,
     @ConnectedSocket() socket: ISocket,
   ): Promise<void> {
-    const room = await this.roomsService.findBySlug(slug);
+    this.logger.log(ROOM_EVENTS.JOIN_ROOM, RoomsGateway.name);
+    const room = await this.roomsService
+      .findBySlug(slug)
+      .catch(handleWsError('Failed to find room to join'));
     if (!room) {
       socket.emit(ROOM_EVENTS.ROOM_DOES_NOT_EXIST);
       return;
     }
 
     // Do corresponding checks
-    const userCurrentRoom = await this.roomsService.findCurrent(user.id);
+    const userCurrentRoom = await this.roomsService
+      .findCurrent(user.id)
+      .catch(handleWsError("Failed to find user's current room"));
     const userInAnotherRoom = userCurrentRoom && userCurrentRoom.slug !== slug;
     if (userInAnotherRoom) {
       socket.emit(ROOM_EVENTS.ALREADY_IN_ROOM, { slug: userCurrentRoom.slug });
@@ -90,7 +98,10 @@ export class RoomsGateway implements OnGatewayDisconnect, OnModuleDestroy {
 
     // Update relevant data
     this.addSocketToRoomStructures(socket, room);
-    this.roomsService.createRoomUser({ roomId: room.id, userId: user.id });
+    // This is the final point of failure. Subsequently, no following steps should throw an error.
+    this.roomsService
+      .createRoomUser({ roomId: room.id, userId: user.id })
+      .catch(handleWsError('Failed to create room user'));
     socket.broadcast
       .to(`${room.id}`)
       .emit(ROOM_EVENTS.JOINED_ROOM, { partner: user });
@@ -104,7 +115,7 @@ export class RoomsGateway implements OnGatewayDisconnect, OnModuleDestroy {
     const partner = room.roomUsers.filter((u) => u.userId !== user.id)[0]?.user;
     const isPartnerInRoom = this.roomIdToSockets.get(room.id)?.length === 2;
     const executableLanguageToVersionMap =
-      await this.judge0Service.getExecutableLanguages();
+      await this.codeService.getExecutableLanguages();
 
     socket.emit(ROOM_EVENTS.JOIN_ROOM, {
       id: room.id,
@@ -119,8 +130,15 @@ export class RoomsGateway implements OnGatewayDisconnect, OnModuleDestroy {
 
   @UseGuards(AuthWsGuard, InRoomGuard)
   @SubscribeMessage(ROOM_EVENTS.CLOSE_ROOM)
-  closeRoom(@GetRoom() room: Room): void {
-    this.closeRoomHelper(room, false);
+  closeRoom(@GetRoom() room: Room): Promise<void> {
+    return this.closeRoomHelper(room, false).catch((e) => {
+      this.logger.error(
+        `Failed to close room with ID: ${room.id}`,
+        e instanceof Error ? e.stack : undefined,
+        RoomsGateway.name,
+      );
+      handleWsError('Failed to close room')(e);
+    });
   }
 
   handleDisconnect(@ConnectedSocket() socket: ISocket): void {
@@ -138,7 +156,14 @@ export class RoomsGateway implements OnGatewayDisconnect, OnModuleDestroy {
       [...this.roomIdToSockets.keys()].map((roomId) =>
         this.roomsService.findById(roomId).then((room) => {
           if (room) {
-            return this.closeRoomHelper(room, true);
+            return this.closeRoomHelper(room, true).catch((e) => {
+              // We will consume the error here. It'll be a best effort attempt at closing room.
+              this.logger.error(
+                `Failed to close room with ID: ${roomId} during shutdown`,
+                e instanceof Error ? e.stack : undefined,
+                RoomsGateway.name,
+              );
+            });
           }
         }),
       ),
@@ -146,8 +171,8 @@ export class RoomsGateway implements OnGatewayDisconnect, OnModuleDestroy {
   }
 
   private async closeRoomHelper(room: Room, isAuto: boolean): Promise<void> {
-    const { code, language } = this.codeService.closeRoom(room);
-    const userNotes = this.notesService.closeRoom(room.id);
+    const { code, language } = this.codeService.getCodeAndLanguage(room);
+    const userNotes = this.notesService.getNotes(room.id);
     const recordData: CreateRecordDto = {
       isRoleplay: false,
       duration: new Date().getTime() - room.createdAt.getTime(),
@@ -160,11 +185,11 @@ export class RoomsGateway implements OnGatewayDisconnect, OnModuleDestroy {
       })),
     };
 
-    await Promise.all([
-      this.recordsService.create(recordData),
-      this.roomsService.closeRoom(room.id, isAuto),
-    ]);
+    // No destructive actions before this step, which can fail
+    await this.roomsService.closeRoom(recordData, isAuto);
     this.server.to(`${room.id}`).emit(ROOM_EVENTS.CLOSE_ROOM);
+    this.codeService.closeRoom(room);
+    this.notesService.closeRoom(room.id);
     this.removeRoomFromRoomStructures(room.id);
   }
 
@@ -185,7 +210,11 @@ export class RoomsGateway implements OnGatewayDisconnect, OnModuleDestroy {
   private removeSocketFromRoomStructures(socket: ISocket, room: Room): void {
     const sockets = this.roomIdToSockets.get(room.id);
     if (sockets == null) {
-      // Invariant violated
+      this.logger.error(
+        'Room was attached to socket but does not exist in map',
+        undefined,
+        RoomsGateway.name,
+      );
       return;
     }
     const updatedSockets = sockets.filter((s) => s.id !== socket.id);
@@ -197,7 +226,14 @@ export class RoomsGateway implements OnGatewayDisconnect, OnModuleDestroy {
     if (updatedSockets.length === 0) {
       this.clearRoomTimeout(room.id);
       const timeout = setTimeout(() => {
-        this.closeRoomHelper(room, true);
+        this.closeRoomHelper(room, true).catch((e) => {
+          // We will consume the error here. No real harm if auto-close fails.
+          this.logger.error(
+            'Failed to autoclose room',
+            e instanceof Error ? e.stack : undefined,
+            RoomsGateway,
+          );
+        });
       }, ROOM_AUTOCLOSE_DURATION);
       this.roomIdToTimeouts.set(room.id, timeout);
     }
@@ -206,6 +242,14 @@ export class RoomsGateway implements OnGatewayDisconnect, OnModuleDestroy {
   private removeRoomFromRoomStructures(roomId: number): void {
     const sockets = this.roomIdToSockets.get(roomId);
     if (sockets == null) {
+      // This shouldn't occur, since an exception should already have occurred when trying to
+      // close the room for the second time, so this method should never be called twice for
+      // the same room.
+      this.logger.error(
+        'Room was somehow already removed',
+        undefined,
+        RoomsGateway.name,
+      );
       return;
     }
     sockets.forEach((s) => {
