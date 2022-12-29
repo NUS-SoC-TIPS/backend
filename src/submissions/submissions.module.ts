@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Logger, Module } from '@nestjs/common';
 
 import { WindowsModule } from '../windows/windows.module';
 
@@ -8,7 +8,7 @@ import { SubmissionsService } from './submissions.service';
 
 @Module({
   controllers: [SubmissionsController],
-  providers: [SubmissionsService, SubmissionsQueryBuilder],
+  providers: [SubmissionsService, SubmissionsQueryBuilder, Logger],
   imports: [WindowsModule],
   exports: [SubmissionsService],
 })

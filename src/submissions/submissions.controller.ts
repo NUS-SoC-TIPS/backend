@@ -2,12 +2,14 @@ import {
   Body,
   Controller,
   Get,
+  Logger,
   Param,
   Patch,
   Post,
   UseGuards,
 } from '@nestjs/common';
 import { QuestionSubmission } from '@prisma/client';
+import { handleRestError } from 'src/utils/error.util';
 
 import { GetUserRest } from '../auth/decorators';
 import { JwtRestGuard } from '../auth/guards';
@@ -19,14 +21,20 @@ import { SubmissionsService } from './submissions.service';
 @UseGuards(JwtRestGuard)
 @Controller('submissions')
 export class SubmissionsController {
-  constructor(private readonly submissionsService: SubmissionsService) {}
+  constructor(
+    private readonly submissionsService: SubmissionsService,
+    private readonly logger: Logger,
+  ) {}
 
   @Post()
   create(
     @Body() createSubmissionDto: CreateSubmissionDto,
     @GetUserRest('id') userId: string,
   ): Promise<QuestionSubmission> {
-    return this.submissionsService.create(createSubmissionDto, userId);
+    this.logger.log('POST /submissions', SubmissionsController.name);
+    return this.submissionsService
+      .create(createSubmissionDto, userId)
+      .catch(handleRestError());
   }
 
   @Patch(':id')
@@ -35,13 +43,17 @@ export class SubmissionsController {
     @Body() updateSubmissionData: UpdateSubmissionDto,
     @GetUserRest('id') userId: string,
   ): Promise<QuestionSubmission> {
-    return this.submissionsService.update(+id, updateSubmissionData, userId);
+    this.logger.log('PATCH /submissions/:id', SubmissionsController.name);
+    return this.submissionsService
+      .update(+id, updateSubmissionData, userId)
+      .catch(handleRestError());
   }
 
   @Get('stats')
   async findStats(
     @GetUserRest('id') userId: string,
   ): Promise<SubmissionStatsEntity> {
-    return this.submissionsService.findStats(userId);
+    this.logger.log('GET /submissions/stats', SubmissionsController.name);
+    return this.submissionsService.findStats(userId).catch(handleRestError());
   }
 }
