@@ -1,3 +1,4 @@
+import { Logger } from '@nestjs/common';
 import { JwtModule, JwtService } from '@nestjs/jwt';
 import { Test, TestingModule } from '@nestjs/testing';
 
@@ -22,7 +23,7 @@ describe('AuthService', () => {
   describe('initialisation', () => {
     beforeEach(async () => {
       const module: TestingModule = await Test.createTestingModule({
-        providers: [AuthService, PrismaService, UsersService],
+        providers: [AuthService, PrismaService, UsersService, Logger],
       })
         .useMocker(mocker)
         .compile();
@@ -40,7 +41,15 @@ describe('AuthService', () => {
     beforeEach(async () => {
       verifyToken = jest.fn().mockResolvedValue('1');
       const module: TestingModule = await Test.createTestingModule({
-        providers: [AuthService, PrismaService, UsersService],
+        imports: [
+          JwtModule.register({
+            secret: 'secret',
+            signOptions: {
+              expiresIn: '7d',
+            },
+          }),
+        ],
+        providers: [AuthService, PrismaService, UsersService, Logger],
       })
         .useMocker((token) => {
           if (token === FirebaseService) {
@@ -65,7 +74,15 @@ describe('AuthService', () => {
 
     beforeEach(async () => {
       const module: TestingModule = await Test.createTestingModule({
-        providers: [AuthService, PrismaService, UsersService],
+        imports: [
+          JwtModule.register({
+            secret: 'secret',
+            signOptions: {
+              expiresIn: '7d',
+            },
+          }),
+        ],
+        providers: [AuthService, PrismaService, UsersService, Logger],
       })
         .useMocker((token) => {
           if (token === FirebaseService) {
@@ -104,7 +121,7 @@ describe('AuthService', () => {
             },
           }),
         ],
-        providers: [AuthService, PrismaService, UsersService],
+        providers: [AuthService, PrismaService, UsersService, Logger],
       })
         .useMocker((token) => {
           if (token === FirebaseService) {
