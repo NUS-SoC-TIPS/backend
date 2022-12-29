@@ -15,7 +15,6 @@ import {
 import { Room, RoomStatus, User } from '@prisma/client';
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { Server } from 'socket.io';
-import { handleWsError } from 'src/utils/error.util';
 
 import { AgoraService } from '../agora/agora.service';
 import { GetUserWs } from '../auth/decorators';
@@ -23,6 +22,7 @@ import { AuthWsGuard } from '../auth/guards';
 import { CodeService } from '../code/code.service';
 import { ISocket } from '../interfaces/socket';
 import { NotesService } from '../notes/notes.service';
+import { handleWsError } from '../utils/error.util';
 
 import { GetRoom } from './decorators';
 import { CreateRecordDto } from './dtos';

@@ -2,11 +2,11 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Language, Room } from '@prisma/client';
 import * as decoding from 'lib0/decoding';
 import * as encoding from 'lib0/encoding';
-import { CallbackDto } from 'src/judge0/dtos';
 import * as awarenessProtocol from 'y-protocols/awareness';
 import * as syncProtocol from 'y-protocols/sync';
 
 import { ISocket } from '../interfaces/socket';
+import { CallbackDto } from '../judge0/dtos';
 import { ExecutionResultEntity } from '../judge0/entities';
 import { Judge0Service } from '../judge0/judge0.service';
 import { UsersService } from '../users/users.service';

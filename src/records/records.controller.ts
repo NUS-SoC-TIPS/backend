@@ -1,8 +1,8 @@
 import { Controller, Get, Logger, UseGuards } from '@nestjs/common';
-import { handleRestError } from 'src/utils/error.util';
 
 import { GetUserRest } from '../auth/decorators';
 import { JwtRestGuard } from '../auth/guards';
+import { handleRestError } from '../utils/error.util';
 
 import { RecordStatsEntity } from './entities';
 import { RecordsService } from './records.service';

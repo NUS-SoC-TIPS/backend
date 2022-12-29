@@ -9,10 +9,10 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { QuestionSubmission } from '@prisma/client';
-import { handleRestError } from 'src/utils/error.util';
 
 import { GetUserRest } from '../auth/decorators';
 import { JwtRestGuard } from '../auth/guards';
+import { handleRestError } from '../utils/error.util';
 
 import { CreateSubmissionDto, UpdateSubmissionDto } from './dtos';
 import { SubmissionStatsEntity } from './entities';
