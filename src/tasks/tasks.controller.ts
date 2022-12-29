@@ -1,8 +1,8 @@
-import { Controller, Get, Logger, UseGuards } from '@nestjs/common';
+import { Controller, Get, Logger, UseFilters, UseGuards } from '@nestjs/common';
 
 import { GetUserRest } from '../auth/decorators';
 import { JwtRestGuard } from '../auth/guards';
-import { handleRestError } from '../utils/error.util';
+import { BadRequestExceptionFilter } from '../utils';
 
 import { TaskStatsEntity } from './entities';
 import { TasksService } from './tasks.service';
@@ -16,8 +16,9 @@ export class TasksController {
   ) {}
 
   @Get('stats')
+  @UseFilters(BadRequestExceptionFilter)
   async findStats(@GetUserRest('id') userId: string): Promise<TaskStatsEntity> {
     this.logger.log('GET /tasks/stats', TasksController.name);
-    return this.tasksService.findStats(userId).catch(handleRestError());
+    return this.tasksService.findStats(userId);
   }
 }

@@ -1,5 +1,13 @@
-import { Controller, Get, Logger, Post, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Logger,
+  Post,
+  UseFilters,
+  UseGuards,
+} from '@nestjs/common';
 import { Room } from '@prisma/client';
+import { BadRequestExceptionFilter } from 'src/utils';
 
 import { GetUserRest } from '../auth/decorators';
 import { JwtRestGuard } from '../auth/guards';
@@ -15,6 +23,7 @@ export class RoomsController {
   ) {}
 
   @Post()
+  @UseFilters(BadRequestExceptionFilter)
   async create(@GetUserRest('id') userId: string): Promise<{ slug: string }> {
     this.logger.log('POST /rooms', RoomsController.name);
     const room = await this.roomsService.create(userId);
@@ -22,6 +31,7 @@ export class RoomsController {
   }
 
   @Get()
+  @UseFilters(BadRequestExceptionFilter)
   findCurrent(@GetUserRest('id') userId: string): Promise<Room | null> {
     this.logger.log('GET /rooms', RoomsController.name);
     return this.roomsService.findCurrent(userId);

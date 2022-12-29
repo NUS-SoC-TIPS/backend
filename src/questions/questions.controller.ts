@@ -1,8 +1,8 @@
-import { Controller, Get, Logger, UseGuards } from '@nestjs/common';
+import { Controller, Get, Logger, UseFilters, UseGuards } from '@nestjs/common';
 import { Question } from '@prisma/client';
 
 import { JwtRestGuard } from '../auth/guards';
-import { handleRestError } from '../utils/error.util';
+import { BadRequestExceptionFilter } from '../utils';
 
 import { QuestionsService } from './questions.service';
 
@@ -15,8 +15,9 @@ export class QuestionsController {
   ) {}
 
   @Get()
+  @UseFilters(BadRequestExceptionFilter)
   findAll(): Promise<Question[]> {
     this.logger.log('GET /questions', QuestionsController.name);
-    return this.questionsService.findAll().catch(handleRestError());
+    return this.questionsService.findAll();
   }
 }

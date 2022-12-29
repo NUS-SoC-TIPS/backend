@@ -1,8 +1,8 @@
-import { Controller, Get, Logger, UseGuards } from '@nestjs/common';
+import { Controller, Get, Logger, UseFilters, UseGuards } from '@nestjs/common';
 
 import { GetUserRest } from '../auth/decorators';
 import { JwtRestGuard } from '../auth/guards';
-import { handleRestError } from '../utils/error.util';
+import { BadRequestExceptionFilter } from '../utils';
 
 import { RecordStatsEntity } from './entities';
 import { RecordsService } from './records.service';
@@ -16,8 +16,9 @@ export class RecordsController {
 
   @Get('stats')
   @UseGuards(JwtRestGuard)
+  @UseFilters(BadRequestExceptionFilter)
   findStats(@GetUserRest('id') userId: string): Promise<RecordStatsEntity> {
     this.logger.log('GET /records/stats', RecordsController.name);
-    return this.recordsService.findStats(userId).catch(handleRestError());
+    return this.recordsService.findStats(userId);
   }
 }

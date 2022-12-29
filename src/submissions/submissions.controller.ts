@@ -6,13 +6,14 @@ import {
   Param,
   Patch,
   Post,
+  UseFilters,
   UseGuards,
 } from '@nestjs/common';
 import { QuestionSubmission } from '@prisma/client';
 
 import { GetUserRest } from '../auth/decorators';
 import { JwtRestGuard } from '../auth/guards';
-import { handleRestError } from '../utils/error.util';
+import { BadRequestExceptionFilter } from '../utils';
 
 import { CreateSubmissionDto, UpdateSubmissionDto } from './dtos';
 import { SubmissionStatsEntity } from './entities';
@@ -27,14 +28,13 @@ export class SubmissionsController {
   ) {}
 
   @Post()
+  @UseFilters(BadRequestExceptionFilter)
   create(
     @Body() createSubmissionDto: CreateSubmissionDto,
     @GetUserRest('id') userId: string,
   ): Promise<QuestionSubmission> {
     this.logger.log('POST /submissions', SubmissionsController.name);
-    return this.submissionsService
-      .create(createSubmissionDto, userId)
-      .catch(handleRestError());
+    return this.submissionsService.create(createSubmissionDto, userId);
   }
 
   @Patch(':id')
@@ -44,16 +44,15 @@ export class SubmissionsController {
     @GetUserRest('id') userId: string,
   ): Promise<QuestionSubmission> {
     this.logger.log('PATCH /submissions/:id', SubmissionsController.name);
-    return this.submissionsService
-      .update(+id, updateSubmissionData, userId)
-      .catch(handleRestError());
+    return this.submissionsService.update(+id, updateSubmissionData, userId);
   }
 
   @Get('stats')
+  @UseFilters(BadRequestExceptionFilter)
   async findStats(
     @GetUserRest('id') userId: string,
   ): Promise<SubmissionStatsEntity> {
     this.logger.log('GET /submissions/stats', SubmissionsController.name);
-    return this.submissionsService.findStats(userId).catch(handleRestError());
+    return this.submissionsService.findStats(userId);
   }
 }

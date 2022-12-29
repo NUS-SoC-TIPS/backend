@@ -4,7 +4,10 @@ import {
   Logger,
   Post,
   UnauthorizedException,
+  UseFilters,
 } from '@nestjs/common';
+
+import { BadRequestExceptionFilter } from '../utils';
 
 import { AuthService } from './auth.service';
 import { AuthDto } from './dtos';
@@ -17,6 +20,7 @@ export class AuthController {
   ) {}
 
   @Post('login')
+  @UseFilters(BadRequestExceptionFilter)
   async login(@Body() dto: AuthDto): Promise<{ token: string }> {
     this.logger.log('POST /auth/login', AuthController.name);
     const token = await this.authService.login(dto).catch(() => {
