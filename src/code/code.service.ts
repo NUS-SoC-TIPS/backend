@@ -173,56 +173,58 @@ export class CodeService {
     this.roomToLanguage.set(roomId, language);
   }
 
-  /**
-   * Closes the room and returns stringified data for persistence purposes.
-   */
-  closeRoom(room: Room): { code: string; language: Language } {
+  getCodeAndLanguage(room: Room): { code: string; language: Language } {
     const language = this.roomToLanguage.get(room.id) ?? Language.PYTHON_THREE;
-    this.roomToLanguage.delete(room.id);
     const doc = this.roomToDoc.get(room.id);
-    this.roomToDoc.delete(room.id);
     if (doc == null) {
       this.logger.warn(
-        'Failed to find doc for room closing, returning default values',
+        'Failed to find doc for getting code, returning default values',
         CodeService.name,
       );
       return { code: '', language };
     }
     const code = doc.getText(room.slug).toJSON().trim();
-    doc.destroy();
     return { code, language };
+  }
+
+  /**
+   * Cleans up the code and language for the room.
+   */
+  closeRoom(room: Room): void {
+    this.roomToLanguage.delete(room.id);
+    const doc = this.roomToDoc.get(room.id);
+    this.roomToDoc.delete(room.id);
+    if (doc != null) {
+      doc.destroy();
+    }
   }
 
   // Sends the code over to Judge0 for execution and returns the submission token
   async executeCodeAsync(room: Room): Promise<string | null> {
-    const doc = this.roomToDoc.get(room.id);
-    const language = this.roomToLanguage.get(room.id) ?? Language.PYTHON_THREE;
-    if (doc == null) {
-      this.logger.warn(
-        'Failed to find doc for async code execution',
-        CodeService.name,
-      );
+    const { code, language } = this.getCodeAndLanguage(room);
+    if (code === '') {
+      this.logger.warn('Attempted to execute empty code', CodeService.name);
       return null;
     }
-    const code = doc.getText(room.slug).toJSON().trim();
     return this.judge0Service.createAsyncSubmission(code, language);
   }
 
   async executeCodeSync(room: Room): Promise<ExecutionResultEntity | null> {
-    const doc = this.roomToDoc.get(room.id);
-    const language = this.roomToLanguage.get(room.id) ?? Language.PYTHON_THREE;
-    if (doc == null) {
-      this.logger.warn(
-        'Failed to find doc for sync code execution',
-        CodeService.name,
-      );
+    const { code, language } = this.getCodeAndLanguage(room);
+    if (code === '') {
+      this.logger.warn('Attempted to execute empty code', CodeService.name);
       return null;
     }
-    const code = doc.getText(room.slug).toJSON().trim();
     return this.judge0Service.createSyncSubmission(code, language);
   }
 
+  // Methods that wrap around Judge0Service
+
   interpretResults(dto: CallbackDto): ExecutionResultEntity {
     return this.judge0Service.interpretResults(dto);
+  }
+
+  getExecutableLanguages(): Promise<{ [language: string]: string }> {
+    return this.judge0Service.getExecutableLanguages();
   }
 }
