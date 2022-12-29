@@ -1,12 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { RoomRecord, Window } from '@prisma/client';
+import { Window } from '@prisma/client';
 
 import { RecordWithPartner } from '../interfaces/interface';
 import { PrismaService } from '../prisma/prisma.service';
 import { WindowsService } from '../windows/windows.service';
 
 import { RecordsQueryBuilder } from './builders';
-import { CreateRecordDto } from './dtos';
 import { RecordStatsEntity } from './entities';
 
 @Injectable()
@@ -17,29 +16,6 @@ export class RecordsService {
     private readonly queryBuilder: RecordsQueryBuilder,
     private readonly logger: Logger,
   ) {}
-
-  create(dto: CreateRecordDto): Promise<RoomRecord> {
-    const { roomRecordUsers, ...recordData } = dto;
-    return this.prismaService.roomRecord
-      .create({
-        data: {
-          ...recordData,
-          roomRecordUsers: {
-            createMany: {
-              data: roomRecordUsers,
-            },
-          },
-        },
-      })
-      .catch((e) => {
-        this.logger.error(
-          'Failed to create room record',
-          e instanceof Error ? e.stack : undefined,
-          RecordsService.name,
-        );
-        throw e;
-      });
-  }
 
   async findStats(userId: string): Promise<RecordStatsEntity> {
     // Finding window may throw. We will not catch here and instead let the
