@@ -33,10 +33,10 @@ export class FirebaseService implements OnModuleInit {
       .auth()
       .verifyIdToken(token)
       .then((decodedToken) => decodedToken.uid)
-      .catch((e: Error) => {
+      .catch((e) => {
         this.logger.error(
           'Failed to verify token',
-          e.stack,
+          e instanceof Error ? e.stack : undefined,
           FirebaseService.name,
         );
         throw e;

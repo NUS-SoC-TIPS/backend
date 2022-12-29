@@ -11,10 +11,10 @@ export class QuestionsService {
   ) {}
 
   findAll(): Promise<Question[]> {
-    return this.prismaService.question.findMany().catch((e: Error) => {
+    return this.prismaService.question.findMany().catch((e) => {
       this.logger.error(
         'Failed to find all questions',
-        e.stack,
+        e instanceof Error ? e.stack : undefined,
         QuestionsService.name,
       );
       throw e;

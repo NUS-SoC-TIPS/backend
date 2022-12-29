@@ -34,16 +34,14 @@ export class AuthGateway implements OnGatewayConnection {
     @ConnectedSocket() socket: ISocket,
   ): Promise<void> {
     this.logger.debug('Authenticating socket...', AuthGateway.name);
-    const payload = await this.jwtService
-      .verifyAsync(token)
-      .catch((e: Error) => {
-        this.logger.error(
-          'Failed to verify token async',
-          e.stack,
-          AuthGateway.name,
-        );
-        throw new WsException('Invalid token');
-      });
+    const payload = await this.jwtService.verifyAsync(token).catch((e) => {
+      this.logger.error(
+        'Failed to verify token async',
+        e instanceof Error ? e.stack : undefined,
+        AuthGateway.name,
+      );
+      throw new WsException('Invalid token');
+    });
 
     const user = await this.prismaService.user.findUnique({
       where: {

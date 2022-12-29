@@ -18,10 +18,10 @@ export class UsersService {
   findOrThrow(userId: string): Promise<User> {
     return this.prismaService.user
       .findUniqueOrThrow({ where: { id: userId } })
-      .catch((e: Error) => {
+      .catch((e) => {
         this.logger.error(
           `Failed to find non-null user with ID: ${userId}`,
-          e.stack,
+          e instanceof Error ? e.stack : undefined,
           UsersService.name,
         );
         throw e;
@@ -35,10 +35,10 @@ export class UsersService {
           userId,
         },
       })
-      .catch((e: Error) => {
+      .catch((e) => {
         this.logger.error(
           `Failed to find nullable settings for user with ID: ${userId}`,
-          e.stack,
+          e instanceof Error ? e.stack : undefined,
           UsersService.name,
         );
         throw e;
@@ -80,10 +80,10 @@ export class UsersService {
             userId: user.id,
           },
         })
-        .catch((e: Error) => {
+        .catch((e) => {
           this.logger.error(
             'Failed to upsert user settings',
-            e.stack,
+            e instanceof Error ? e.stack : undefined,
             UsersService.name,
           );
           throw e;
@@ -101,10 +101,10 @@ export class UsersService {
               id: user.id,
             },
           })
-          .catch((e: Error) => {
+          .catch((e) => {
             this.logger.error(
               'Failed to update user with non-default name and photoUrl',
-              e.stack,
+              e instanceof Error ? e.stack : undefined,
               UsersService.name,
             );
             throw e;
@@ -135,8 +135,12 @@ export class UsersService {
           ...dto,
         },
       })
-      .catch((e: Error) => {
-        this.logger.error('Failed to upsert user', e.stack, UsersService.name);
+      .catch((e) => {
+        this.logger.error(
+          'Failed to upsert user',
+          e instanceof Error ? e.stack : undefined,
+          UsersService.name,
+        );
         throw e;
       });
   }

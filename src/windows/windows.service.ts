@@ -15,10 +15,10 @@ export class WindowsService {
   findOrThrow(windowId: number): Promise<Window> {
     return this.prismaService.window
       .findUniqueOrThrow({ where: { id: windowId } })
-      .catch((e: Error) => {
+      .catch((e) => {
         this.logger.error(
           `Failed to find window with ID: ${windowId}`,
-          e.stack,
+          e instanceof Error ? e.stack : undefined,
           WindowsService.name,
         );
         throw e;
@@ -62,10 +62,10 @@ export class WindowsService {
           },
         },
       })
-      .catch((e: Error) => {
+      .catch((e) => {
         this.logger.error(
           'Failed to find nullable ongoing window',
-          e.stack,
+          e instanceof Error ? e.stack : undefined,
           WindowsService.name,
         );
         throw e;
@@ -82,10 +82,10 @@ export class WindowsService {
           startAt: 'asc',
         },
       })
-      .catch((e: Error) => {
+      .catch((e) => {
         this.logger.error(
           'Failed to find windows for current iteration',
-          e.stack,
+          e instanceof Error ? e.stack : undefined,
           WindowsService.name,
         );
         throw e;
@@ -117,10 +117,10 @@ export class WindowsService {
         },
         take: 1,
       })
-      .catch((e: Error) => {
+      .catch((e) => {
         this.logger.error(
           'Failed to find nullable upcoming window',
-          e.stack,
+          e instanceof Error ? e.stack : undefined,
           WindowsService.name,
         );
         throw e;
@@ -135,10 +135,10 @@ export class WindowsService {
         },
         take: 1,
       })
-      .catch((e: Error) => {
+      .catch((e) => {
         this.logger.error(
           'Failed to find non-null most recent past window',
-          e.stack,
+          e instanceof Error ? e.stack : undefined,
           WindowsService.name,
         );
         throw e;

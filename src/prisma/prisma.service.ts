@@ -62,8 +62,12 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
       deleteSettings,
       deleteUsers,
     ])
-      .catch((e: Error) => {
-        this.logger.error('Failed to clean DB', e.stack, PrismaService.name);
+      .catch((e) => {
+        this.logger.error(
+          'Failed to clean DB',
+          e instanceof Error ? e.stack : undefined,
+          PrismaService.name,
+        );
         throw e;
       })
       .then((result) => {
@@ -79,10 +83,10 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
           role: UserRole.NORMAL,
         },
       })
-      .catch((e: Error) => {
+      .catch((e) => {
         this.logger.error(
           'Failed to update all users to NORMAL during admin seeding',
-          e.stack,
+          e instanceof Error ? e.stack : undefined,
           PrismaService.name,
         );
         throw e;
@@ -99,10 +103,10 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
           role: UserRole.ADMIN,
         },
       })
-      .catch((e: Error) => {
+      .catch((e) => {
         this.logger.error(
           'Failed to update admin users to ADMIN during admin seeding',
-          e.stack,
+          e instanceof Error ? e.stack : undefined,
           PrismaService.name,
         );
         throw e;
@@ -126,10 +130,10 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
               id,
             },
           })
-          .catch((e: Error) => {
+          .catch((e) => {
             this.logger.error(
               `Failed to seed window with ID: ${window.id}`,
-              e.stack,
+              e instanceof Error ? e.stack : undefined,
               PrismaService.name,
             );
             throw e;
@@ -160,10 +164,10 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
               },
             },
           })
-          .catch((e: Error) => {
+          .catch((e) => {
             this.logger.error(
               `Failed to upsert LeetCode question with slug: ${slug}`,
-              e.stack,
+              e instanceof Error ? e.stack : undefined,
               PrismaService.name,
             );
             throw e;
@@ -194,10 +198,10 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
               },
             },
           })
-          .catch((e: Error) => {
+          .catch((e) => {
             this.logger.error(
               `Failed to upsert Kattis question with slug: ${slug}`,
-              e.stack,
+              e instanceof Error ? e.stack : undefined,
               PrismaService.name,
             );
             throw e;

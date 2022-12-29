@@ -26,10 +26,10 @@ export class AuthService {
 
   private signToken(userId: string): Promise<string> {
     const payload = { sub: userId };
-    return this.jwt.signAsync(payload).catch((e: Error) => {
+    return this.jwt.signAsync(payload).catch((e) => {
       this.logger.error(
         'JWT token async signing failed',
-        e.stack,
+        e instanceof Error ? e.stack : undefined,
         AuthService.name,
       );
       throw e;
