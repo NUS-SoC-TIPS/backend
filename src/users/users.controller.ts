@@ -1,4 +1,11 @@
-import { Body, Controller, Get, Patch, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Logger,
+  Patch,
+  UseGuards,
+} from '@nestjs/common';
 import { User } from '@prisma/client';
 import { handleRestError } from 'src/utils/error.util';
 
@@ -12,9 +19,13 @@ import { UsersService } from './users.service';
 @UseGuards(JwtRestGuard)
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly logger: Logger,
+  ) {}
   @Get('self')
   async findSelf(@GetUserRest() user: User): Promise<UserSettingsConfig> {
+    this.logger.log('GET /users/self', UsersController.name);
     const settings = await this.usersService
       .findSettings(user.id)
       .catch(handleRestError());
@@ -27,6 +38,7 @@ export class UsersController {
     @GetUserRest() user: User,
     @Body() dto: UpdateSettingsDto,
   ): Promise<UserSettingsConfig> {
+    this.logger.log('PATCH /users/settings', UsersController.name);
     return this.usersService.updateSettings(user, dto).catch(handleRestError());
   }
 }
