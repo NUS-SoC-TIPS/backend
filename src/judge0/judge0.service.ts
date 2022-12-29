@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Language } from '@prisma/client';
 import axios, { AxiosRequestConfig } from 'axios';
@@ -21,7 +21,10 @@ export class Judge0Service {
   >;
   private useBatchSubmission = true;
 
-  constructor(private readonly configService: ConfigService) {
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly logger: Logger,
+  ) {
     this.judge0Key = this.configService.get('JUDGE0_KEY');
     this.judge0Host = this.configService.get('JUDGE0_HOST');
     this.judge0CallbackUrl = this.configService.get('JUDGE0_CALLBACK_URL');
@@ -64,7 +67,12 @@ export class Judge0Service {
         },
       );
       return this.interpretResults(response.data as CallbackDto);
-    } catch {
+    } catch (e) {
+      this.logger.error(
+        'Failed to create sync submission',
+        e instanceof Error ? e.stack : undefined,
+        Judge0Service.name,
+      );
       return null;
     }
   }
@@ -129,7 +137,12 @@ export class Judge0Service {
         },
       );
       return response.data.token;
-    } catch {
+    } catch (e) {
+      this.logger.error(
+        'Failed to create single submission',
+        e instanceof Error ? e.stack : undefined,
+        Judge0Service.name,
+      );
       return null;
     }
   }
@@ -150,7 +163,12 @@ export class Judge0Service {
         return null;
       }
       return response.data[0].token;
-    } catch {
+    } catch (e) {
+      this.logger.error(
+        'Failed to create batched submission',
+        e instanceof Error ? e.stack : undefined,
+        Judge0Service.name,
+      );
       return null;
     }
   }
@@ -159,23 +177,26 @@ export class Judge0Service {
     if (this.prismaLanguageToJudge0Language.size === 0) {
       await this.refreshLanguages();
     }
-    return this.prismaLanguageToJudge0Language.get(language)?.id ?? null;
+    const id = this.prismaLanguageToJudge0Language.get(language)?.id ?? null;
+    if (id == null) {
+      this.logger.warn(
+        `Failed to find language ID for ${language}`,
+        Judge0Service.name,
+      );
+    }
+    return id;
   }
 
   private async refreshLanguages(): Promise<void> {
-    if (this.judge0Key == null || this.judge0Host == null) {
+    if (!this.isFullyInitialised()) {
       return;
     }
 
-    const options: AxiosRequestConfig = {
-      method: 'GET',
-      url: `https://${this.judge0Host}/languages`,
-      headers: this.getDefaultHeaders(),
-    };
-
     try {
       const { data }: { data: { id: number; name: string }[] } =
-        await axios.request(options);
+        await axios.get(`https://${this.judge0Host}/languages`, {
+          headers: this.getDefaultHeaders(),
+        });
       this.prismaLanguageToJudge0Language.clear();
       const matchings = this.matchPrismaLanguageToJudge0Language(data);
       Object.entries(matchings).forEach(([prismaLanguage, judge0Language]) => {
@@ -184,9 +205,13 @@ export class Judge0Service {
           judge0Language,
         );
       });
-    } catch (error) {
+    } catch (e) {
+      this.logger.error(
+        'Failed to refresh languages',
+        e instanceof Error ? e.stack : undefined,
+        Judge0Service.name,
+      );
       // no-op, failed to refresh
-      // TODO: Look into whether there's a need to handle this error
     }
   }
 
@@ -251,10 +276,16 @@ export class Judge0Service {
   }
 
   private isFullyInitialised(): boolean {
-    return (
+    const isFullyInitialised =
       this.judge0Key != null &&
       this.judge0Host != null &&
-      this.judge0CallbackUrl != null
-    );
+      this.judge0CallbackUrl != null;
+    if (!isFullyInitialised) {
+      this.logger.warn(
+        'Judge0 key, host or callback URL is not defined',
+        Judge0Service.name,
+      );
+    }
+    return isFullyInitialised;
   }
 }
