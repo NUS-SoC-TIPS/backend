@@ -1,13 +1,20 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import firebase from 'firebase-admin';
 
 @Injectable()
 export class FirebaseService implements OnModuleInit {
-  constructor(private readonly configService: ConfigService) {}
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly logger: Logger,
+  ) {}
 
   async onModuleInit(): Promise<void> {
     if (this.configService.get('NODE_ENV') === 'test') {
+      this.logger.warn(
+        'Firebase is not initializing due to being in test environment',
+        FirebaseService.name,
+      );
       return;
     }
     firebase.initializeApp({
@@ -25,6 +32,14 @@ export class FirebaseService implements OnModuleInit {
     return firebase
       .auth()
       .verifyIdToken(token)
-      .then((decodedToken) => decodedToken.uid);
+      .then((decodedToken) => decodedToken.uid)
+      .catch((e: Error) => {
+        this.logger.error(
+          'Failed to verify token',
+          e.stack,
+          FirebaseService.name,
+        );
+        throw e;
+      });
   }
 }
