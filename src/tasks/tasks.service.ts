@@ -15,10 +15,15 @@ export class TasksService {
   ) {}
 
   async findStats(userId: string): Promise<TaskStatsEntity> {
+    // Finding windows may throw. We will not catch here and instead let the
+    // controller handle it.
     const windows = await this.windowsService.findCurrentIterationWindows();
     const currentDate = new Date();
+    // TODO: Look into whether to batch these queries into a single transaction
     return await Promise.all(
       windows.map(async (window) => {
+        // Finding submissions and records may throw. We will not catch here and
+        // instead let the controller handle it.
         const submissions = await this.submissionsService.findWithinWindow(
           userId,
           window,

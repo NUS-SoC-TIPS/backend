@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Logger, Module } from '@nestjs/common';
 
 import { RecordsModule } from '../records/records.module';
 import { SubmissionsModule } from '../submissions/submissions.module';
@@ -9,7 +9,7 @@ import { TasksService } from './tasks.service';
 
 @Module({
   controllers: [TasksController],
-  providers: [TasksService],
+  providers: [TasksService, Logger],
   imports: [WindowsModule, SubmissionsModule, RecordsModule],
 })
 export class TasksModule {}
