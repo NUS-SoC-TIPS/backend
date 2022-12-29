@@ -42,8 +42,10 @@ export class Judge0Service {
     const submission = await this.createSubmissionObject(code, language);
     this.useBatchSubmission = !this.useBatchSubmission;
     if (this.useBatchSubmission) {
+      this.logger.log('Performing batched submission', Judge0Service.name);
       return this.createBatchedSubmission(submission);
     } else {
+      this.logger.log('Performing single submission', Judge0Service.name);
       return this.createSingleSubmission(submission);
     }
   }

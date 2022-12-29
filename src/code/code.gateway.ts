@@ -67,7 +67,7 @@ export class CodeGateway implements OnModuleDestroy {
     @ConnectedSocket() socket: ISocket,
     @GetRoom('id') roomId: number,
   ): void {
-    this.logger.log(CODE_EVENTS.UPDATE_YJS, CodeGateway.name);
+    this.logger.debug(CODE_EVENTS.UPDATE_YJS, CodeGateway.name); // Too spammy in production
     const response = this.codeService.updateDoc(roomId, socket, data);
     if (response) {
       socket.emit(CODE_EVENTS.UPDATE_YJS, response);
