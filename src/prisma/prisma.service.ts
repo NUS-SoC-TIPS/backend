@@ -1,4 +1,9 @@
-import { INestApplication, Injectable, OnModuleInit } from '@nestjs/common';
+import {
+  INestApplication,
+  Injectable,
+  Logger,
+  OnModuleInit,
+} from '@nestjs/common';
 import {
   Prisma,
   PrismaClient,
@@ -11,7 +16,10 @@ import { DataService } from '../data/data.service';
 
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit {
-  constructor(private readonly dataService: DataService) {
+  constructor(
+    private readonly dataService: DataService,
+    private readonly logger: Logger,
+  ) {
     super();
   }
 
@@ -21,6 +29,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
     await this.seedWindows();
     await this.seedLeetCode();
     await this.seedKattis();
+    this.logger.log('All data seeded', PrismaService.name);
   }
 
   async enableShutdownHooks(app: INestApplication): Promise<void> {
@@ -52,88 +61,151 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
       deleteRooms,
       deleteSettings,
       deleteUsers,
-    ]);
+    ])
+      .catch((e: Error) => {
+        this.logger.error('Failed to clean DB', e.stack, PrismaService.name);
+        throw e;
+      })
+      .then((result) => {
+        this.logger.log('DB cleaned', PrismaService.name);
+        return result;
+      });
   }
 
   private async seedAdmins(): Promise<void> {
-    await this.user.updateMany({
-      data: {
-        role: UserRole.NORMAL,
-      },
-    });
-    await this.user.updateMany({
-      where: {
-        githubUsername: {
-          in: this.dataService.getAdminData(),
-          mode: 'insensitive',
+    await this.user
+      .updateMany({
+        data: {
+          role: UserRole.NORMAL,
         },
-      },
-      data: {
-        role: UserRole.ADMIN,
-      },
-    });
+      })
+      .catch((e: Error) => {
+        this.logger.error(
+          'Failed to update all users to NORMAL during admin seeding',
+          e.stack,
+          PrismaService.name,
+        );
+        throw e;
+      });
+    await this.user
+      .updateMany({
+        where: {
+          githubUsername: {
+            in: this.dataService.getAdminData(),
+            mode: 'insensitive',
+          },
+        },
+        data: {
+          role: UserRole.ADMIN,
+        },
+      })
+      .catch((e: Error) => {
+        this.logger.error(
+          'Failed to update admin users to ADMIN during admin seeding',
+          e.stack,
+          PrismaService.name,
+        );
+        throw e;
+      });
+    this.logger.log('Admins seeded', PrismaService.name);
   }
 
   private async seedWindows(): Promise<Window[]> {
     return Promise.all(
       this.dataService.getWindowData().map((window) => {
         const { id, ...windowData } = window;
-        return this.window.upsert({
-          create: {
-            ...window,
-          },
-          update: {
-            ...windowData,
-          },
-          where: {
-            id,
-          },
-        });
+        return this.window
+          .upsert({
+            create: {
+              ...window,
+            },
+            update: {
+              ...windowData,
+            },
+            where: {
+              id,
+            },
+          })
+          .catch((e: Error) => {
+            this.logger.error(
+              `Failed to seed window with ID: ${window.id}`,
+              e.stack,
+              PrismaService.name,
+            );
+            throw e;
+          });
       }),
-    );
+    ).then((result) => {
+      this.logger.log('Windows seeded', PrismaService.name);
+      return result;
+    });
   }
 
   private seedLeetCode(): Promise<Question[]> {
     return Promise.all(
       this.dataService.getLeetCodeData().map((question) => {
         const { slug, source, ...questionData } = question;
-        return this.question.upsert({
-          create: {
-            ...question,
-          },
-          update: {
-            ...questionData,
-          },
-          where: {
-            slug_source: {
-              slug,
-              source,
+        return this.question
+          .upsert({
+            create: {
+              ...question,
             },
-          },
-        });
+            update: {
+              ...questionData,
+            },
+            where: {
+              slug_source: {
+                slug,
+                source,
+              },
+            },
+          })
+          .catch((e: Error) => {
+            this.logger.error(
+              `Failed to upsert LeetCode question with slug: ${slug}`,
+              e.stack,
+              PrismaService.name,
+            );
+            throw e;
+          });
       }),
-    );
+    ).then((result) => {
+      this.logger.log('LeetCode questions seeded', PrismaService.name);
+      return result;
+    });
   }
 
   private seedKattis(): Promise<Question[]> {
     return Promise.all(
       this.dataService.getKattisData().map((question) => {
         const { slug, source, ...questionData } = question;
-        return this.question.upsert({
-          create: {
-            ...question,
-          },
-          update: {
-            ...questionData,
-          },
-          where: {
-            slug_source: {
-              slug,
-              source,
+        return this.question
+          .upsert({
+            create: {
+              ...question,
             },
-          },
-        });
+            update: {
+              ...questionData,
+            },
+            where: {
+              slug_source: {
+                slug,
+                source,
+              },
+            },
+          })
+          .catch((e: Error) => {
+            this.logger.error(
+              `Failed to upsert Kattis question with slug: ${slug}`,
+              e.stack,
+              PrismaService.name,
+            );
+            throw e;
+          });
       }),
-    );
+    ).then((result) => {
+      this.logger.log('Kattis questions seeded', PrismaService.name);
+      return result;
+    });
   }
 }
