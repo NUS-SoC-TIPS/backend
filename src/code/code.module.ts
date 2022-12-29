@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Logger, Module } from '@nestjs/common';
 
 import { Judge0Module } from '../judge0/judge0.module';
 import { UsersModule } from '../users/users.module';
@@ -9,7 +9,7 @@ import { CodeService } from './code.service';
 
 @Module({
   controllers: [CodeController],
-  providers: [CodeGateway, CodeService],
+  providers: [CodeGateway, CodeService, Logger],
   exports: [CodeService],
   imports: [UsersModule, Judge0Module],
 })

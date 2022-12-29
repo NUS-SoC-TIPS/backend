@@ -1,4 +1,9 @@
-import { OnModuleDestroy, ParseEnumPipe, UseGuards } from '@nestjs/common';
+import {
+  Logger,
+  OnModuleDestroy,
+  ParseEnumPipe,
+  UseGuards,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
   ConnectedSocket,
@@ -14,7 +19,6 @@ import { Server } from 'socket.io';
 import { AuthWsGuard } from '../auth/guards';
 import { ISocket } from '../interfaces/socket';
 import { CallbackDto } from '../judge0/dtos';
-import { Judge0Service } from '../judge0/judge0.service';
 import { GetRoom } from '../rooms/decorators';
 import { InRoomGuard } from '../rooms/guards';
 
@@ -37,8 +41,8 @@ export class CodeGateway implements OnModuleDestroy {
 
   constructor(
     private readonly codeService: CodeService,
-    private readonly judge0Service: Judge0Service,
     private readonly configService: ConfigService,
+    private readonly logger: Logger,
   ) {
     this.roomIdToCodeExecutionTimeouts = new Map();
     this.submissionTokenToRoomId = new Map();
@@ -47,6 +51,10 @@ export class CodeGateway implements OnModuleDestroy {
   @UseGuards(AuthWsGuard, InRoomGuard)
   @SubscribeMessage(CODE_EVENTS.CONNECT_YJS)
   connectYjs(@ConnectedSocket() socket: ISocket, @GetRoom() room: Room): void {
+    this.logger.debug(
+      `Connecting YJS for room with ID: ${room.id}`,
+      CodeGateway.name,
+    );
     socket.emit(CODE_EVENTS.CONNECT_YJS);
     const { sync, awareness } = this.codeService.joinOrInitDoc(room, socket);
     socket.emit(CODE_EVENTS.UPDATE_YJS, sync);
@@ -62,6 +70,10 @@ export class CodeGateway implements OnModuleDestroy {
     @ConnectedSocket() socket: ISocket,
     @GetRoom('id') roomId: number,
   ): void {
+    this.logger.debug(
+      `Updating YJS for room with ID: ${roomId}`,
+      CodeGateway.name,
+    );
     const response = this.codeService.updateDoc(roomId, socket, data);
     if (response) {
       socket.emit(CODE_EVENTS.UPDATE_YJS, response);
@@ -76,6 +88,10 @@ export class CodeGateway implements OnModuleDestroy {
     @GetRoom('id') roomId: number,
     @ConnectedSocket() socket: ISocket,
   ): void {
+    this.logger.debug(
+      `Updating language for room with ID: ${roomId}`,
+      CodeGateway.name,
+    );
     this.codeService.updateLanguage(roomId, language);
     socket.broadcast
       .to(`${roomId}`)
@@ -85,8 +101,16 @@ export class CodeGateway implements OnModuleDestroy {
   @UseGuards(AuthWsGuard, InRoomGuard)
   @SubscribeMessage(CODE_EVENTS.EXECUTE_CODE)
   async executeCode(@GetRoom() room: Room): Promise<void> {
+    this.logger.debug(
+      `Executing code for room with ID: ${room.id}`,
+      CodeGateway.name,
+    );
+
     if (this.roomIdToCodeExecutionTimeouts.has(room.id)) {
-      // Do nothing, since someone is already executing code
+      this.logger.warn(
+        'User requested to execute code despite code already executing for room',
+        CodeGateway.name,
+      );
       return;
     }
 
@@ -125,18 +149,24 @@ export class CodeGateway implements OnModuleDestroy {
   completeExecution(dto: CallbackDto): void {
     const roomId = this.submissionTokenToRoomId.get(dto.token);
     if (roomId == null) {
-      // Token somehow cleared
+      this.logger.warn(
+        `Token ${dto.token} was somehow previously cleared`,
+        CodeGateway.name,
+      );
       return;
     }
     this.submissionTokenToRoomId.delete(dto.token);
     const timeout = this.roomIdToCodeExecutionTimeouts.get(roomId);
     if (timeout == null) {
-      // Execution was cancelled
+      this.logger.log(
+        'Code execution has been cancelled due to timeout',
+        CodeGateway.name,
+      );
       return;
     }
     clearTimeout(timeout);
     this.roomIdToCodeExecutionTimeouts.delete(roomId);
-    const result = this.judge0Service.interpretResults(dto);
+    const result = this.codeService.interpretResults(dto);
     this.server.to(`${roomId}`).emit(CODE_EVENTS.EXECUTION_COMPLETED, result);
   }
 
@@ -147,6 +177,10 @@ export class CodeGateway implements OnModuleDestroy {
   }
 
   private cancelExecution(roomId: number): void {
+    this.logger.warn(
+      `Cancelling code execution due to timeout for room with ID: ${roomId}`,
+      CodeGateway.name,
+    );
     this.server.to(`${roomId}`).emit(CODE_EVENTS.EXECUTION_TIMED_OUT);
     this.clearRoomTimeout(roomId);
   }

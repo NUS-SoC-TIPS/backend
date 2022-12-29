@@ -1,7 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { Language, Room } from '@prisma/client';
 import * as decoding from 'lib0/decoding';
 import * as encoding from 'lib0/encoding';
+import { CallbackDto } from 'src/judge0/dtos';
 import * as awarenessProtocol from 'y-protocols/awareness';
 import * as syncProtocol from 'y-protocols/sync';
 
@@ -21,6 +22,7 @@ export class CodeService {
   constructor(
     private readonly usersService: UsersService,
     private readonly judge0Service: Judge0Service,
+    private readonly logger: Logger,
   ) {
     this.roomToLanguage = new Map();
     this.roomToDoc = new Map();
@@ -43,7 +45,7 @@ export class CodeService {
     syncProtocol.writeSyncStep1(encoder, doc);
     const sync = encoding.toUint8Array(encoder);
 
-    // Handle awarenesss
+    // Handle awareness
     let awareness: Uint8Array | undefined;
     const awarenessStates = doc.awareness.getStates();
     if (awarenessStates.size > 0) {
@@ -68,6 +70,7 @@ export class CodeService {
   ): Uint8Array | undefined {
     const doc = this.roomToDoc.get(roomId);
     if (doc == null) {
+      this.logger.warn('Failed to find YJS doc for updating', CodeService.name);
       return;
     }
 
@@ -84,16 +87,25 @@ export class CodeService {
             return encoding.toUint8Array(encoder);
           }
           break;
-        case MESSAGE_AWARENESS: {
+        case MESSAGE_AWARENESS:
           awarenessProtocol.applyAwarenessUpdate(
             doc.awareness,
             decoding.readVarUint8Array(decoder),
             socket,
           );
           break;
-        }
+        default:
+          this.logger.error(
+            `Unknown YJS message type: ${messageType}`,
+            CodeService.name,
+          );
       }
     } catch (err) {
+      this.logger.error(
+        'Failed to update YJS doc',
+        err instanceof Error ? err.stack : undefined,
+        CodeService.name,
+      );
       doc.emit('error', [err]);
     }
   }
@@ -102,6 +114,10 @@ export class CodeService {
     const doc = this.roomToDoc.get(roomId);
     const controlledIds = doc?.connections?.get(socket);
     if (doc == null || controlledIds == null) {
+      this.logger.warn(
+        'User attempted to leave YJS doc despite doc not existing or socket not being connected',
+        CodeService.name,
+      );
       return;
     }
     doc.connections.delete(socket);
@@ -122,9 +138,19 @@ export class CodeService {
   async findOrInitLanguage(roomId: number, userId: string): Promise<Language> {
     let language = this.roomToLanguage.get(roomId);
     if (language == null) {
-      const userSettings = await this.usersService.findSettings(userId);
-      language =
-        userSettings?.preferredInterviewLanguage ?? Language.PYTHON_THREE;
+      language = Language.PYTHON_THREE;
+      await this.usersService
+        .findSettings(userId)
+        .then((userSettings) => {
+          language = userSettings?.preferredInterviewLanguage ?? language;
+        })
+        .catch(() => {
+          // We will consume the error here instead of propagating it up further.
+          this.logger.warn(
+            'Failed to find preferred interview language setting, using default',
+            CodeService.name,
+          );
+        });
       this.roomToLanguage.set(roomId, language);
     }
     return language;
@@ -138,6 +164,10 @@ export class CodeService {
    */
   updateLanguage(roomId: number, language: Language): void {
     if (!this.roomToLanguage.has(roomId)) {
+      this.logger.warn(
+        'Failed to find language for updating',
+        CodeService.name,
+      );
       return;
     }
     this.roomToLanguage.set(roomId, language);
@@ -152,6 +182,10 @@ export class CodeService {
     const doc = this.roomToDoc.get(room.id);
     this.roomToDoc.delete(room.id);
     if (doc == null) {
+      this.logger.warn(
+        'Failed to find doc for room closing, returning default values',
+        CodeService.name,
+      );
       return { code: '', language };
     }
     const code = doc.getText(room.slug).toJSON().trim();
@@ -162,8 +196,12 @@ export class CodeService {
   // Sends the code over to Judge0 for execution and returns the submission token
   async executeCodeAsync(room: Room): Promise<string | null> {
     const doc = this.roomToDoc.get(room.id);
-    const language = this.roomToLanguage.get(room.id);
-    if (doc == null || language == null) {
+    const language = this.roomToLanguage.get(room.id) ?? Language.PYTHON_THREE;
+    if (doc == null) {
+      this.logger.warn(
+        'Failed to find doc for async code execution',
+        CodeService.name,
+      );
       return null;
     }
     const code = doc.getText(room.slug).toJSON().trim();
@@ -172,11 +210,19 @@ export class CodeService {
 
   async executeCodeSync(room: Room): Promise<ExecutionResultEntity | null> {
     const doc = this.roomToDoc.get(room.id);
-    const language = this.roomToLanguage.get(room.id);
-    if (doc == null || language == null) {
+    const language = this.roomToLanguage.get(room.id) ?? Language.PYTHON_THREE;
+    if (doc == null) {
+      this.logger.warn(
+        'Failed to find doc for sync code execution',
+        CodeService.name,
+      );
       return null;
     }
     const code = doc.getText(room.slug).toJSON().trim();
     return this.judge0Service.createSyncSubmission(code, language);
+  }
+
+  interpretResults(dto: CallbackDto): ExecutionResultEntity {
+    return this.judge0Service.interpretResults(dto);
   }
 }
