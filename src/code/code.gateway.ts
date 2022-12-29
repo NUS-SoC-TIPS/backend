@@ -51,10 +51,7 @@ export class CodeGateway implements OnModuleDestroy {
   @UseGuards(AuthWsGuard, InRoomGuard)
   @SubscribeMessage(CODE_EVENTS.CONNECT_YJS)
   connectYjs(@ConnectedSocket() socket: ISocket, @GetRoom() room: Room): void {
-    this.logger.debug(
-      `Connecting YJS for room with ID: ${room.id}`,
-      CodeGateway.name,
-    );
+    this.logger.log(CODE_EVENTS.CONNECT_YJS, CodeGateway.name);
     socket.emit(CODE_EVENTS.CONNECT_YJS);
     const { sync, awareness } = this.codeService.joinOrInitDoc(room, socket);
     socket.emit(CODE_EVENTS.UPDATE_YJS, sync);
@@ -70,10 +67,7 @@ export class CodeGateway implements OnModuleDestroy {
     @ConnectedSocket() socket: ISocket,
     @GetRoom('id') roomId: number,
   ): void {
-    this.logger.debug(
-      `Updating YJS for room with ID: ${roomId}`,
-      CodeGateway.name,
-    );
+    this.logger.log(CODE_EVENTS.UPDATE_YJS, CodeGateway.name);
     const response = this.codeService.updateDoc(roomId, socket, data);
     if (response) {
       socket.emit(CODE_EVENTS.UPDATE_YJS, response);
@@ -88,10 +82,7 @@ export class CodeGateway implements OnModuleDestroy {
     @GetRoom('id') roomId: number,
     @ConnectedSocket() socket: ISocket,
   ): void {
-    this.logger.debug(
-      `Updating language for room with ID: ${roomId}`,
-      CodeGateway.name,
-    );
+    this.logger.log(CODE_EVENTS.UPDATE_LANGUAGE, CodeGateway.name);
     this.codeService.updateLanguage(roomId, language);
     socket.broadcast
       .to(`${roomId}`)
@@ -101,11 +92,7 @@ export class CodeGateway implements OnModuleDestroy {
   @UseGuards(AuthWsGuard, InRoomGuard)
   @SubscribeMessage(CODE_EVENTS.EXECUTE_CODE)
   async executeCode(@GetRoom() room: Room): Promise<void> {
-    this.logger.debug(
-      `Executing code for room with ID: ${room.id}`,
-      CodeGateway.name,
-    );
-
+    this.logger.log(CODE_EVENTS.EXECUTE_CODE, CodeGateway.name);
     if (this.roomIdToCodeExecutionTimeouts.has(room.id)) {
       this.logger.warn(
         'User requested to execute code despite code already executing for room',
