@@ -97,16 +97,17 @@ export class CodeService {
         default:
           this.logger.error(
             `Unknown YJS message type: ${messageType}`,
+            undefined,
             CodeService.name,
           );
       }
-    } catch (err) {
+    } catch (e) {
       this.logger.error(
         'Failed to update YJS doc',
-        err instanceof Error ? err.stack : undefined,
+        e instanceof Error ? e.stack : undefined,
         CodeService.name,
       );
-      doc.emit('error', [err]);
+      doc.emit('error', [e]);
     }
   }
 
