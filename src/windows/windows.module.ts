@@ -1,9 +1,9 @@
-import { Module } from '@nestjs/common';
+import { Logger, Module } from '@nestjs/common';
 
 import { WindowsService } from './windows.service';
 
 @Module({
-  providers: [WindowsService],
+  providers: [WindowsService, Logger],
   exports: [WindowsService],
 })
 export class WindowsModule {}

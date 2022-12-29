@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Window } from '@prisma/client';
 
@@ -9,10 +9,20 @@ export class WindowsService {
   constructor(
     private readonly prismaService: PrismaService,
     private readonly configService: ConfigService,
+    private readonly logger: Logger,
   ) {}
 
-  find(windowId: number): Promise<Window | null> {
-    return this.prismaService.window.findUnique({ where: { id: windowId } });
+  findOrThrow(windowId: number): Promise<Window> {
+    return this.prismaService.window
+      .findUniqueOrThrow({ where: { id: windowId } })
+      .catch((e: Error) => {
+        this.logger.error(
+          `Failed to find window with ID: ${windowId}`,
+          e.stack,
+          WindowsService.name,
+        );
+        throw e;
+      });
   }
 
   /**
@@ -20,65 +30,66 @@ export class WindowsService {
    * - If currently in the middle of a window, that will be returned
    * - Else if there exists a window in the future, the upcoming window will be returned
    * - Else (all windows are over), the most recent window will be returned
+   *
+   * Currently, this fires off three separate transactions, which is safe since windows are only refreshed
+   * on app restart.
+   *
+   * TODO: Consider whether there's a need to wrap these queries in a single transaction.
    */
   async findClosestWindow(): Promise<Window> {
     const ongoingWindow = await this.findOngoingWindow();
-    if (ongoingWindow) {
+    if (ongoingWindow != null) {
       return ongoingWindow;
     }
-
-    const currentDate = new Date();
-    const upcomingWindow = await this.prismaService.window.findFirst({
-      where: {
-        startAt: {
-          gte: currentDate,
-        },
-      },
-      orderBy: {
-        startAt: 'asc',
-      },
-      take: 1,
-    });
-    if (upcomingWindow) {
+    const upcomingWindow = await this.findUpcomingWindow();
+    if (upcomingWindow != null) {
       return upcomingWindow;
     }
-
-    const mostRecentPastWindow = await this.prismaService.window.findFirst({
-      orderBy: {
-        startAt: 'desc',
-      },
-      take: 1,
-    });
-    if (mostRecentPastWindow == null) {
-      throw new BadRequestException();
-    }
-
+    const mostRecentPastWindow = await this.findMostRecentPastWindowOrThrow();
     return mostRecentPastWindow;
   }
 
   findOngoingWindow(): Promise<Window | null> {
     const currentDate = new Date();
-    return this.prismaService.window.findFirst({
-      where: {
-        startAt: {
-          lte: currentDate,
+    return this.prismaService.window
+      .findFirst({
+        where: {
+          startAt: {
+            lte: currentDate,
+          },
+          endAt: {
+            gte: currentDate,
+          },
         },
-        endAt: {
-          gte: currentDate,
-        },
-      },
-    });
+      })
+      .catch((e: Error) => {
+        this.logger.error(
+          'Failed to find nullable ongoing window',
+          e.stack,
+          WindowsService.name,
+        );
+        throw e;
+      });
   }
 
   findCurrentIterationWindows(): Promise<Window[]> {
-    return this.prismaService.window.findMany({
-      where: {
-        iteration: Number(this.configService.get('CURRENT_ITERATION')),
-      },
-      orderBy: {
-        startAt: 'asc',
-      },
-    });
+    return this.prismaService.window
+      .findMany({
+        where: {
+          iteration: Number(this.configService.get('CURRENT_ITERATION')),
+        },
+        orderBy: {
+          startAt: 'asc',
+        },
+      })
+      .catch((e: Error) => {
+        this.logger.error(
+          'Failed to find windows for current iteration',
+          e.stack,
+          WindowsService.name,
+        );
+        throw e;
+      });
   }
 
   findStartOfWeek(): Date {
@@ -90,5 +101,47 @@ export class WindowsService {
     } // Set the hours to day number minus 1
     date.setHours(0, 0, 0, 0);
     return date;
+  }
+
+  private findUpcomingWindow(): Promise<Window | null> {
+    const currentDate = new Date();
+    return this.prismaService.window
+      .findFirst({
+        where: {
+          startAt: {
+            gte: currentDate,
+          },
+        },
+        orderBy: {
+          startAt: 'asc',
+        },
+        take: 1,
+      })
+      .catch((e: Error) => {
+        this.logger.error(
+          'Failed to find nullable upcoming window',
+          e.stack,
+          WindowsService.name,
+        );
+        throw e;
+      });
+  }
+
+  private findMostRecentPastWindowOrThrow(): Promise<Window> {
+    return this.prismaService.window
+      .findFirstOrThrow({
+        orderBy: {
+          startAt: 'desc',
+        },
+        take: 1,
+      })
+      .catch((e: Error) => {
+        this.logger.error(
+          'Failed to find non-null most recent past window',
+          e.stack,
+          WindowsService.name,
+        );
+        throw e;
+      });
   }
 }
