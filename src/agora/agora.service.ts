@@ -17,7 +17,7 @@ export class AgoraService {
     const agoraAppCertificate = this.configService.get('AGORA_APP_CERTIFICATE');
     if (agoraAppId == null || agoraAppCertificate == null) {
       this.logger.warn(
-        'Agora app ID or certificate not defined, could not generate access token.',
+        'Agora app ID or certificate not defined, failed to generate access token.',
         AgoraService.name,
       );
       return null;
