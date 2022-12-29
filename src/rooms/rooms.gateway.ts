@@ -1,6 +1,7 @@
 import {
   Logger,
   OnModuleDestroy,
+  UseFilters,
   UseGuards,
   ValidationPipe,
 } from '@nestjs/common';
@@ -22,10 +23,10 @@ import { AuthWsGuard } from '../auth/guards';
 import { CodeService } from '../code/code.service';
 import { ISocket } from '../interfaces/socket';
 import { NotesService } from '../notes/notes.service';
-import { handleWsError } from '../utils/error.util';
 
 import { GetRoom } from './decorators';
 import { CreateRecordDto } from './dtos';
+import { CloseRoomExceptionFilter, JoinRoomExceptionFilter } from './filters';
 import { InRoomGuard } from './guards';
 import { ROOM_AUTOCLOSE_DURATION, ROOM_EVENTS } from './rooms.constants';
 import { RoomsService } from './rooms.service';
@@ -53,6 +54,7 @@ export class RoomsGateway implements OnGatewayDisconnect, OnModuleDestroy {
   }
 
   @UseGuards(AuthWsGuard)
+  @UseFilters(JoinRoomExceptionFilter)
   @SubscribeMessage(ROOM_EVENTS.JOIN_ROOM)
   async joinRoom(
     @MessageBody('slug', new ValidationPipe()) slug: string,
@@ -60,18 +62,14 @@ export class RoomsGateway implements OnGatewayDisconnect, OnModuleDestroy {
     @ConnectedSocket() socket: ISocket,
   ): Promise<void> {
     this.logger.log(ROOM_EVENTS.JOIN_ROOM, RoomsGateway.name);
-    const room = await this.roomsService
-      .findBySlug(slug)
-      .catch(handleWsError('Failed to find room to join'));
+    const room = await this.roomsService.findBySlug(slug);
     if (!room) {
       socket.emit(ROOM_EVENTS.ROOM_DOES_NOT_EXIST);
       return;
     }
 
     // Do corresponding checks
-    const userCurrentRoom = await this.roomsService
-      .findCurrent(user.id)
-      .catch(handleWsError("Failed to find user's current room"));
+    const userCurrentRoom = await this.roomsService.findCurrent(user.id);
     const userInAnotherRoom = userCurrentRoom && userCurrentRoom.slug !== slug;
     if (userInAnotherRoom) {
       socket.emit(ROOM_EVENTS.ALREADY_IN_ROOM, { slug: userCurrentRoom.slug });
@@ -99,9 +97,7 @@ export class RoomsGateway implements OnGatewayDisconnect, OnModuleDestroy {
     // Update relevant data
     this.addSocketToRoomStructures(socket, room);
     // This is the final point of failure. Subsequently, no following steps should throw an error.
-    this.roomsService
-      .createRoomUser({ roomId: room.id, userId: user.id })
-      .catch(handleWsError('Failed to create room user'));
+    this.roomsService.createRoomUser({ roomId: room.id, userId: user.id });
     socket.broadcast
       .to(`${room.id}`)
       .emit(ROOM_EVENTS.JOINED_ROOM, { partner: user });
@@ -129,6 +125,7 @@ export class RoomsGateway implements OnGatewayDisconnect, OnModuleDestroy {
   }
 
   @UseGuards(AuthWsGuard, InRoomGuard)
+  @UseFilters(CloseRoomExceptionFilter)
   @SubscribeMessage(ROOM_EVENTS.CLOSE_ROOM)
   closeRoom(@GetRoom() room: Room): Promise<void> {
     return this.closeRoomHelper(room, false).catch((e) => {
@@ -137,7 +134,7 @@ export class RoomsGateway implements OnGatewayDisconnect, OnModuleDestroy {
         e instanceof Error ? e.stack : undefined,
         RoomsGateway.name,
       );
-      handleWsError('Failed to close room')(e);
+      throw e;
     });
   }
 
@@ -171,6 +168,7 @@ export class RoomsGateway implements OnGatewayDisconnect, OnModuleDestroy {
   }
 
   private async closeRoomHelper(room: Room, isAuto: boolean): Promise<void> {
+    this.server.to(`${room.id}`).emit(ROOM_EVENTS.CLOSING_ROOM);
     const { code, language } = this.codeService.getCodeAndLanguage(room);
     const userNotes = this.notesService.getNotes(room.id);
     const recordData: CreateRecordDto = {

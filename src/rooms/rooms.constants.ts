@@ -12,11 +12,16 @@ export const ROOM_EVENTS = {
   ROOM_IS_FULL: 'room_is_full',
   ROOM_IS_CLOSED: 'room_is_closed',
 
-  // For any of the two users in the room to end the session. Also sent back to both users in room.
+  // For any of the two users in the room to end the session. Also sent back to both users in room upon room close success.
   CLOSE_ROOM: 'close_room',
+  CLOSING_ROOM: 'closing_room', // To trigger loading state
 
   // To inform the other user that one user has disconnected
   PARTNER_DISCONNECTED: 'partner_disconnected',
+
+  // General errors, such as due to database errors
+  JOIN_ROOM_FAILED: 'join_room_failed',
+  CLOSE_ROOM_FAILED: 'close_room_failed',
 };
 
 export const ROOM_AUTOCLOSE_DURATION = 300000; // 5 minutes in milliseconds
