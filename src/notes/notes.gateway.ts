@@ -1,4 +1,4 @@
-import { UseGuards, ValidationPipe } from '@nestjs/common';
+import { Logger, UseGuards, ValidationPipe } from '@nestjs/common';
 import {
   MessageBody,
   SubscribeMessage,
@@ -19,7 +19,10 @@ import { NotesService } from './notes.service';
   },
 })
 export class NotesGateway {
-  constructor(private readonly notesService: NotesService) {}
+  constructor(
+    private readonly notesService: NotesService,
+    private readonly logger: Logger,
+  ) {}
 
   @UseGuards(AuthWsGuard, InRoomGuard)
   @SubscribeMessage(NOTES_EVENTS.UPDATE_NOTES)
@@ -28,6 +31,7 @@ export class NotesGateway {
     @GetRoom('id') roomId: number,
     @GetUserWs('id') userId: string,
   ): void {
+    this.logger.log(NOTES_EVENTS.UPDATE_NOTES, NotesGateway.name);
     this.notesService.updateNotes(roomId, userId, notes);
   }
 }

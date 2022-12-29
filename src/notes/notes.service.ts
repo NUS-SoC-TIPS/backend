@@ -1,10 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 
 @Injectable()
 export class NotesService {
   private roomIdToUserIdToNotesMap: Map<number, Map<string, string>>;
 
-  constructor() {
+  constructor(private readonly logger: Logger) {
     this.roomIdToUserIdToNotesMap = new Map();
   }
 
@@ -17,6 +17,7 @@ export class NotesService {
   updateNotes(roomId: number, userId: string, notes: string): void {
     const notesMap = this.roomIdToUserIdToNotesMap.get(roomId);
     if (notesMap == null) {
+      this.logger.warn('Failed to find notes for updating', NotesService.name);
       return;
     }
     notesMap.set(userId, notes);
@@ -42,6 +43,10 @@ export class NotesService {
   closeRoom(roomId: number): { userId: string; notes: string }[] {
     const userIdToNotesMap = this.roomIdToUserIdToNotesMap.get(roomId);
     if (userIdToNotesMap == null) {
+      this.logger.warn(
+        'Failed to find notes for room closing, returning default values',
+        NotesService.name,
+      );
       return [];
     }
     const result: { userId: string; notes: string }[] = [];
