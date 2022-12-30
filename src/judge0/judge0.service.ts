@@ -42,10 +42,13 @@ export class Judge0Service {
     const submission = await this.createSubmissionObject(code, language);
     this.useBatchSubmission = !this.useBatchSubmission;
     if (this.useBatchSubmission) {
-      this.logger.log('Performing batched submission', Judge0Service.name);
+      this.logger.log(
+        'Performing batched async submission',
+        Judge0Service.name,
+      );
       return this.createBatchedSubmission(submission);
     } else {
-      this.logger.log('Performing single submission', Judge0Service.name);
+      this.logger.log('Performing single async submission', Judge0Service.name);
       return this.createSingleSubmission(submission);
     }
   }
@@ -58,6 +61,7 @@ export class Judge0Service {
     if (!this.isFullyInitialised()) {
       return Promise.resolve(null);
     }
+    this.logger.log('Performing single sync submission', Judge0Service.name);
     const submission = await this.createSubmissionObject(code, language);
     try {
       const response = await axios.post(
@@ -194,6 +198,7 @@ export class Judge0Service {
       return;
     }
 
+    this.logger.log('Refreshing languages', Judge0Service.name);
     try {
       const { data }: { data: { id: number; name: string }[] } =
         await axios.get(`https://${this.judge0Host}/languages`, {

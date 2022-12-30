@@ -204,7 +204,10 @@ export class CodeService {
   async executeCodeAsync(room: Room): Promise<string | null> {
     const { code, language } = this.getCodeAndLanguage(room);
     if (code === '') {
-      this.logger.warn('Attempted to execute empty code', CodeService.name);
+      this.logger.warn(
+        'Attempted to execute empty code async',
+        CodeService.name,
+      );
       return null;
     }
     return this.judge0Service.createAsyncSubmission(code, language);
@@ -213,7 +216,10 @@ export class CodeService {
   async executeCodeSync(room: Room): Promise<ExecutionResultEntity | null> {
     const { code, language } = this.getCodeAndLanguage(room);
     if (code === '') {
-      this.logger.warn('Attempted to execute empty code', CodeService.name);
+      this.logger.warn(
+        'Attempted to execute empty code sync',
+        CodeService.name,
+      );
       return null;
     }
     return this.judge0Service.createSyncSubmission(code, language);
