@@ -33,7 +33,7 @@ export class AuthGateway implements OnGatewayConnection {
     @MessageBody('bearerToken') token: string,
     @ConnectedSocket() socket: ISocket,
   ): Promise<void> {
-    this.logger.debug('Authenticating socket...', AuthGateway.name);
+    this.logger.log(AUTH_EVENTS.AUTHENTICATE, AuthGateway.name);
     const payload = await this.jwtService.verifyAsync(token).catch((e) => {
       this.logger.error(
         'Failed to verify token async',

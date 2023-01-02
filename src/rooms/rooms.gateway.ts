@@ -128,6 +128,7 @@ export class RoomsGateway implements OnGatewayDisconnect, OnModuleDestroy {
   @UseFilters(CloseRoomExceptionFilter)
   @SubscribeMessage(ROOM_EVENTS.CLOSE_ROOM)
   closeRoom(@GetRoom() room: Room): Promise<void> {
+    this.logger.log(ROOM_EVENTS.CLOSE_ROOM, RoomsGateway.name);
     return this.closeRoomHelper(room, false).catch((e) => {
       this.logger.error(
         `Failed to close room with ID: ${room.id}`,
@@ -142,6 +143,10 @@ export class RoomsGateway implements OnGatewayDisconnect, OnModuleDestroy {
     if (!socket.room) {
       return;
     }
+    this.logger.log(
+      `Socket with ID: ${socket.id} disconnected`,
+      RoomsGateway.name,
+    );
     const { room } = socket;
     this.removeSocketFromRoomStructures(socket, room);
     this.codeService.leaveDoc(room.id, socket);
@@ -149,6 +154,7 @@ export class RoomsGateway implements OnGatewayDisconnect, OnModuleDestroy {
   }
 
   onModuleDestroy(): Promise<void[]> {
+    this.logger.log('Destroying module...', RoomsGateway.name);
     return Promise.all(
       [...this.roomIdToSockets.keys()].map((roomId) =>
         this.roomsService.findById(roomId).then((room) => {

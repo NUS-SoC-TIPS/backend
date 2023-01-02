@@ -158,6 +158,7 @@ export class CodeGateway implements OnModuleDestroy {
   }
 
   onModuleDestroy(): void {
+    this.logger.log('Destroying module...', CodeGateway.name);
     [...this.roomIdToCodeExecutionTimeouts.keys()].map((roomId) =>
       this.clearRoomTimeout(roomId),
     );
