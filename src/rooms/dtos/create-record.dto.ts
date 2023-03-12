@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { Language, QuestionSource } from '@prisma/client';
 import {
   IsArray,
   IsBoolean,
@@ -11,6 +10,8 @@ import {
   IsPositive,
   IsString,
 } from 'class-validator';
+
+import { Language, QuestionSource } from '../../prisma/generated';
 
 @Injectable()
 export class CreateRecordDto {

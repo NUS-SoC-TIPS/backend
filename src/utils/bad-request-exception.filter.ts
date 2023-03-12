@@ -4,7 +4,6 @@ import {
   ExceptionFilter,
   HttpException,
 } from '@nestjs/common';
-// eslint-disable-next-line import/no-extraneous-dependencies
 import { Request, Response } from 'express';
 
 @Catch()

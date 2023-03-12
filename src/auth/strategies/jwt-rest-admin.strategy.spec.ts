@@ -1,9 +1,9 @@
 import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
-import { User, UserRole } from '@prisma/client';
 
 import { DataModule } from '../../data/data.module';
+import { User, UserRole } from '../../prisma/generated';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuthDto } from '../dtos';
 

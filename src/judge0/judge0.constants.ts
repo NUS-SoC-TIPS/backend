@@ -1,4 +1,4 @@
-import { Language } from '@prisma/client';
+import { Language } from '../prisma/generated';
 
 // If the language is not inside, it means it's not supported
 export const PRISMA_LANGUAGE_TO_JUDGE0_NAME_PREFIX = {

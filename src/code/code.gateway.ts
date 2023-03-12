@@ -12,13 +12,12 @@ import {
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets';
-import { Language, Room } from '@prisma/client';
-// eslint-disable-next-line import/no-extraneous-dependencies
 import { Server } from 'socket.io';
 
 import { AuthWsGuard } from '../auth/guards';
 import { ISocket } from '../interfaces/socket';
 import { CallbackDto } from '../judge0/dtos';
+import { Language, Room } from '../prisma/generated';
 import { GetRoom } from '../rooms/decorators';
 import { InRoomGuard } from '../rooms/guards';
 

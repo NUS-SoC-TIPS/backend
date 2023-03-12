@@ -1,6 +1,5 @@
-import { Window } from '@prisma/client';
-
 import { SubmissionWithQuestion } from '../../interfaces/interface';
+import { Window } from '../../prisma/generated';
 
 export interface SubmissionStatsEntity {
   // If currently in the middle of a window, the number will be returned

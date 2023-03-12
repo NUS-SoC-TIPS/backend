@@ -12,6 +12,7 @@ node_modules
 # compiled output
 /dist
 /build
+src/prisma/generated/*
 
 # Logs
 logs/*

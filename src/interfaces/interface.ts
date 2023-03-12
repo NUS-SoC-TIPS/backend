@@ -1,4 +1,9 @@
-import { Question, QuestionSubmission, RoomRecord, User } from '@prisma/client';
+import {
+  Question,
+  QuestionSubmission,
+  RoomRecord,
+  User,
+} from '../prisma/generated';
 
 export interface SubmissionWithQuestion extends QuestionSubmission {
   question: Question;

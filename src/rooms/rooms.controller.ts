@@ -6,10 +6,10 @@ import {
   UseFilters,
   UseGuards,
 } from '@nestjs/common';
-import { Room } from '@prisma/client';
 
 import { GetUserRest } from '../auth/decorators';
 import { JwtRestGuard } from '../auth/guards';
+import { Room } from '../prisma/generated';
 import { BadRequestExceptionFilter } from '../utils';
 
 import { RoomsService } from './rooms.service';

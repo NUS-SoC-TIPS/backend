@@ -1,5 +1,6 @@
 generator client {
-  provider        = "prisma-client-js"
+  provider = "prisma-client-js"
+
   // Explanation of each of these:
   // postgresqlExtensions: Allows PG extensions, see https://www.postgresql.org/docs/current/sql-createextension.html.
   // fieldReference: Allows you to compare columns in the same table e.g. `where: { quantity: { lte: prisma.product.fields.warnQuantity } }`
@@ -8,6 +9,9 @@ generator client {
   // orderByNulls: Allows you to do e.g. `orderBy: { updatedAt: { sort: 'asc', nulls: 'last' } }`
   // clientExtensions: Allows client extensions, see https://www.prisma.io/docs/concepts/components/prisma-client/client-extensions
   previewFeatures = ["postgresqlExtensions", "fieldReference", "filteredRelationCount", "extendedWhereUnique", "orderByNulls", "clientExtensions"]
+
+  // We need this due to generate issue with Prisma and Yarn v2: https://github.com/prisma/prisma/issues/1439
+  output = "../src/prisma/generated"
 }
 
 datasource db {

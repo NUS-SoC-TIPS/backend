@@ -7,10 +7,10 @@ import {
   UseFilters,
   UseGuards,
 } from '@nestjs/common';
-import { User } from '@prisma/client';
 
 import { GetUserRest } from '../auth/decorators';
 import { JwtRestGuard } from '../auth/guards';
+import { User } from '../prisma/generated';
 import { BadRequestExceptionFilter } from '../utils';
 
 import { UpdateSettingsDto } from './dtos';

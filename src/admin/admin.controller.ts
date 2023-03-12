@@ -9,9 +9,9 @@ import {
   UseFilters,
   UseGuards,
 } from '@nestjs/common';
-import { Exclusion, Window } from '@prisma/client';
 
 import { JwtRestAdminGuard } from '../auth/guards';
+import { Exclusion, Window } from '../prisma/generated';
 import { BadRequestExceptionFilter } from '../utils';
 
 import { AdminService } from './admin.service';

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { RoomRecord, RoomRecordUser, User } from '@prisma/client';
 
+import { RoomRecord, RoomRecordUser, User } from '../../prisma/generated';
 import { PrismaService } from '../../prisma/prisma.service';
 import { MINIMUM_INTERVIEW_DURATION } from '../records.constants';
 

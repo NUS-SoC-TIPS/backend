@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Window } from '@prisma/client';
 
 import { RecordWithPartner } from '../interfaces/interface';
+import { Window } from '../prisma/generated';
 import { PrismaService } from '../prisma/prisma.service';
 import { WindowsService } from '../windows/windows.service';
 

@@ -2,7 +2,7 @@ import {
   QuestionDifficulty,
   QuestionSource,
   QuestionType,
-} from '@prisma/client';
+} from '../../prisma/generated';
 
 export type QuestionData = {
   id: number;

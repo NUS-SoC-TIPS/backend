@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Settings, User } from '@prisma/client';
 
 import { DataService } from '../data/data.service';
+import { Settings, User } from '../prisma/generated';
 import { PrismaService } from '../prisma/prisma.service';
 
 import { UpdateSettingsDto, UpsertUserDto } from './dtos';

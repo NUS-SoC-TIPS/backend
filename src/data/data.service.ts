@@ -1,9 +1,10 @@
 import { Injectable } from '@nestjs/common';
+
 import {
   QuestionDifficulty,
   QuestionSource,
   QuestionType,
-} from '@prisma/client';
+} from '../prisma/generated';
 
 import {
   AdminData,

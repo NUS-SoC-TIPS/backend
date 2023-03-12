@@ -13,8 +13,6 @@ import {
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets';
-import { Room, RoomStatus, User } from '@prisma/client';
-// eslint-disable-next-line import/no-extraneous-dependencies
 import { Server } from 'socket.io';
 
 import { AgoraService } from '../agora/agora.service';
@@ -23,6 +21,7 @@ import { AuthWsGuard } from '../auth/guards';
 import { CodeService } from '../code/code.service';
 import { ISocket } from '../interfaces/socket';
 import { NotesService } from '../notes/notes.service';
+import { Room, RoomStatus, User } from '../prisma/generated';
 
 import { GetRoom } from './decorators';
 import { CreateRecordDto } from './dtos';

@@ -4,15 +4,10 @@ import {
   Logger,
   OnModuleInit,
 } from '@nestjs/common';
-import {
-  Prisma,
-  PrismaClient,
-  Question,
-  UserRole,
-  Window,
-} from '@prisma/client';
 
 import { DataService } from '../data/data.service';
+
+import { Prisma, PrismaClient, Question, UserRole, Window } from './generated';
 
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit {

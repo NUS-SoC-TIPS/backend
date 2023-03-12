@@ -1,12 +1,4 @@
 import { Injectable, Logger } from '@nestjs/common';
-import {
-  Exclusion,
-  RoomRecord,
-  RoomRecordUser,
-  User,
-  UserRole,
-  Window,
-} from '@prisma/client';
 
 import { DataService } from '../data/data.service';
 import { StudentData } from '../data/entities';
@@ -14,6 +6,14 @@ import {
   RecordWithPartner,
   SubmissionWithQuestion,
 } from '../interfaces/interface';
+import {
+  Exclusion,
+  RoomRecord,
+  RoomRecordUser,
+  User,
+  UserRole,
+  Window,
+} from '../prisma/generated';
 import { PrismaService } from '../prisma/prisma.service';
 import { MINIMUM_INTERVIEW_DURATION } from '../records/records.constants';
 import { UsersService } from '../users/users.service';

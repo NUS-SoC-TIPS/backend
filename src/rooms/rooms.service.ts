@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Room, RoomStatus, RoomUser, User } from '@prisma/client';
 import { generateSlug } from 'random-word-slugs';
 
+import { Room, RoomStatus, RoomUser, User } from '../prisma/generated';
 import { PrismaService } from '../prisma/prisma.service';
 
 import { CreateRecordDto, CreateRoomUserDto } from './dtos';

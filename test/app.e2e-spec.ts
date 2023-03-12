@@ -1,11 +1,11 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { User } from '@prisma/client';
 import helmet from 'helmet';
 import * as pactum from 'pactum';
 
 import { AppModule } from '../src/app.module';
 import appConfig from '../src/data/jsons/config.json';
+import { User } from '../src/prisma/generated';
 import { PrismaService } from '../src/prisma/prisma.service';
 import { createUserAndLogin } from '../src/utils';
 

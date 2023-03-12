@@ -1,6 +1,6 @@
-import { Room, User } from '@prisma/client';
-// eslint-disable-next-line import/no-extraneous-dependencies
 import { Socket } from 'socket.io';
+
+import { Room, User } from '../prisma/generated';
 
 export interface ISocket extends Socket {
   user?: User;

@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Window } from '@prisma/client';
 
+import { Window } from '../prisma/generated';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()

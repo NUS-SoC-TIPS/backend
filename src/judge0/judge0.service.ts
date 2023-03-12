@@ -1,7 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Language } from '@prisma/client';
 import axios, { AxiosRequestConfig } from 'axios';
+
+import { Language } from '../prisma/generated';
 
 import { CallbackDto } from './dtos';
 import { ExecutionResultEntity, Judge0Submission } from './entities';

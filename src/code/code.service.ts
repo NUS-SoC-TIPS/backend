@@ -1,5 +1,4 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Language, Room } from '@prisma/client';
 import * as decoding from 'lib0/decoding';
 import * as encoding from 'lib0/encoding';
 import * as awarenessProtocol from 'y-protocols/awareness';
@@ -9,6 +8,7 @@ import { ISocket } from '../interfaces/socket';
 import { CallbackDto } from '../judge0/dtos';
 import { ExecutionResultEntity } from '../judge0/entities';
 import { Judge0Service } from '../judge0/judge0.service';
+import { Language, Room } from '../prisma/generated';
 import { UsersService } from '../users/users.service';
 
 import { MESSAGE_AWARENESS, MESSAGE_SYNC } from './code.constants';

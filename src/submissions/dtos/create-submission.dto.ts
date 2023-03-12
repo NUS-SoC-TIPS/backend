@@ -1,5 +1,6 @@
-import { Language, QuestionSource } from '@prisma/client';
 import { IsEnum, IsNotEmpty, IsString } from 'class-validator';
+
+import { Language, QuestionSource } from '../../prisma/generated';
 
 export class CreateSubmissionDto {
   @IsString()

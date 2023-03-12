@@ -1,9 +1,9 @@
 import { INestApplication, InjectionToken } from '@nestjs/common';
 import { CanActivate } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { User } from '@prisma/client';
 import { Mock, MockFunctionMetadata, ModuleMocker } from 'jest-mock';
 
+import { User } from '../prisma/generated';
 import { PrismaService } from '../prisma/prisma.service';
 
 const moduleMocker = new ModuleMocker(global);

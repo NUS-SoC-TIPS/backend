@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { QuestionSubmission, Window } from '@prisma/client';
 
 import { SubmissionWithQuestion } from '../interfaces/interface';
+import { QuestionSubmission, Window } from '../prisma/generated';
 import { PrismaService } from '../prisma/prisma.service';
 import { WindowsService } from '../windows/windows.service';
 

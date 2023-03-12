@@ -1,5 +1,6 @@
-import { Language } from '@prisma/client';
 import { IsEnum, IsOptional, IsString } from 'class-validator';
+
+import { Language } from '../../prisma/generated';
 
 export class UpdateSettingsDto {
   @IsString()

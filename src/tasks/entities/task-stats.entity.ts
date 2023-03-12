@@ -1,7 +1,6 @@
-import { Window } from '@prisma/client';
-
 import { RecordWithPartner } from '../../interfaces/interface';
 import { SubmissionWithQuestion } from '../../interfaces/interface';
+import { Window } from '../../prisma/generated';
 
 export enum TaskStatWindowStatus {
   COMPLETED = 'COMPLETED',

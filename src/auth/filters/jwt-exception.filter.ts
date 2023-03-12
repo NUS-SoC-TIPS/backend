@@ -1,5 +1,4 @@
 import { ArgumentsHost, Catch, ExceptionFilter } from '@nestjs/common';
-// eslint-disable-next-line import/no-extraneous-dependencies
 import { JsonWebTokenError } from 'jsonwebtoken';
 
 @Catch(JsonWebTokenError)
