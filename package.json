@@ -135,5 +135,6 @@
     "**/*.md": [
       "markdownlint --fix"
     ]
-  }
+  },
+  "packageManager": "yarn@3.4.1"
 }
