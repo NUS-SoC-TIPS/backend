@@ -15,8 +15,8 @@ import { AuthDto } from './dtos';
 @Controller('auth')
 export class AuthController {
   constructor(
-    private readonly authService: AuthService,
     private readonly logger: Logger,
+    private readonly authService: AuthService,
   ) {}
 
   @Post('login')

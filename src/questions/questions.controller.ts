@@ -10,8 +10,8 @@ import { QuestionsService } from './questions.service';
 @Controller('questions')
 export class QuestionsController {
   constructor(
-    private readonly questionsService: QuestionsService,
     private readonly logger: Logger,
+    private readonly questionsService: QuestionsService,
   ) {}
 
   @Get()

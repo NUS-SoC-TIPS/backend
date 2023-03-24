@@ -5,8 +5,8 @@ import firebase from 'firebase-admin';
 @Injectable()
 export class FirebaseService implements OnModuleInit {
   constructor(
-    private readonly configService: ConfigService,
     private readonly logger: Logger,
+    private readonly configService: ConfigService,
   ) {}
 
   async onModuleInit(): Promise<void> {

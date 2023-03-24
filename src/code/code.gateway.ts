@@ -39,9 +39,9 @@ export class CodeGateway implements OnModuleDestroy {
   private submissionTokenToRoomId: Map<string, number>;
 
   constructor(
+    private readonly logger: Logger,
     private readonly codeService: CodeService,
     private readonly configService: ConfigService,
-    private readonly logger: Logger,
   ) {
     this.roomIdToCodeExecutionTimeouts = new Map();
     this.submissionTokenToRoomId = new Map();

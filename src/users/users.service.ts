@@ -10,9 +10,9 @@ import { AppConfig, UserSettingsConfig } from './entities';
 @Injectable()
 export class UsersService {
   constructor(
-    private readonly prismaService: PrismaService,
-    private readonly dataService: DataService,
     private readonly logger: Logger,
+    private readonly dataService: DataService,
+    private readonly prismaService: PrismaService,
   ) {}
 
   findOrThrow(userId: string): Promise<User> {

@@ -9,10 +9,10 @@ import { AuthDto } from './dtos';
 @Injectable()
 export class AuthService {
   constructor(
-    private readonly firebaseService: FirebaseService,
     private readonly jwt: JwtService,
-    private readonly usersService: UsersService,
     private readonly logger: Logger,
+    private readonly usersService: UsersService,
+    private readonly firebaseService: FirebaseService,
   ) {}
 
   async login(dto: AuthDto): Promise<string> {

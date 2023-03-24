@@ -12,8 +12,8 @@ import { Prisma, PrismaClient, Question, UserRole, Window } from './generated';
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit {
   constructor(
-    private readonly dataService: DataService,
     private readonly logger: Logger,
+    private readonly dataService: DataService,
   ) {
     super();
   }

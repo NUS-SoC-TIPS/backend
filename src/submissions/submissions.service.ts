@@ -12,10 +12,10 @@ import { SubmissionStatsEntity } from './entities';
 @Injectable()
 export class SubmissionsService {
   constructor(
+    private readonly logger: Logger,
     private readonly prismaService: PrismaService,
     private readonly windowsService: WindowsService,
     private readonly queryBuilder: SubmissionsQueryBuilder,
-    private readonly logger: Logger,
   ) {}
 
   create(

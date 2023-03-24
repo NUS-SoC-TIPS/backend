@@ -7,9 +7,9 @@ import { PrismaService } from '../prisma/prisma.service';
 @Injectable()
 export class WindowsService {
   constructor(
-    private readonly prismaService: PrismaService,
-    private readonly configService: ConfigService,
     private readonly logger: Logger,
+    private readonly configService: ConfigService,
+    private readonly prismaService: PrismaService,
   ) {}
 
   findOrThrow(windowId: number): Promise<Window> {

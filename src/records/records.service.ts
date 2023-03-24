@@ -2,7 +2,6 @@ import { Injectable, Logger } from '@nestjs/common';
 
 import { RecordWithPartner } from '../interfaces/interface';
 import { Window } from '../prisma/generated';
-import { PrismaService } from '../prisma/prisma.service';
 import { WindowsService } from '../windows/windows.service';
 
 import { RecordsQueryBuilder } from './builders';
@@ -11,10 +10,9 @@ import { RecordStatsEntity } from './entities';
 @Injectable()
 export class RecordsService {
   constructor(
-    private readonly prismaService: PrismaService,
+    private readonly logger: Logger,
     private readonly windowsService: WindowsService,
     private readonly queryBuilder: RecordsQueryBuilder,
-    private readonly logger: Logger,
   ) {}
 
   async findStats(userId: string): Promise<RecordStatsEntity> {

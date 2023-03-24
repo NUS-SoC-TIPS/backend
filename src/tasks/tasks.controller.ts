@@ -11,8 +11,8 @@ import { TasksService } from './tasks.service';
 @Controller('tasks')
 export class TasksController {
   constructor(
-    private readonly tasksService: TasksService,
     private readonly logger: Logger,
+    private readonly tasksService: TasksService,
   ) {}
 
   @Get('stats')

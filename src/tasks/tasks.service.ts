@@ -9,9 +9,9 @@ import { TaskStatsEntity, TaskStatWindowStatus } from './entities';
 @Injectable()
 export class TasksService {
   constructor(
+    private readonly recordsService: RecordsService,
     private readonly windowsService: WindowsService,
     private readonly submissionsService: SubmissionsService,
-    private readonly recordsService: RecordsService,
   ) {}
 
   async findStats(userId: string): Promise<TaskStatsEntity> {

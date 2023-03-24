@@ -6,8 +6,8 @@ import { PrismaService } from '../prisma/prisma.service';
 @Injectable()
 export class QuestionsService {
   constructor(
-    private readonly prismaService: PrismaService,
     private readonly logger: Logger,
+    private readonly prismaService: PrismaService,
   ) {}
 
   findAll(): Promise<Question[]> {

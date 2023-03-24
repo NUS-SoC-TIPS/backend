@@ -20,9 +20,9 @@ export class CodeService {
   private roomToDoc: Map<number, YjsDoc>;
 
   constructor(
+    private readonly logger: Logger,
     private readonly usersService: UsersService,
     private readonly judge0Service: Judge0Service,
-    private readonly logger: Logger,
   ) {
     this.roomToLanguage = new Map();
     this.roomToDoc = new Map();

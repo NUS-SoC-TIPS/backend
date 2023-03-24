@@ -8,8 +8,8 @@ import { CodeGateway } from './code.gateway';
 @Controller('code')
 export class CodeController {
   constructor(
-    private readonly codeGateway: CodeGateway,
     private readonly logger: Logger,
+    private readonly codeGateway: CodeGateway,
   ) {}
 
   @Put('callback')

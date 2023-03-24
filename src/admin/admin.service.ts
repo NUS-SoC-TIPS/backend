@@ -50,11 +50,11 @@ export class AdminService {
   private studentMap: Map<string, CustomStudentDataItem>;
 
   constructor(
-    private readonly prismaService: PrismaService,
-    private readonly windowsService: WindowsService,
+    private readonly logger: Logger,
     private readonly dataService: DataService,
     private readonly usersService: UsersService,
-    private readonly logger: Logger,
+    private readonly prismaService: PrismaService,
+    private readonly windowsService: WindowsService,
   ) {
     this.studentData = this.dataService.getStudentData().map((s) => ({
       ...s,

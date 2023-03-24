@@ -23,8 +23,8 @@ export class Judge0Service {
   private useBatchSubmission = true;
 
   constructor(
-    private readonly configService: ConfigService,
     private readonly logger: Logger,
+    private readonly configService: ConfigService,
   ) {
     this.judge0Key = this.configService.get('JUDGE0_KEY');
     this.judge0Host = this.configService.get('JUDGE0_HOST');

@@ -20,8 +20,8 @@ import { NotesService } from './notes.service';
 })
 export class NotesGateway {
   constructor(
-    private readonly notesService: NotesService,
     private readonly logger: Logger,
+    private readonly notesService: NotesService,
   ) {}
 
   @UseGuards(AuthWsGuard, InRoomGuard)

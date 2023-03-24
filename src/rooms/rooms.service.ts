@@ -9,8 +9,8 @@ import { CreateRecordDto, CreateRoomUserDto } from './dtos';
 @Injectable()
 export class RoomsService {
   constructor(
-    private readonly prismaService: PrismaService,
     private readonly logger: Logger,
+    private readonly prismaService: PrismaService,
   ) {}
 
   async create(userId: string): Promise<Room> {

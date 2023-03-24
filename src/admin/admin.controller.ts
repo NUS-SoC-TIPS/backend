@@ -22,8 +22,8 @@ import { AdminStatsEntity } from './entities';
 @Controller('admin')
 export class AdminController {
   constructor(
-    private readonly adminService: AdminService,
     private readonly logger: Logger,
+    private readonly adminService: AdminService,
   ) {}
 
   @Get('windows')

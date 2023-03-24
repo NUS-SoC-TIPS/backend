@@ -7,8 +7,8 @@ import { AGORA_TOKEN_DURATION } from './agora.constants';
 @Injectable()
 export class AgoraService {
   constructor(
-    private readonly configService: ConfigService,
     private readonly logger: Logger,
+    private readonly configService: ConfigService,
   ) {}
 
   generateAccessToken(roomId: number, userId: string): string | null {
