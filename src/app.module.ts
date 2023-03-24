@@ -6,6 +6,7 @@ import { AgoraModule } from './agora/agora.module';
 import { AuthModule } from './auth/auth.module';
 import { CodeModule } from './code/code.module';
 import { DataModule } from './data/data.module';
+import { DevModule } from './dev/dev.module';
 import { FirebaseModule } from './firebase/firebase.module';
 import { Judge0Module } from './judge0/judge0.module';
 import { NotesModule } from './notes/notes.module';
@@ -37,6 +38,7 @@ import { WindowsModule } from './windows/windows.module';
     WindowsModule,
     AdminModule,
     TasksModule,
+    ...(process.env.NODE_ENV === 'development' ? [DevModule] : []),
   ],
 })
 export class AppModule {}
