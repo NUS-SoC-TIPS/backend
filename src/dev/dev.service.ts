@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { generateSlug } from 'random-word-slugs';
 
 import { UpsertUserDto } from '../users/dtos';
 import { UsersService } from '../users/users.service';
@@ -13,10 +14,11 @@ export class DevService {
   ) {}
 
   async login(): Promise<string> {
+    const slug = generateSlug();
     const userInfo: UpsertUserDto = {
-      id: 'devuser806a61a264556518471dccbde32d4d39',
+      id: slug,
       name: 'Dev User',
-      githubUsername: 'devuser',
+      githubUsername: slug,
       photoUrl:
         'https://res.cloudinary.com/folio-hnr/image/upload/v1679629122/blob_ycezgh.jpg',
       profileUrl: 'https://github.com',
