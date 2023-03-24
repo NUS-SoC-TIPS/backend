@@ -1,17 +1,21 @@
-import { IsEnum, IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
-import { Language } from '../../prisma/generated';
+import { KeyBinding, Language } from '../../prisma/generated';
 
 export class UpdateSettingsDto {
   @IsString()
-  @IsOptional()
-  name?: string;
+  @IsNotEmpty()
+  name: string;
 
   @IsString()
-  @IsOptional()
-  photoUrl?: string;
+  @IsNotEmpty()
+  photoUrl: string;
 
   @IsEnum(Language)
   @IsOptional()
   preferredInterviewLanguage?: Language;
+
+  @IsEnum(KeyBinding)
+  @IsNotEmpty()
+  preferredKeyBinding: KeyBinding;
 }

@@ -53,14 +53,13 @@ export class UsersService {
     user: User,
     dto: UpdateSettingsDto,
   ): Promise<UserSettingsConfig> {
-    const { name, photoUrl, preferredInterviewLanguage } = dto;
+    const { name, photoUrl, preferredInterviewLanguage, preferredKeyBinding } =
+      dto;
     // Finding settings may throw. We will not catch here and instead let the controller handle it.
     const settings = await this.findSettings(user.id);
-    const hasUpdatedName =
-      settings?.hasUpdatedName || (name != null && name !== user.name);
+    const hasUpdatedName = settings?.hasUpdatedName ?? name !== user.name;
     const hasUpdatedPhoto =
-      settings?.hasUpdatedPhoto ||
-      (photoUrl != null && photoUrl !== user.photoUrl);
+      settings?.hasUpdatedPhoto ?? photoUrl !== user.photoUrl;
 
     return await this.prismaService.$transaction(async (tx) => {
       const updatedSettings = await tx.settings
@@ -70,11 +69,13 @@ export class UsersService {
             hasUpdatedName,
             hasUpdatedPhoto,
             preferredInterviewLanguage,
+            preferredKeyBinding,
           },
           update: {
             hasUpdatedName,
             hasUpdatedPhoto,
             preferredInterviewLanguage,
+            preferredKeyBinding,
           },
           where: {
             userId: user.id,
@@ -94,8 +95,8 @@ export class UsersService {
         updatedUser = await tx.user
           .update({
             data: {
-              name: name?.trim() ?? user.name,
-              photoUrl: photoUrl ?? user.photoUrl,
+              name: name.trim(),
+              photoUrl: photoUrl,
             },
             where: {
               id: user.id,

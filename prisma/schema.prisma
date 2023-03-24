@@ -38,14 +38,15 @@ model User {
 }
 
 model Settings {
-  id                         Int       @id @default(autoincrement())
-  createdAt                  DateTime  @default(now())
-  updatedAt                  DateTime  @updatedAt
-  userId                     String    @unique
+  id                         Int        @id @default(autoincrement())
+  createdAt                  DateTime   @default(now())
+  updatedAt                  DateTime   @updatedAt
+  userId                     String     @unique
   hasUpdatedName             Boolean
   hasUpdatedPhoto            Boolean
   preferredInterviewLanguage Language?
-  user                       User      @relation(fields: [userId], references: [id])
+  preferredKeyBinding        KeyBinding @default(STANDARD)
+  user                       User       @relation(fields: [userId], references: [id])
 }
 
 model Room {
@@ -249,4 +250,13 @@ enum QuestionSource {
   CUSTOM
 
   @@map("question_source")
+}
+
+enum KeyBinding {
+  STANDARD
+  VIM
+  EMACS
+  SUBLIME
+
+  @@map("key_binding")
 }
