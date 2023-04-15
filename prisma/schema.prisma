@@ -256,7 +256,7 @@ enum KeyBinding {
   STANDARD
   VIM
   EMACS
-  SUBLIME
+  VS_CODE
 
   @@map("key_binding")
 }
