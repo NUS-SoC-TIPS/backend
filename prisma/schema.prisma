@@ -255,7 +255,6 @@ enum QuestionSource {
 enum KeyBinding {
   STANDARD
   VIM
-  EMACS
   VS_CODE
 
   @@map("key_binding")
