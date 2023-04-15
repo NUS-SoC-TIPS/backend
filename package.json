@@ -134,6 +134,9 @@
       "pretty-quick --staged",
       "eslint --fix"
     ],
+    "**/*.prisma": [
+      "pretty-quick --staged"
+    ],
     "**/*.md": [
       "markdownlint --fix"
     ]
