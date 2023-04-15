@@ -31,4 +31,4 @@ export const PRISMA_LANGUAGE_TO_JUDGE0_NAME_PREFIX = {
   [Language.PROLOG]: 'Prolog',
 };
 
-export const VERSION_NUMBER_REGEX = new RegExp('d+(.d+)+');
+export const VERSION_NUMBER_REGEX = /\d+(\.\d+)+/;
