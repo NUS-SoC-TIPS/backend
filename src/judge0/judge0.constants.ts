@@ -17,14 +17,21 @@ export const PRISMA_LANGUAGE_TO_JUDGE0_NAME_PREFIX = {
   [Language.RUST]: 'Rust',
   [Language.PHP]: 'PHP',
   [Language.TYPESCRIPT]: 'TypeScript',
+  // RACKET is not supported
   [Language.ERLANG]: 'Erlang',
   [Language.ELIXIR]: 'Elixir',
+  [Language.DART]: 'Dart',
+  // MY_SQL is not supported
+  // MS_SQL_SERVER is not supported
+  // ORACLE is not supported
   [Language.BASH]: 'Bash',
   [Language.COBOL]: 'COBOL',
   [Language.LISP]: 'Common Lisp',
   [Language.F_SHARP]: 'F#',
   [Language.FORTRAN]: 'Fortran',
+  // GERBIL is not supported
   [Language.HASKELL]: 'Haskell',
+  // JULIA is not supported
   [Language.OBJECTIVE_C]: 'Objective-C',
   [Language.OCAML]: 'OCaml',
   [Language.PASCAL]: 'Pascal',
