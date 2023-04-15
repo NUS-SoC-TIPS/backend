@@ -185,6 +185,7 @@ enum RoomStatus {
 }
 
 enum Language {
+  // For LeetCode Algorithm + JavaScript + Concurrency questions
   C_PLUS_PLUS
   JAVA
   PYTHON
@@ -203,21 +204,25 @@ enum Language {
   RACKET
   ERLANG
   ELIXIR
+  DART
 
-  // For database questions
+  // For LeetCode Database questions
   MY_SQL
   MS_SQL_SERVER
   ORACLE
 
-  // For shell question
+  // For LeetCode Shell questions
   BASH
 
-  // For Kattis
+  // For Kattis questions
+  APL
   COBOL
   LISP
   F_SHARP
   FORTRAN
+  GERBIL
   HASKELL
+  JULIA
   OBJECTIVE_C
   OCAML
   PASCAL
@@ -234,9 +239,11 @@ enum QuestionDifficulty {
   @@map("question_difficulty")
 }
 
+// Mainly used for LeetCode questions, which are categorised by types
 enum QuestionType {
   ALGORITHMS
   DATABASE
+  JAVASCRIPT
   SHELL
   CONCURRENCY
 
