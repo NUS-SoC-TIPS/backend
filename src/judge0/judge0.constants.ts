@@ -32,3 +32,4 @@ export const PRISMA_LANGUAGE_TO_JUDGE0_NAME_PREFIX = {
 };
 
 export const VERSION_NUMBER_REGEX = /\d+(\.\d+)+/;
+export const VERSION_UPDATE_INTERVAL_MS = 3600000;

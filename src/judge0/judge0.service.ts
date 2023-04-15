@@ -9,6 +9,7 @@ import { ExecutionResultEntity, Judge0Submission } from './entities';
 import {
   PRISMA_LANGUAGE_TO_JUDGE0_NAME_PREFIX,
   VERSION_NUMBER_REGEX,
+  VERSION_UPDATE_INTERVAL_MS,
 } from './judge0.constants';
 
 @Injectable()
@@ -18,7 +19,7 @@ export class Judge0Service {
   private judge0CallbackUrl: string | undefined;
   private prismaLanguageToJudge0Language: Map<
     Language,
-    { id: number; name: string }
+    { id: number; name: string; lastUpdated: number }
   >;
   private useBatchSubmission = true;
 
@@ -86,9 +87,7 @@ export class Judge0Service {
 
   // Returns a map of language to Judge0 language name
   async getExecutableLanguages(): Promise<{ [language: string]: string }> {
-    if (this.prismaLanguageToJudge0Language.size === 0) {
-      await this.refreshLanguages();
-    }
+    await this.refreshLanguagesIfNecessary();
     const languages = {};
     [...this.prismaLanguageToJudge0Language.entries()].forEach(
       ([key, value]) => (languages[key] = value.name),
@@ -181,9 +180,7 @@ export class Judge0Service {
   }
 
   private async getLanguageId(language: Language): Promise<number | null> {
-    if (this.prismaLanguageToJudge0Language.size === 0) {
-      await this.refreshLanguages();
-    }
+    await this.refreshLanguagesIfNecessary();
     const id = this.prismaLanguageToJudge0Language.get(language)?.id ?? null;
     if (id == null) {
       this.logger.warn(
@@ -192,6 +189,20 @@ export class Judge0Service {
       );
     }
     return id;
+  }
+
+  private async refreshLanguagesIfNecessary(): Promise<void> {
+    if (this.prismaLanguageToJudge0Language.size === 0) {
+      return this.refreshLanguages();
+    }
+    const keys = Array(...this.prismaLanguageToJudge0Language.keys());
+    // They will all have the same lastUpdated, so we'll just check any one
+    const lastUpdated = this.prismaLanguageToJudge0Language.get(
+      keys[0],
+    )?.lastUpdated;
+    if (lastUpdated && Date.now() - lastUpdated > VERSION_UPDATE_INTERVAL_MS) {
+      return this.refreshLanguages();
+    }
   }
 
   private async refreshLanguages(): Promise<void> {
@@ -207,11 +218,12 @@ export class Judge0Service {
         });
       this.prismaLanguageToJudge0Language.clear();
       const matchings = this.matchPrismaLanguageToJudge0Language(data);
+      const lastUpdated = Date.now();
       Object.entries(matchings).forEach(([prismaLanguage, judge0Language]) => {
-        this.prismaLanguageToJudge0Language.set(
-          prismaLanguage as Language,
-          judge0Language,
-        );
+        this.prismaLanguageToJudge0Language.set(prismaLanguage as Language, {
+          ...judge0Language,
+          lastUpdated,
+        });
       });
     } catch (e) {
       this.logger.error(
