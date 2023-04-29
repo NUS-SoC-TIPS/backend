@@ -9,6 +9,7 @@
     "prisma:dev:setup": "dotenv -e .env.development -- prisma migrate deploy && yarn pnpify prisma generate",
     "prisma:test:setup": "dotenv -e .env.test -- prisma migrate deploy && yarn pnpify prisma generate",
     "prisma:dev:migrate": "dotenv -e .env.development -- prisma migrate dev --skip-generate",
+    "prisma:dev:migrate:manual": "dotenv -e .env.development -- prisma migrate dev --create-only",
     "prisma:prod:migrate": "dotenv -e .env.production -- prisma migrate deploy",
     "db:dev:rm": "docker compose rm dev-db -s -f -v",
     "db:dev:up": "docker compose up dev-db -d",

@@ -47,6 +47,8 @@ model Settings {
   preferredInterviewLanguage Language?
   preferredKeyBinding        KeyBinding @default(STANDARD)
   user                       User       @relation(fields: [userId], references: [id])
+
+  @@map("settings")
 }
 
 model Room {
