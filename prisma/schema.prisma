@@ -21,11 +21,11 @@ datasource db {
 
 model User {
   id                  String               @id // ID from GitHub
-  createdAt           DateTime             @default(now())
-  updatedAt           DateTime             @updatedAt
-  githubUsername      String
-  photoUrl            String // Provided by GitHub
-  profileUrl          String // Also provided by GitHub
+  createdAt           DateTime             @default(now()) @map("created_at")
+  updatedAt           DateTime             @updatedAt @map("updated_at")
+  githubUsername      String               @map("github_username")
+  photoUrl            String               @map("photo_url") // Provided by GitHub
+  profileUrl          String               @map("profile_url") // Also provided by GitHub
   name                String
   role                UserRole             @default(NORMAL)
   settings            Settings?
