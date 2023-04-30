@@ -77,16 +77,16 @@ model RoomUser {
 
 model RoomRecord {
   id              Int              @id @default(autoincrement())
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
-  isRoleplay      Boolean          @default(false)
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
+  isRoleplay      Boolean          @default(false) @map("is_roleplay")
   duration        Float // In milliseconds. Time taken for both users if general, else time taken for specific turn.
-  codeWritten     String // Code written by both users if general, else by interviewee
-  isSolved        Boolean          @default(false)
-  roomId          Int
-  questionSlug    String?
+  codeWritten     String           @map("code_written") // Code written by both users if general, else by interviewee
+  isSolved        Boolean          @default(false) @map("is_solved")
+  roomId          Int              @map("room_id")
+  questionSlug    String?          @map("question_slug")
   language        Language
-  questionSource  QuestionSource?
+  questionSource  QuestionSource?  @map("question_source")
   question        Question?        @relation(fields: [questionSlug, questionSource], references: [slug, source]) // Null if general
   room            Room             @relation(fields: [roomId], references: [id], onDelete: Cascade)
   roomRecordUsers RoomRecordUser[]
