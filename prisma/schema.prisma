@@ -145,13 +145,13 @@ model QuestionSubmission {
 
 model Window {
   id               Int         @id
-  createdAt        DateTime    @default(now())
-  updatedAt        DateTime    @updatedAt
-  startAt          DateTime
-  endAt            DateTime
+  createdAt        DateTime    @default(now()) @map("created_at")
+  updatedAt        DateTime    @updatedAt @map("updated_at")
+  startAt          DateTime    @map("start_at")
+  endAt            DateTime    @map("end_at")
   iteration        Int
-  requireInterview Boolean
-  numQuestions     Int         @default(7)
+  requireInterview Boolean     @map("require_interview")
+  numQuestions     Int         @default(7) @map("num_questions")
   exclusions       Exclusion[]
 
   @@map("windows")
