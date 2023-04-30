@@ -115,12 +115,12 @@ model Question {
 // 1 pair of users per room record
 model RoomRecordUser {
   id            Int        @id @default(autoincrement())
-  createdAt     DateTime   @default(now())
-  updatedAt     DateTime   @updatedAt
-  isInterviewer Boolean // false if record is general, but it's not really used
+  createdAt     DateTime   @default(now()) @map("created_at")
+  updatedAt     DateTime   @updatedAt @map("updated_at")
+  isInterviewer Boolean    @map("is_interviewer") // false if record is general, but it's not really used
   notes         String // Notes taken by this user during interview
-  userId        String
-  roomRecordId  Int
+  userId        String     @map("user_id")
+  roomRecordId  Int        @map("room_record_id")
   roomRecord    RoomRecord @relation(fields: [roomRecordId], references: [id])
   user          User       @relation(fields: [userId], references: [id])
 
