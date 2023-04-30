@@ -66,8 +66,8 @@ model Room {
 
 model RoomUser {
   id     Int    @id @default(autoincrement())
-  roomId Int
-  userId String
+  roomId Int    @map("room_id")
+  userId String @map("user_id")
   room   Room   @relation(fields: [roomId], references: [id], onDelete: Cascade)
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
