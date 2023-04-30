@@ -97,13 +97,13 @@ model RoomRecord {
 model Question {
   slug                String
   name                String
-  isPremium           Boolean
+  isPremium           Boolean              @map("is_premium")
   difficulty          QuestionDifficulty
   source              QuestionSource
   type                QuestionType
   id                  Int
-  createdAt           DateTime             @default(now())
-  updatedAt           DateTime             @updatedAt
+  createdAt           DateTime             @default(now()) @map("created_at")
+  updatedAt           DateTime             @updatedAt @map("updated_at")
   questionSubmissions QuestionSubmission[]
   roomRecords         RoomRecord[]
 
