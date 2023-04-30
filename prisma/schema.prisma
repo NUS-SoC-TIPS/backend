@@ -39,13 +39,13 @@ model User {
 
 model Settings {
   id                         Int        @id @default(autoincrement())
-  createdAt                  DateTime   @default(now())
-  updatedAt                  DateTime   @updatedAt
-  userId                     String     @unique
-  hasUpdatedName             Boolean
-  hasUpdatedPhoto            Boolean
-  preferredInterviewLanguage Language?
-  preferredKeyBinding        KeyBinding @default(STANDARD)
+  createdAt                  DateTime   @default(now()) @map("created_at")
+  updatedAt                  DateTime   @updatedAt @map("updated_at")
+  userId                     String     @unique @map("user_id")
+  hasUpdatedName             Boolean    @map("has_updated_name")
+  hasUpdatedPhoto            Boolean    @map("has_updated_photo")
+  preferredInterviewLanguage Language?  @map("preferred_interview_language")
+  preferredKeyBinding        KeyBinding @default(STANDARD) @map("preferred_key_binding")
   user                       User       @relation(fields: [userId], references: [id])
 
   @@map("settings")
