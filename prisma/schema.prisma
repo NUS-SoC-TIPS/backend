@@ -130,13 +130,13 @@ model RoomRecordUser {
 
 model QuestionSubmission {
   id             Int            @id @default(autoincrement())
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
-  codeWritten    String
-  userId         String
-  questionSlug   String
-  languageUsed   Language
-  questionSource QuestionSource
+  createdAt      DateTime       @default(now()) @map("created_at")
+  updatedAt      DateTime       @updatedAt @map("updated_at")
+  codeWritten    String         @map("code_written")
+  userId         String         @map("user_id")
+  questionSlug   String         @map("question_slug")
+  languageUsed   Language       @map("language_used")
+  questionSource QuestionSource @map("question_source")
   question       Question       @relation(fields: [questionSlug, questionSource], references: [slug, source])
   user           User           @relation(fields: [userId], references: [id])
 
