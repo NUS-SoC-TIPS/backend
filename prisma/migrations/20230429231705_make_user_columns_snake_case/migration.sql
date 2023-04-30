@@ -1,6 +1,6 @@
 /*
  
- NOTE: This migration script is manually written to avoid dropping all the below columns.
+  NOTE: This migration script is manually written to avoid dropping all the below columns.
  
 */
 -- AlterTable
