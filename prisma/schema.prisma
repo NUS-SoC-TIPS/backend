@@ -52,11 +52,11 @@ model Settings {
 }
 
 model Room {
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-  closedAt    DateTime? // Null if not closed
-  slug        String // Random word slug generated at app level
   id          Int          @id @default(autoincrement())
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+  closedAt    DateTime?    @map("closed_at") // Null if not closed
+  slug        String // Random word slug generated at app level
   status      RoomStatus   @default(OPEN)
   roomRecords RoomRecord[]
   roomUsers   RoomUser[] // Max 2 room users
