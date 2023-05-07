@@ -4,9 +4,9 @@ import helmet from 'helmet';
 import * as pactum from 'pactum';
 
 import { AppModule } from '../src/app.module';
-import appConfig from '../src/data/jsons/config.json';
-import { User } from '../src/prisma/generated';
-import { PrismaService } from '../src/prisma/prisma.service';
+import appConfig from '../src/infra/data/jsons/config.json';
+import { User } from '../src/infra/prisma/generated';
+import { PrismaService } from '../src/infra/prisma/prisma.service';
 import { createUserAndLogin } from '../src/utils';
 
 // Tests all main user flows

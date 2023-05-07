@@ -2,8 +2,8 @@ import { Injectable, Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { generateSlug } from 'random-word-slugs';
 
-import { UpsertUserDto } from '../users/dtos';
-import { UsersService } from '../users/users.service';
+import { UpsertUserDto } from '../product/general/users/dtos';
+import { UsersService } from '../product/general/users/users.service';
 
 @Injectable()
 export class DevService {

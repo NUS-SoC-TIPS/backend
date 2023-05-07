@@ -9,7 +9,7 @@ import {
 import * as winston from 'winston';
 import DailyRotateFile from 'winston-daily-rotate-file';
 
-import { PrismaService } from './prisma/prisma.service';
+import { PrismaService } from './infra/prisma/prisma.service';
 import { AppModule } from './app.module';
 
 function getWinstonFormat(isConsole: boolean): winston.Logform.Format {

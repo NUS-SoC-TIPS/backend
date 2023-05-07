@@ -3,6 +3,6 @@
   "collection": "@nestjs/schematics",
   "sourceRoot": "src",
   "compilerOptions": {
-    "assets": ["prisma/generated/**/*"]
+    "assets": ["infra/prisma/generated/**/*"]
   }
 }

@@ -4,4 +4,4 @@ build
 jest.config.js
 coverage
 __snapshots__
-src/prisma/generated/*
+src/infra/prisma/generated/*

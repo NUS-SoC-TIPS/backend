@@ -1,8 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
-import { Window } from '../prisma/generated';
-import { PrismaService } from '../prisma/prisma.service';
+import { Window } from '../infra/prisma/generated';
+import { PrismaService } from '../infra/prisma/prisma.service';
 
 @Injectable()
 export class WindowsService {
