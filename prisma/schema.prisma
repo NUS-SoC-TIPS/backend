@@ -145,16 +145,27 @@ model QuestionSubmission {
   @@map("question_submissions")
 }
 
+model Cohort {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  name      String   @unique
+  Window    Window[]
+
+  @@map("cohorts")
+}
+
 model Window {
   id               Int         @id
   createdAt        DateTime    @default(now()) @map("created_at")
   updatedAt        DateTime    @updatedAt @map("updated_at")
   startAt          DateTime    @map("start_at")
   endAt            DateTime    @map("end_at")
-  iteration        Int
+  cohortId         Int         @map("cohort_id")
   requireInterview Boolean     @map("require_interview")
   numQuestions     Int         @default(7) @map("num_questions")
   exclusions       Exclusion[]
+  cohort           Cohort      @relation(fields: [cohortId], references: [id], onDelete: Cascade)
 
   @@map("windows")
 }
