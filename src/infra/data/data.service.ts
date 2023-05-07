@@ -6,20 +6,13 @@ import {
   QuestionType,
 } from '../prisma/generated';
 
-import {
-  AdminData,
-  ConfigData,
-  QuestionData,
-  StudentData,
-  WindowData,
-} from './entities';
+import { AdminData, ConfigData, QuestionData, StudentData } from './entities';
 import {
   adminsJson,
   configJson,
   kattisJson,
   leetCodeJson,
   studentsJson,
-  windowsJson,
 } from './jsons';
 
 @Injectable()
@@ -28,7 +21,6 @@ export class DataService {
   private configData: ConfigData;
   private leetCodeData: QuestionData;
   private kattisData: QuestionData;
-  private windowData: WindowData;
   private studentData: StudentData;
 
   constructor() {
@@ -45,11 +37,6 @@ export class DataService {
       difficulty: QuestionDifficulty[k.difficulty],
       type: QuestionType[k.type],
       source: QuestionSource.KATTIS,
-    }));
-    this.windowData = windowsJson.map((w) => ({
-      ...w,
-      startAt: new Date(w.startAt),
-      endAt: new Date(w.endAt),
     }));
     this.studentData = studentsJson.map((s) => ({
       ...s,
@@ -71,10 +58,6 @@ export class DataService {
 
   getKattisData(): QuestionData {
     return this.kattisData;
-  }
-
-  getWindowData(): WindowData {
-    return this.windowData;
   }
 
   getStudentData(): StudentData {

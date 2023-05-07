@@ -38,7 +38,6 @@ This project requires Docker and Docker Compose to be installed for the database
    DATABASE_URL="postgresql://postgres:123@localhost:5433/tips?schema=public"
    JWT_SECRET="some_secret_here"
    PORT=3001
-   CURRENT_ITERATION=1
    FIREBASE_PROJECT_ID=
    FIREBASE_CLIENT_EMAIL=
    FIREBASE_PRIVATE_KEY=
@@ -72,12 +71,6 @@ This project requires Docker and Docker Compose to be installed for the database
    ```
 
    You will be guided through an interactive prompt that will help you craft a beautiful commit message, using `commitizen`.
-
-## Updating TIPS for Upcoming Iteration
-
-To update TIPS for the coming iteration, you can simply update the JSON data at `src/data/jsons`.
-
-**NOTE:** DO NOT OVERWRITE past windows in `windows.json`. Instead, append new windows using an incremental `id`.
 
 ## Contributors
 

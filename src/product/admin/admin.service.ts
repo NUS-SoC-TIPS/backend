@@ -85,8 +85,8 @@ export class AdminService {
         where: {
           userId: dto.userId,
           window: {
-            iteration: {
-              equals: window.iteration,
+            cohortId: {
+              equals: window.cohortId,
             },
           },
         },
@@ -113,7 +113,7 @@ export class AdminService {
 
     if (existingExclusion) {
       // Update if we're going for an earlier exclusion than the existing one for
-      // the same iteration.
+      // the same cohort.
       return this.prismaService.exclusion
         .update({
           data: {
@@ -164,7 +164,7 @@ export class AdminService {
 
   async findWindows(): Promise<Window[]> {
     const currentDate = new Date();
-    const windows = await this.windowsService.findCurrentIterationWindows();
+    const windows = await this.windowsService.findCurrentCohortWindows();
     return windows.filter((window) => window.startAt <= currentDate);
   }
 
@@ -277,7 +277,7 @@ export class AdminService {
       .filter((user) =>
         user.exclusions.every(
           (e) =>
-            e.window.iteration !== window.iteration ||
+            e.window.cohortId !== window.cohortId ||
             e.window.startAt >= window.startAt,
         ),
       )

@@ -7,7 +7,7 @@ import {
 
 import { DataService } from '../data/data.service';
 
-import { Prisma, PrismaClient, Question, UserRole, Window } from './generated';
+import { Prisma, PrismaClient, Question, UserRole } from './generated';
 
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit {
@@ -21,7 +21,6 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
   async onModuleInit(): Promise<void> {
     await this.$connect();
     await this.seedAdmins();
-    await this.seedWindows();
     await this.seedLeetCode();
     await this.seedKattis();
     this.logger.log('All data seeded', PrismaService.name);
@@ -37,6 +36,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
   cleanDb(): Promise<Prisma.BatchPayload[]> {
     const deleteExclusions = this.exclusion.deleteMany();
     const deleteWindows = this.window.deleteMany();
+    const deleteCohorts = this.cohort.deleteMany();
     const deleteQuestionSubmissions = this.questionSubmission.deleteMany();
     const deleteRoomRecordUsers = this.roomRecordUser.deleteMany();
     const deleteQuestions = this.question.deleteMany();
@@ -48,6 +48,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
     return this.$transaction([
       deleteExclusions,
       deleteWindows,
+      deleteCohorts,
       deleteQuestionSubmissions,
       deleteRoomRecordUsers,
       deleteQuestions,
@@ -107,37 +108,6 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
         throw e;
       });
     this.logger.log('Admins seeded', PrismaService.name);
-  }
-
-  private async seedWindows(): Promise<Window[]> {
-    return Promise.all(
-      this.dataService.getWindowData().map((window) => {
-        const { id, ...windowData } = window;
-        return this.window
-          .upsert({
-            create: {
-              ...window,
-            },
-            update: {
-              ...windowData,
-            },
-            where: {
-              id,
-            },
-          })
-          .catch((e) => {
-            this.logger.error(
-              `Failed to seed window with ID: ${window.id}`,
-              e instanceof Error ? e.stack : undefined,
-              PrismaService.name,
-            );
-            throw e;
-          });
-      }),
-    ).then((result) => {
-      this.logger.log('Windows seeded', PrismaService.name);
-      return result;
-    });
   }
 
   private seedLeetCode(): Promise<Question[]> {

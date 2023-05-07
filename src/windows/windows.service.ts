@@ -1,5 +1,4 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 
 import { Window } from '../infra/prisma/generated';
 import { PrismaService } from '../infra/prisma/prisma.service';
@@ -8,7 +7,6 @@ import { PrismaService } from '../infra/prisma/prisma.service';
 export class WindowsService {
   constructor(
     private readonly logger: Logger,
-    private readonly configService: ConfigService,
     private readonly prismaService: PrismaService,
   ) {}
 
@@ -72,11 +70,12 @@ export class WindowsService {
       });
   }
 
-  findCurrentIterationWindows(): Promise<Window[]> {
+  findCurrentCohortWindows(): Promise<Window[]> {
     return this.prismaService.window
       .findMany({
         where: {
-          iteration: Number(this.configService.get('CURRENT_ITERATION')),
+          // TODO: Replace the hardcoded cohort ID with a variable one
+          cohortId: 1,
         },
         orderBy: {
           startAt: 'asc',
@@ -84,7 +83,7 @@ export class WindowsService {
       })
       .catch((e) => {
         this.logger.error(
-          'Failed to find windows for current iteration',
+          'Failed to find windows for current cohort',
           e instanceof Error ? e.stack : undefined,
           WindowsService.name,
         );
