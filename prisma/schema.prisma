@@ -163,6 +163,7 @@ model CohortUser {
   updatedAt              DateTime @updatedAt @map("updated_at")
   userId                 String   @map("user_id")
   cohortId               Int      @map("cohort_id")
+  coursemologyName       String   @map("coursemology_name")
   coursemologyProfileUrl String   @map("coursemology_profile_url")
   user                   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   cohort                 Cohort   @relation(fields: [cohortId], references: [id], onDelete: Cascade)
