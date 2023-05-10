@@ -23,6 +23,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
     await this.seedAdmins();
     await this.seedLeetCode();
     await this.seedKattis();
+    await this.seedCohortUsers();
     this.logger.log('All data seeded', PrismaService.name);
   }
 
@@ -175,6 +176,56 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
     ).then((result) => {
       this.logger.log('Kattis questions seeded', PrismaService.name);
       return result;
+    });
+  }
+
+  private async seedCohortUsers(): Promise<void> {
+    const numCohortUsers = await this.cohortUser.count();
+    if (numCohortUsers > 0) {
+      this.logger.log(
+        'Cohort users have already been seeded',
+        PrismaService.name,
+      );
+      return;
+    }
+    // The following code seeds the students of the first cohort.
+    const firstCohort = await this.cohort.findFirst();
+    if (firstCohort == null) {
+      this.logger.log(
+        'There should be an existing cohort, something is wrong',
+        PrismaService.name,
+      );
+      return;
+    }
+    return Promise.all(
+      this.dataService.getStudentData().map(async (student) => {
+        const user = await this.user.findFirst({
+          where: {
+            githubUsername: student.githubUsername,
+          },
+        });
+        if (user == null) {
+          return Promise.resolve(null);
+        }
+        return this.cohortUser.create({
+          data: {
+            userId: user.id,
+            cohortId: firstCohort.id,
+            coursemologyName: student.name,
+            coursemologyProfileUrl: student.coursemologyProfile,
+          },
+        });
+      }),
+    ).then((result) => {
+      const numSeeded = result.filter(
+        (cohortUser) => cohortUser != null,
+      ).length;
+      this.logger.log(`${numSeeded} cohort users seeded`, PrismaService.name);
+      const numNotSeeded = result.length - numSeeded;
+      this.logger.log(
+        `${numNotSeeded} students could not be found`,
+        PrismaService.name,
+      );
     });
   }
 }
