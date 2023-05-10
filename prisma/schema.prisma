@@ -47,7 +47,7 @@ model Settings {
   hasUpdatedPhoto            Boolean    @map("has_updated_photo")
   preferredInterviewLanguage Language?  @map("preferred_interview_language")
   preferredKeyBinding        KeyBinding @default(STANDARD) @map("preferred_key_binding")
-  user                       User       @relation(fields: [userId], references: [id])
+  user                       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("settings")
 }
@@ -124,8 +124,8 @@ model RoomRecordUser {
   notes         String // Notes taken by this user during interview
   userId        String     @map("user_id")
   roomRecordId  Int        @map("room_record_id")
-  roomRecord    RoomRecord @relation(fields: [roomRecordId], references: [id])
-  user          User       @relation(fields: [userId], references: [id])
+  roomRecord    RoomRecord @relation(fields: [roomRecordId], references: [id], onDelete: Cascade)
+  user          User       @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([roomRecordId, userId])
   @@map("room_record_users")
@@ -140,8 +140,8 @@ model QuestionSubmission {
   questionSlug   String         @map("question_slug")
   languageUsed   Language       @map("language_used")
   questionSource QuestionSource @map("question_source")
-  question       Question       @relation(fields: [questionSlug, questionSource], references: [slug, source])
-  user           User           @relation(fields: [userId], references: [id])
+  question       Question       @relation(fields: [questionSlug, questionSource], references: [slug, source], onDelete: Cascade)
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("question_submissions")
 }
@@ -189,8 +189,8 @@ model Exclusion {
   userId    String   @map("user_id")
   windowId  Int      @map("window_id")
   reason    String
-  user      User     @relation(fields: [userId], references: [id])
-  window    Window   @relation(fields: [windowId], references: [id])
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  window    Window   @relation(fields: [windowId], references: [id], onDelete: Cascade)
 
   @@unique([userId, windowId])
   @@map("exclusions")
