@@ -158,13 +158,14 @@ model Cohort {
 }
 
 model CohortUser {
-  id        Int      @id @default(autoincrement())
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-  userId    String   @map("user_id")
-  cohortId  Int      @map("cohort_id")
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  cohort    Cohort   @relation(fields: [cohortId], references: [id], onDelete: Cascade)
+  id                     Int      @id @default(autoincrement())
+  createdAt              DateTime @default(now()) @map("created_at")
+  updatedAt              DateTime @updatedAt @map("updated_at")
+  userId                 String   @map("user_id")
+  cohortId               Int      @map("cohort_id")
+  coursemologyProfileUrl String   @map("coursemology_profile_url")
+  user                   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cohort                 Cohort   @relation(fields: [cohortId], references: [id], onDelete: Cascade)
 }
 
 model Window {
