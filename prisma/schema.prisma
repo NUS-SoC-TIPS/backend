@@ -33,6 +33,7 @@ model User {
   questionSubmissions QuestionSubmission[]
   roomRecordUsers     RoomRecordUser[]
   roomUsers           RoomUser[]
+  cohortUsers         CohortUser[]
 
   @@map("users")
 }
@@ -146,13 +147,24 @@ model QuestionSubmission {
 }
 
 model Cohort {
+  id          Int          @id @default(autoincrement())
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+  name        String       @unique
+  windows     Window[]
+  cohortUsers CohortUser[]
+
+  @@map("cohorts")
+}
+
+model CohortUser {
   id        Int      @id @default(autoincrement())
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
-  name      String   @unique
-  Window    Window[]
-
-  @@map("cohorts")
+  userId    String   @map("user_id")
+  cohortId  Int      @map("cohort_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cohort    Cohort   @relation(fields: [cohortId], references: [id], onDelete: Cascade)
 }
 
 model Window {
