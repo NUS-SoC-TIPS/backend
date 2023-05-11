@@ -158,30 +158,45 @@ model Cohort {
 }
 
 model CohortUser {
-  id                     Int      @id @default(autoincrement())
-  createdAt              DateTime @default(now()) @map("created_at")
-  updatedAt              DateTime @updatedAt @map("updated_at")
-  userId                 String   @map("user_id")
-  cohortId               Int      @map("cohort_id")
-  coursemologyName       String   @map("coursemology_name")
-  coursemologyProfileUrl String   @map("coursemology_profile_url")
-  user                   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  cohort                 Cohort   @relation(fields: [cohortId], references: [id], onDelete: Cascade)
+  id                     Int                @id @default(autoincrement())
+  createdAt              DateTime           @default(now()) @map("created_at")
+  updatedAt              DateTime           @updatedAt @map("updated_at")
+  userId                 String             @map("user_id")
+  cohortId               Int                @map("cohort_id")
+  coursemologyName       String             @map("coursemology_name")
+  coursemologyProfileUrl String             @map("coursemology_profile_url")
+  user                   User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cohort                 Cohort             @relation(fields: [cohortId], references: [id], onDelete: Cascade)
+  cohortUserWindows      CohortUserWindow[]
 }
 
 model Window {
-  id               Int         @id
-  createdAt        DateTime    @default(now()) @map("created_at")
-  updatedAt        DateTime    @updatedAt @map("updated_at")
-  startAt          DateTime    @map("start_at")
-  endAt            DateTime    @map("end_at")
-  cohortId         Int         @map("cohort_id")
-  requireInterview Boolean     @map("require_interview")
-  numQuestions     Int         @default(7) @map("num_questions")
-  exclusions       Exclusion[]
-  cohort           Cohort      @relation(fields: [cohortId], references: [id], onDelete: Cascade)
+  id                Int                @id
+  createdAt         DateTime           @default(now()) @map("created_at")
+  updatedAt         DateTime           @updatedAt @map("updated_at")
+  startAt           DateTime           @map("start_at")
+  endAt             DateTime           @map("end_at")
+  cohortId          Int                @map("cohort_id")
+  requireInterview  Boolean            @map("require_interview")
+  numQuestions      Int                @default(7) @map("num_questions")
+  exclusions        Exclusion[]
+  cohort            Cohort             @relation(fields: [cohortId], references: [id], onDelete: Cascade)
+  cohortUserWindows CohortUserWindow[]
 
   @@map("windows")
+}
+
+model CohortUserWindow {
+  id           Int        @id @default(autoincrement())
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime   @updatedAt @map("updated_at")
+  cohortUserId Int        @map("cohort_user_id")
+  windowId     Int        @map("window_id")
+  cohortUser   CohortUser @relation(fields: [cohortUserId], references: [id], onDelete: Cascade)
+  window       Window     @relation(fields: [windowId], references: [id], onDelete: Cascade)
+
+  @@unique([cohortUserId, windowId])
+  @@map("cohort_user_windows")
 }
 
 model Exclusion {
