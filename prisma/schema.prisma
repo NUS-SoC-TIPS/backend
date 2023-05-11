@@ -168,6 +168,9 @@ model CohortUser {
   user                   User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   cohort                 Cohort             @relation(fields: [cohortId], references: [id], onDelete: Cascade)
   cohortUserWindows      CohortUserWindow[]
+
+  @@unique([userId, cohortId])
+  @@map("cohort_users")
 }
 
 model Window {
