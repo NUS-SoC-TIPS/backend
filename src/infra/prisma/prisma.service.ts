@@ -5,6 +5,7 @@ import {
   OnModuleInit,
 } from '@nestjs/common';
 
+import { MINIMUM_INTERVIEW_DURATION } from '../../product/general/records/records.constants';
 import { DataService } from '../data/data.service';
 
 import { Prisma, PrismaClient, Question, UserRole } from './generated';
@@ -25,6 +26,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
     await this.seedKattis();
     await this.seedCohortUsers();
     await this.seedCohortUserWindows();
+    await this.matchSubmissionsAndRecordsToCohortUserWindows();
     this.logger.log('All data seeded', PrismaService.name);
   }
 
@@ -269,6 +271,93 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
         `${numCohortUserWindowsSeeded} cohort user windows seeded`,
         PrismaService.name,
       );
+    });
+  }
+
+  private async matchSubmissionsAndRecordsToCohortUserWindows(): Promise<void> {
+    const numMatchedSubmissions = await this.questionSubmission.count({
+      where: {
+        cohortUserWindowId: {
+          not: null,
+        },
+      },
+    });
+    const numMatchedRecords = await this.roomRecordUser.count({
+      where: {
+        cohortUserWindowId: {
+          not: null,
+        },
+      },
+    });
+    if (numMatchedSubmissions > 0 || numMatchedRecords > 0) {
+      this.logger.log(
+        'Submissions and records have already been matched!',
+        PrismaService.name,
+      );
+      return;
+    }
+    const cohortUserWindows = await this.cohortUserWindow.findMany({
+      include: {
+        window: true,
+        cohortUser: true,
+      },
+    });
+    return Promise.all(
+      cohortUserWindows.map(async (cohortUserWindow) => {
+        await this.questionSubmission.updateMany({
+          data: {
+            cohortUserWindowId: cohortUserWindow.id,
+          },
+          where: {
+            userId: cohortUserWindow.cohortUser.userId,
+            createdAt: {
+              gte: cohortUserWindow.window.startAt,
+              lte: cohortUserWindow.window.endAt,
+            },
+          },
+        });
+        const roomRecords = this.roomRecord.findMany({
+          where: {
+            roomRecordUsers: {
+              some: {
+                userId: cohortUserWindow.cohortUser.userId,
+                isInterviewer: false,
+              },
+            },
+            createdAt: {
+              gte: cohortUserWindow.window.startAt,
+              lte: cohortUserWindow.window.endAt,
+            },
+            duration: {
+              gte: MINIMUM_INTERVIEW_DURATION,
+            },
+          },
+          include: { roomRecordUsers: { include: { user: true } } },
+        });
+        const validRoomRecords = (await roomRecords).filter(
+          (record) => record.roomRecordUsers.length === 2,
+        );
+        return Promise.all(
+          validRoomRecords
+            .flatMap((record) => record.roomRecordUsers)
+            .filter(
+              (recordUser) =>
+                recordUser.userId === cohortUserWindow.cohortUser.userId,
+            )
+            .map((roomRecord) =>
+              this.roomRecordUser.update({
+                where: {
+                  id: roomRecord.id,
+                },
+                data: {
+                  cohortUserWindowId: cohortUserWindow.id,
+                },
+              }),
+            ),
+        );
+      }),
+    ).then(() => {
+      this.logger.log('Submissions and records matched!', PrismaService.name);
     });
   }
 }
