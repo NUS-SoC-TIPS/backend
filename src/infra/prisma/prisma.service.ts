@@ -24,6 +24,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
     await this.seedLeetCode();
     await this.seedKattis();
     await this.seedCohortUsers();
+    await this.seedCohortUserWindows();
     this.logger.log('All data seeded', PrismaService.name);
   }
 
@@ -224,6 +225,44 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
       const numNotSeeded = result.length - numSeeded;
       this.logger.log(
         `${numNotSeeded} students could not be found`,
+        PrismaService.name,
+      );
+    });
+  }
+
+  private async seedCohortUserWindows(): Promise<void> {
+    const numCohortUserWindows = await this.cohortUserWindow.count();
+    if (numCohortUserWindows > 0) {
+      this.logger.log(
+        'Cohort user windows have already been seeded',
+        PrismaService.name,
+      );
+      return;
+    }
+    const cohortUsers = await this.cohortUser.findMany();
+    // We can assume all windows are for the first cohort, for now.
+    const windows = await this.window.findMany();
+    return Promise.all(
+      cohortUsers.map(async (cohortUser) => {
+        const cohortUserWindows = await Promise.all(
+          windows.map((window) =>
+            this.cohortUserWindow.create({
+              data: {
+                windowId: window.id,
+                cohortUserId: cohortUser.id,
+              },
+            }),
+          ),
+        );
+        return cohortUserWindows;
+      }),
+    ).then((result) => {
+      const numCohortUserWindowsSeeded = result.reduce(
+        (a, b) => a + b.length,
+        0,
+      );
+      this.logger.log(
+        `${numCohortUserWindowsSeeded} cohort user windows seeded`,
         PrismaService.name,
       );
     });
