@@ -1,36 +1,60 @@
 import { Injectable } from '@nestjs/common';
 
-import { WindowsService } from '../../../windows/windows.service';
-import { RecordsService } from '../../general/records/records.service';
-import { SubmissionsService } from '../../general/submissions/submissions.service';
+import { PrismaService } from '../../../infra/prisma/prisma.service';
+import { transformRoomRecord } from '../../../utils';
 
 import { TaskStatsEntity, TaskStatWindowStatus } from './entities';
 
 @Injectable()
 export class TasksService {
-  constructor(
-    private readonly recordsService: RecordsService,
-    private readonly windowsService: WindowsService,
-    private readonly submissionsService: SubmissionsService,
-  ) {}
+  constructor(private readonly prismaService: PrismaService) {}
 
-  async findStats(userId: string): Promise<TaskStatsEntity> {
-    // Finding windows may throw. We will not catch here and instead let the
-    // controller handle it.
-    const windows = await this.windowsService.findCurrentCohortWindows();
+  async findStats(userId: string, cohortId: number): Promise<TaskStatsEntity> {
+    const cohortUser = await this.prismaService.cohortUser.findUniqueOrThrow({
+      where: {
+        userId_cohortId: {
+          userId: userId,
+          cohortId: cohortId,
+        },
+      },
+      include: {
+        cohortUserWindows: {
+          include: {
+            window: true,
+            questionSubmissions: {
+              include: {
+                question: true,
+              },
+            },
+            roomRecordUsers: {
+              include: {
+                roomRecord: {
+                  include: {
+                    roomRecordUsers: {
+                      include: {
+                        user: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
     const currentDate = new Date();
-    // TODO: Look into whether to batch these queries into a single transaction
-    return await Promise.all(
-      windows.map(async (window) => {
-        // Finding submissions and records may throw. We will not catch here and
-        // instead let the controller handle it.
-        const submissions = await this.submissionsService.findWithinWindow(
-          userId,
+    return cohortUser.cohortUserWindows
+      .sort((a, b) => a.window.startAt.getTime() - b.window.startAt.getTime())
+      .map((cohortUserWindow) => {
+        const {
+          questionSubmissions: submissions,
+          roomRecordUsers,
           window,
-        );
-        const records = await this.recordsService.findWithinWindow(
-          userId,
-          window,
+        } = cohortUserWindow;
+        const records = roomRecordUsers.map((roomRecordUser) =>
+          transformRoomRecord(roomRecordUser.roomRecord, userId),
         );
         const hasCompletedQuestions = submissions.length >= window.numQuestions;
         const hasCompletedInterview =
@@ -41,7 +65,6 @@ export class TasksService {
             : window.endAt < currentDate
             ? TaskStatWindowStatus.FAILED
             : TaskStatWindowStatus.NONE;
-
         return {
           ...window,
           submissions,
@@ -50,7 +73,6 @@ export class TasksService {
           hasCompletedInterview,
           status,
         };
-      }),
-    );
+      });
   }
 }

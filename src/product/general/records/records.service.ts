@@ -1,7 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
 
-import { RecordWithPartner } from '../../../infra/interfaces/interface';
-import { Window } from '../../../infra/prisma/generated';
 import { WindowsService } from '../../../windows/windows.service';
 
 import { RecordsQueryBuilder } from './builders';
@@ -68,27 +66,5 @@ export class RecordsService {
       latestRecord: latestRecord as RecordStatsEntity['latestRecord'],
       allRecords: allRecords as RecordStatsEntity['allRecords'],
     };
-  }
-
-  async findWithinWindow(
-    userId: string,
-    window: Window,
-  ): Promise<RecordWithPartner[]> {
-    const result = await this.queryBuilder
-      .reset()
-      .forUser(userId)
-      .createdBefore(window.endAt)
-      .createdAfter(window.startAt)
-      .withLatestFirst()
-      .query()
-      .catch((e) => {
-        this.logger.error(
-          'Failed to find room records within window',
-          e instanceof Error ? e.stack : undefined,
-          RecordsService.name,
-        );
-        throw e;
-      });
-    return result as RecordWithPartner[];
   }
 }
