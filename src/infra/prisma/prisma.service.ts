@@ -24,9 +24,9 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
     await this.seedAdmins();
     await this.seedLeetCode();
     await this.seedKattis();
-    await this.seedCohortUsers();
-    await this.seedCohortUserWindows();
-    await this.matchSubmissionsAndRecordsToCohortUserWindows();
+    await this.seedStudents();
+    await this.seedStudentResults();
+    await this.matchSubmissionsAndRecordsToStudentResults();
     this.logger.log('All data seeded', PrismaService.name);
   }
 
@@ -39,9 +39,9 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
   // Sequencing matters here!
   cleanDb(): Promise<Prisma.BatchPayload[]> {
     const deleteExclusions = this.exclusion.deleteMany();
-    const deleteCohortUserWindows = this.cohortUserWindow.deleteMany();
+    const deleteStudentResults = this.studentResult.deleteMany();
     const deleteWindows = this.window.deleteMany();
-    const deleteCohortUsers = this.cohortUser.deleteMany();
+    const deleteStudents = this.student.deleteMany();
     const deleteCohorts = this.cohort.deleteMany();
     const deleteQuestionSubmissions = this.questionSubmission.deleteMany();
     const deleteRoomRecordUsers = this.roomRecordUser.deleteMany();
@@ -53,9 +53,9 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
     const deleteUsers = this.user.deleteMany();
     return this.$transaction([
       deleteExclusions,
-      deleteCohortUserWindows,
+      deleteStudentResults,
       deleteWindows,
-      deleteCohortUsers,
+      deleteStudents,
       deleteCohorts,
       deleteQuestionSubmissions,
       deleteRoomRecordUsers,
@@ -186,13 +186,10 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
     });
   }
 
-  private async seedCohortUsers(): Promise<void> {
-    const numCohortUsers = await this.cohortUser.count();
-    if (numCohortUsers > 0) {
-      this.logger.log(
-        'Cohort users have already been seeded',
-        PrismaService.name,
-      );
+  private async seedStudents(): Promise<void> {
+    const numStudents = await this.student.count();
+    if (numStudents > 0) {
+      this.logger.log('Students have already been seeded', PrismaService.name);
       return;
     }
     // The following code seeds the students of the first cohort.
@@ -214,7 +211,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
         if (user == null) {
           return Promise.resolve(null);
         }
-        return this.cohortUser.create({
+        return this.student.create({
           data: {
             userId: user.id,
             cohortId: firstCohort.id,
@@ -224,10 +221,8 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
         });
       }),
     ).then((result) => {
-      const numSeeded = result.filter(
-        (cohortUser) => cohortUser != null,
-      ).length;
-      this.logger.log(`${numSeeded} cohort users seeded`, PrismaService.name);
+      const numSeeded = result.filter((student) => student != null).length;
+      this.logger.log(`${numSeeded} students seeded`, PrismaService.name);
       const numNotSeeded = result.length - numSeeded;
       this.logger.log(
         `${numNotSeeded} students could not be found`,
@@ -236,55 +231,52 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
     });
   }
 
-  private async seedCohortUserWindows(): Promise<void> {
-    const numCohortUserWindows = await this.cohortUserWindow.count();
-    if (numCohortUserWindows > 0) {
+  private async seedStudentResults(): Promise<void> {
+    const numStudentResults = await this.studentResult.count();
+    if (numStudentResults > 0) {
       this.logger.log(
-        'Cohort user windows have already been seeded',
+        'Student records have already been seeded',
         PrismaService.name,
       );
       return;
     }
-    const cohortUsers = await this.cohortUser.findMany();
+    const students = await this.student.findMany();
     // We can assume all windows are for the first cohort, for now.
     const windows = await this.window.findMany();
     return Promise.all(
-      cohortUsers.map(async (cohortUser) => {
-        const cohortUserWindows = await Promise.all(
+      students.map(async (student) => {
+        const studentResults = await Promise.all(
           windows.map((window) =>
-            this.cohortUserWindow.create({
+            this.studentResult.create({
               data: {
                 windowId: window.id,
-                cohortUserId: cohortUser.id,
+                studentId: student.id,
               },
             }),
           ),
         );
-        return cohortUserWindows;
+        return studentResults;
       }),
     ).then((result) => {
-      const numCohortUserWindowsSeeded = result.reduce(
-        (a, b) => a + b.length,
-        0,
-      );
+      const numStudentResultsSeeded = result.reduce((a, b) => a + b.length, 0);
       this.logger.log(
-        `${numCohortUserWindowsSeeded} cohort user windows seeded`,
+        `${numStudentResultsSeeded} student results seeded`,
         PrismaService.name,
       );
     });
   }
 
-  private async matchSubmissionsAndRecordsToCohortUserWindows(): Promise<void> {
+  private async matchSubmissionsAndRecordsToStudentResults(): Promise<void> {
     const numMatchedSubmissions = await this.questionSubmission.count({
       where: {
-        cohortUserWindowId: {
+        studentResultId: {
           not: null,
         },
       },
     });
     const numMatchedRecords = await this.roomRecordUser.count({
       where: {
-        cohortUserWindowId: {
+        studentResultId: {
           not: null,
         },
       },
@@ -296,23 +288,23 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
       );
       return;
     }
-    const cohortUserWindows = await this.cohortUserWindow.findMany({
+    const studentResults = await this.studentResult.findMany({
       include: {
         window: true,
-        cohortUser: true,
+        student: true,
       },
     });
     return Promise.all(
-      cohortUserWindows.map(async (cohortUserWindow) => {
+      studentResults.map(async (studentResult) => {
         await this.questionSubmission.updateMany({
           data: {
-            cohortUserWindowId: cohortUserWindow.id,
+            studentResultId: studentResult.id,
           },
           where: {
-            userId: cohortUserWindow.cohortUser.userId,
+            userId: studentResult.student.userId,
             createdAt: {
-              gte: cohortUserWindow.window.startAt,
-              lte: cohortUserWindow.window.endAt,
+              gte: studentResult.window.startAt,
+              lte: studentResult.window.endAt,
             },
           },
         });
@@ -320,13 +312,13 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
           where: {
             roomRecordUsers: {
               some: {
-                userId: cohortUserWindow.cohortUser.userId,
+                userId: studentResult.student.userId,
                 isInterviewer: false,
               },
             },
             createdAt: {
-              gte: cohortUserWindow.window.startAt,
-              lte: cohortUserWindow.window.endAt,
+              gte: studentResult.window.startAt,
+              lte: studentResult.window.endAt,
             },
             duration: {
               gte: MINIMUM_INTERVIEW_DURATION,
@@ -342,15 +334,15 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
             .flatMap((record) => record.roomRecordUsers)
             .filter(
               (recordUser) =>
-                recordUser.userId === cohortUserWindow.cohortUser.userId,
+                recordUser.userId === studentResult.student.userId,
             )
-            .map((roomRecord) =>
+            .map((recordUser) =>
               this.roomRecordUser.update({
                 where: {
-                  id: roomRecord.id,
+                  id: recordUser.id,
                 },
                 data: {
-                  cohortUserWindowId: cohortUserWindow.id,
+                  studentResultId: studentResult.id,
                 },
               }),
             ),

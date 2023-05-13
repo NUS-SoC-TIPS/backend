@@ -10,7 +10,7 @@ export class TasksService {
   constructor(private readonly prismaService: PrismaService) {}
 
   async findStats(userId: string, cohortId: number): Promise<TaskStatsEntity> {
-    const cohortUser = await this.prismaService.cohortUser.findUniqueOrThrow({
+    const student = await this.prismaService.student.findUniqueOrThrow({
       where: {
         userId_cohortId: {
           userId: userId,
@@ -18,7 +18,7 @@ export class TasksService {
         },
       },
       include: {
-        cohortUserWindows: {
+        results: {
           include: {
             window: true,
             questionSubmissions: {
@@ -45,7 +45,7 @@ export class TasksService {
     });
 
     const currentDate = new Date();
-    return cohortUser.cohortUserWindows
+    return student.results
       .sort((a, b) => a.window.startAt.getTime() - b.window.startAt.getTime())
       .map((cohortUserWindow) => {
         const {

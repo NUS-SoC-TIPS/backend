@@ -33,7 +33,7 @@ model User {
   questionSubmissions QuestionSubmission[]
   roomRecordUsers     RoomRecordUser[]
   roomUsers           RoomUser[]
-  cohortUsers         CohortUser[]
+  students            Student[]
 
   @@map("users")
 }
@@ -117,98 +117,95 @@ model Question {
 }
 
 model Cohort {
-  id          Int          @id @default(autoincrement())
-  createdAt   DateTime     @default(now()) @map("created_at")
-  updatedAt   DateTime     @updatedAt @map("updated_at")
-  name        String       @unique
-  windows     Window[]
-  cohortUsers CohortUser[]
+  id        Int       @id @default(autoincrement())
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  name      String    @unique
+  windows   Window[]
+  students  Student[]
 
   @@map("cohorts")
 }
 
-model CohortUser {
-  id                     Int                @id @default(autoincrement())
-  createdAt              DateTime           @default(now()) @map("created_at")
-  updatedAt              DateTime           @updatedAt @map("updated_at")
-  userId                 String             @map("user_id")
-  cohortId               Int                @map("cohort_id")
-  coursemologyName       String             @map("coursemology_name")
-  coursemologyProfileUrl String             @map("coursemology_profile_url")
-  user                   User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  cohort                 Cohort             @relation(fields: [cohortId], references: [id], onDelete: Cascade)
-  cohortUserWindows      CohortUserWindow[]
+model Student {
+  id                     Int             @id @default(autoincrement())
+  createdAt              DateTime        @default(now()) @map("created_at")
+  updatedAt              DateTime        @updatedAt @map("updated_at")
+  userId                 String          @map("user_id")
+  cohortId               Int             @map("cohort_id")
+  coursemologyName       String          @map("coursemology_name")
+  coursemologyProfileUrl String          @map("coursemology_profile_url")
+  user                   User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cohort                 Cohort          @relation(fields: [cohortId], references: [id], onDelete: Cascade)
+  results                StudentResult[]
 
   @@unique([userId, cohortId])
-  @@map("cohort_users")
+  @@map("students")
 }
 
 model Window {
-  id                Int                @id
-  createdAt         DateTime           @default(now()) @map("created_at")
-  updatedAt         DateTime           @updatedAt @map("updated_at")
-  startAt           DateTime           @map("start_at")
-  endAt             DateTime           @map("end_at")
-  cohortId          Int                @map("cohort_id")
-  requireInterview  Boolean            @map("require_interview")
-  numQuestions      Int                @default(7) @map("num_questions")
-  exclusions        Exclusion[]
-  cohort            Cohort             @relation(fields: [cohortId], references: [id], onDelete: Cascade)
-  cohortUserWindows CohortUserWindow[]
+  id               Int             @id
+  createdAt        DateTime        @default(now()) @map("created_at")
+  updatedAt        DateTime        @updatedAt @map("updated_at")
+  startAt          DateTime        @map("start_at")
+  endAt            DateTime        @map("end_at")
+  cohortId         Int             @map("cohort_id")
+  requireInterview Boolean         @map("require_interview")
+  numQuestions     Int             @default(7) @map("num_questions")
+  exclusions       Exclusion[]
+  cohort           Cohort          @relation(fields: [cohortId], references: [id], onDelete: Cascade)
+  studentResults   StudentResult[]
 
   @@map("windows")
 }
 
-model CohortUserWindow {
+// Tracks the student's work done for each window
+model StudentResult {
   id                  Int                  @id @default(autoincrement())
   createdAt           DateTime             @default(now()) @map("created_at")
   updatedAt           DateTime             @updatedAt @map("updated_at")
-  cohortUserId        Int                  @map("cohort_user_id")
+  studentId           Int                  @map("student_id")
   windowId            Int                  @map("window_id")
-  cohortUser          CohortUser           @relation(fields: [cohortUserId], references: [id], onDelete: Cascade)
+  student             Student              @relation(fields: [studentId], references: [id], onDelete: Cascade)
   window              Window               @relation(fields: [windowId], references: [id], onDelete: Cascade)
   questionSubmissions QuestionSubmission[]
   roomRecordUsers     RoomRecordUser[]
 
-  @@unique([cohortUserId, windowId])
-  @@map("cohort_user_windows")
+  @@unique([studentId, windowId])
+  @@map("student_results")
 }
 
 // 1 pair of users per room record
 model RoomRecordUser {
-  id                 Int               @id @default(autoincrement())
-  createdAt          DateTime          @default(now()) @map("created_at")
-  updatedAt          DateTime          @updatedAt @map("updated_at")
-  isInterviewer      Boolean           @map("is_interviewer") // false if record is general, but it's not really used
-  notes              String // Notes taken by this user during interview
-  userId             String            @map("user_id")
-  roomRecordId       Int               @map("room_record_id")
-  // cohortUserWindowId tells us the associated window this record is for.
-  // Currently assumes that only one window is active at any time.
-  cohortUserWindowId Int?              @map("cohort_user_window_id")
-  roomRecord         RoomRecord        @relation(fields: [roomRecordId], references: [id], onDelete: Cascade)
-  user               User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  cohortUserWindow   CohortUserWindow? @relation(fields: [cohortUserWindowId], references: [id], onDelete: SetNull)
+  id              Int            @id @default(autoincrement())
+  createdAt       DateTime       @default(now()) @map("created_at")
+  updatedAt       DateTime       @updatedAt @map("updated_at")
+  isInterviewer   Boolean        @map("is_interviewer") // false if record is general, but it's not really used
+  notes           String // Notes taken by this user during interview
+  userId          String         @map("user_id")
+  roomRecordId    Int            @map("room_record_id")
+  studentResultId Int?           @map("student_result_id") // Currently assumes that only one window is active at any time.
+  roomRecord      RoomRecord     @relation(fields: [roomRecordId], references: [id], onDelete: Cascade)
+  user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  studentResult   StudentResult? @relation(fields: [studentResultId], references: [id], onDelete: SetNull)
 
   @@unique([roomRecordId, userId])
   @@map("room_record_users")
 }
 
 model QuestionSubmission {
-  id                 Int               @id @default(autoincrement())
-  createdAt          DateTime          @default(now()) @map("created_at")
-  updatedAt          DateTime          @updatedAt @map("updated_at")
-  codeWritten        String            @map("code_written")
-  userId             String            @map("user_id")
-  // cohortUserWindowId tells us the associated window this submission is for.
-  // Currently assumes that only one window is active at any time.
-  cohortUserWindowId Int?              @map("cohort_user_window_id")
-  questionSlug       String            @map("question_slug")
-  languageUsed       Language          @map("language_used")
-  questionSource     QuestionSource    @map("question_source")
-  question           Question          @relation(fields: [questionSlug, questionSource], references: [slug, source], onDelete: Cascade)
-  user               User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  cohortUserWindow   CohortUserWindow? @relation(fields: [cohortUserWindowId], references: [id], onDelete: SetNull)
+  id              Int            @id @default(autoincrement())
+  createdAt       DateTime       @default(now()) @map("created_at")
+  updatedAt       DateTime       @updatedAt @map("updated_at")
+  codeWritten     String         @map("code_written")
+  userId          String         @map("user_id")
+  studentResultId Int?           @map("student_result_id") // Currently assumes that only one window is active at any time.
+  questionSlug    String         @map("question_slug")
+  languageUsed    Language       @map("language_used")
+  questionSource  QuestionSource @map("question_source")
+  question        Question       @relation(fields: [questionSlug, questionSource], references: [slug, source], onDelete: Cascade)
+  user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  studentResult   StudentResult? @relation(fields: [studentResultId], references: [id], onDelete: SetNull)
 
   @@map("question_submissions")
 }
