@@ -90,9 +90,8 @@ export class SubmissionsService {
   }
 
   async findStats(userId: string): Promise<SubmissionStatsEntity> {
-    const numberOfSubmissionsForThisWindowOrWeek = await this.countSubmissions(
-      userId,
-    );
+    const [numberOfSubmissionsForThisWindowOrWeek, isWindow] =
+      await this.countSubmissionsForThisWindowOrWeek(userId);
     const latestSubmission = await this.prismaService.questionSubmission
       .findFirst({
         where: { userId },
@@ -141,13 +140,16 @@ export class SubmissionsService {
     );
     return {
       numberOfSubmissionsForThisWindowOrWeek,
+      isWindow,
       stats,
       latestSubmission,
       allSubmissions,
     };
   }
 
-  private async countSubmissions(userId: string): Promise<number> {
+  private async countSubmissionsForThisWindowOrWeek(
+    userId: string,
+  ): Promise<[number, boolean]> {
     // Finding window may throw. We will not catch here and instead let the
     // controller handle it.
     const ongoingWindow = await this.windowsService.findOngoingWindow();
@@ -185,20 +187,23 @@ export class SubmissionsService {
             );
             throw e;
           });
-        return studentRecord._count.questionSubmissions;
+        return [studentRecord._count.questionSubmissions, true];
       }
     }
-    return this.prismaService.questionSubmission
-      .count({
-        where: { userId, createdAt: { gte: findStartOfWeek() } },
-      })
-      .catch((e) => {
-        this.logger.error(
-          'Failed to count number of submissions for this week',
-          e instanceof Error ? e.stack : undefined,
-          SubmissionsService.name,
-        );
-        throw e;
-      });
+    return [
+      await this.prismaService.questionSubmission
+        .count({
+          where: { userId, createdAt: { gte: findStartOfWeek() } },
+        })
+        .catch((e) => {
+          this.logger.error(
+            'Failed to count number of submissions for this week',
+            e instanceof Error ? e.stack : undefined,
+            SubmissionsService.name,
+          );
+          throw e;
+        }),
+      false,
+    ];
   }
 }
