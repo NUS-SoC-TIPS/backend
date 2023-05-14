@@ -1,6 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 
-import { QuestionSubmission } from '../../infra/prisma/generated';
+import {
+  QuestionSubmission,
+  StudentResult,
+} from '../../infra/prisma/generated';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { WindowsService } from '../windows/windows.service';
 
@@ -16,18 +19,42 @@ export class ResultsService {
     submission: QuestionSubmission,
     userId: string,
   ): Promise<QuestionSubmission> {
-    const ongoingWindow = await this.windowsService.findOngoingWindow();
-    if (ongoingWindow == null) {
-      this.logger.log('No ongoing window for matching', ResultsService.name);
+    const studentResult = await this.findStudentResultForOngoingWindow(userId);
+    if (studentResult == null) {
       return submission;
     }
+    return this.prismaService.questionSubmission
+      .update({
+        where: {
+          id: submission.id,
+        },
+        data: {
+          studentResultId: studentResult.id,
+        },
+      })
+      .catch((e) => {
+        this.logger.error(
+          'Failed to update question submission',
+          e instanceof Error ? e.stack : undefined,
+          ResultsService.name,
+        );
+        throw e;
+      });
+  }
+
+  private async findStudentResultForOngoingWindow(
+    userId: string,
+  ): Promise<StudentResult | null> {
+    const ongoingWindow = await this.windowsService.findOngoingWindow();
+    if (ongoingWindow == null) {
+      this.logger.log('No ongoing window', ResultsService.name);
+      return null;
+    }
+
     const student = await this.prismaService.student
       .findUnique({
         where: {
-          userId_cohortId: {
-            userId,
-            cohortId: ongoingWindow.cohortId,
-          },
+          userId_cohortId: { userId, cohortId: ongoingWindow.cohortId },
         },
       })
       .catch((e) => {
@@ -43,10 +70,10 @@ export class ResultsService {
         'User is not a student of ongoing cohort',
         ResultsService.name,
       );
-      return submission;
+      return null;
     }
 
-    const studentResult = await this.prismaService.studentResult
+    return this.prismaService.studentResult
       .findUniqueOrThrow({
         where: {
           studentId_windowId: {
@@ -58,24 +85,6 @@ export class ResultsService {
       .catch((e) => {
         this.logger.error(
           'Failed to find student result',
-          e instanceof Error ? e.stack : undefined,
-          ResultsService.name,
-        );
-        throw e;
-      });
-
-    return this.prismaService.questionSubmission
-      .update({
-        where: {
-          id: submission.id,
-        },
-        data: {
-          studentResultId: studentResult.id,
-        },
-      })
-      .catch((e) => {
-        this.logger.error(
-          'Failed to update question submission',
           e instanceof Error ? e.stack : undefined,
           ResultsService.name,
         );

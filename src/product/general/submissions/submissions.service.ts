@@ -1,10 +1,13 @@
 import { Injectable, Logger } from '@nestjs/common';
 
-import { QuestionSubmission } from '../../../infra/prisma/generated';
+import {
+  QuestionDifficulty,
+  QuestionSubmission,
+} from '../../../infra/prisma/generated';
 import { PrismaService } from '../../../infra/prisma/prisma.service';
 import { ResultsService } from '../../../productinfra/results/results.service';
+import { WindowsService } from '../../../productinfra/windows/windows.service';
 import { findStartOfWeek } from '../../../utils';
-import { WindowsService } from '../../../windows/windows.service';
 
 import { CreateSubmissionDto, UpdateSubmissionDto } from './dtos';
 import { SubmissionStatsEntity } from './entities';
@@ -105,8 +108,7 @@ export class SubmissionsService {
         );
         throw e;
       });
-    // TODO: Replace this stat with something more meaningful
-    const closestWindow = await this.windowsService.findClosestWindow();
+    // TODO: Rewrite this to be paginated, perhaps as part of a separate endpoint
     const allSubmissions = await this.prismaService.questionSubmission
       .findMany({
         where: { userId },
@@ -121,9 +123,25 @@ export class SubmissionsService {
         );
         throw e;
       });
+    const stats = allSubmissions.reduce(
+      (acc, curr) => {
+        switch (curr.question.difficulty) {
+          case QuestionDifficulty.EASY:
+            acc.numEasyCompleted += 1;
+            break;
+          case QuestionDifficulty.MEDIUM:
+            acc.numMediumCompleted += 1;
+            break;
+          case QuestionDifficulty.HARD:
+            acc.numHardCompleted += 1;
+        }
+        return acc;
+      },
+      { numEasyCompleted: 0, numMediumCompleted: 0, numHardCompleted: 0 },
+    );
     return {
-      closestWindow,
       numberOfSubmissionsForThisWindowOrWeek,
+      stats,
       latestSubmission,
       allSubmissions,
     };
