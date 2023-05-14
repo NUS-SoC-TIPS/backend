@@ -1,13 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 
-import { SubmissionWithQuestion } from '../../../infra/interfaces/interface';
-import { QuestionSubmission, Window } from '../../../infra/prisma/generated';
+import { QuestionSubmission } from '../../../infra/prisma/generated';
 import { PrismaService } from '../../../infra/prisma/prisma.service';
 import { ResultsService } from '../../../productinfra/results/results.service';
 import { findStartOfWeek } from '../../../utils';
 import { WindowsService } from '../../../windows/windows.service';
 
-import { SubmissionsQueryBuilder } from './builders';
 import { CreateSubmissionDto, UpdateSubmissionDto } from './dtos';
 import { SubmissionStatsEntity } from './entities';
 
@@ -18,7 +16,6 @@ export class SubmissionsService {
     private readonly prismaService: PrismaService,
     private readonly resultsService: ResultsService,
     private readonly windowsService: WindowsService,
-    private readonly queryBuilder: SubmissionsQueryBuilder,
   ) {}
 
   async create(
@@ -90,29 +87,16 @@ export class SubmissionsService {
   }
 
   async findStats(userId: string): Promise<SubmissionStatsEntity> {
-    // Finding window may throw. We will not catch here and instead let the
-    // controller handle it.
-    const ongoingWindow = await this.windowsService.findOngoingWindow();
-    const before = ongoingWindow?.endAt;
-    const after = ongoingWindow?.startAt ?? findStartOfWeek();
-    const numberOfSubmissionsForThisWindowOrWeek = await this.queryBuilder
-      .reset()
-      .forUser(userId)
-      .createdBefore(before)
-      .createdAfter(after)
-      .count()
-      .catch((e) => {
-        this.logger.error(
-          'Failed to count number of submissions for this window or week',
-          e instanceof Error ? e.stack : undefined,
-          SubmissionsService.name,
-        );
-        throw e;
-      });
-    const latestSubmission = await this.queryBuilder
-      .reset()
-      .forUser(userId)
-      .latest()
+    const numberOfSubmissionsForThisWindowOrWeek = await this.countSubmissions(
+      userId,
+    );
+    const latestSubmission = await this.prismaService.questionSubmission
+      .findFirst({
+        where: { userId },
+        include: { question: true },
+        orderBy: { createdAt: 'desc' },
+        take: 1,
+      })
       .catch((e) => {
         this.logger.error(
           'Failed to find latest submission',
@@ -121,12 +105,14 @@ export class SubmissionsService {
         );
         throw e;
       });
+    // TODO: Replace this stat with something more meaningful
     const closestWindow = await this.windowsService.findClosestWindow();
-    const allSubmissions = await this.queryBuilder
-      .reset()
-      .forUser(userId)
-      .withLatestFirst()
-      .query()
+    const allSubmissions = await this.prismaService.questionSubmission
+      .findMany({
+        where: { userId },
+        include: { question: true },
+        orderBy: { createdAt: 'desc' },
+      })
       .catch((e) => {
         this.logger.error(
           'Failed to find all submissions',
@@ -143,20 +129,54 @@ export class SubmissionsService {
     };
   }
 
-  findWithinWindow(
-    userId: string,
-    window: Window,
-  ): Promise<SubmissionWithQuestion[]> {
-    return this.queryBuilder
-      .reset()
-      .forUser(userId)
-      .createdBefore(window.endAt)
-      .createdAfter(window.startAt)
-      .withLatestFirst()
-      .query()
+  private async countSubmissions(userId: string): Promise<number> {
+    // Finding window may throw. We will not catch here and instead let the
+    // controller handle it.
+    const ongoingWindow = await this.windowsService.findOngoingWindow();
+    if (ongoingWindow != null) {
+      const student = await this.prismaService.student
+        .findUnique({
+          where: {
+            userId_cohortId: { userId, cohortId: ongoingWindow.cohortId },
+          },
+        })
+        .catch((e) => {
+          this.logger.error(
+            'Failed to find nullable student',
+            e instanceof Error ? e.stack : undefined,
+            SubmissionsService.name,
+          );
+          throw e;
+        });
+      if (student != null) {
+        const studentRecord = await this.prismaService.studentResult
+          .findUniqueOrThrow({
+            where: {
+              studentId_windowId: {
+                studentId: student.id,
+                windowId: ongoingWindow.id,
+              },
+            },
+            include: { _count: { select: { questionSubmissions: true } } },
+          })
+          .catch((e) => {
+            this.logger.error(
+              'Failed to count number of submissions for this window',
+              e instanceof Error ? e.stack : undefined,
+              SubmissionsService.name,
+            );
+            throw e;
+          });
+        return studentRecord._count.questionSubmissions;
+      }
+    }
+    return this.prismaService.questionSubmission
+      .count({
+        where: { userId, createdAt: { gte: findStartOfWeek() } },
+      })
       .catch((e) => {
         this.logger.error(
-          'Failed to find submissions within window',
+          'Failed to count number of submissions for this week',
           e instanceof Error ? e.stack : undefined,
           SubmissionsService.name,
         );
