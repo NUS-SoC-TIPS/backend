@@ -4,6 +4,7 @@ import { SubmissionWithQuestion } from '../../../infra/interfaces/interface';
 import { QuestionSubmission, Window } from '../../../infra/prisma/generated';
 import { PrismaService } from '../../../infra/prisma/prisma.service';
 import { ResultsService } from '../../../productinfra/results/results.service';
+import { findStartOfWeek } from '../../../utils';
 import { WindowsService } from '../../../windows/windows.service';
 
 import { SubmissionsQueryBuilder } from './builders';
@@ -93,8 +94,7 @@ export class SubmissionsService {
     // controller handle it.
     const ongoingWindow = await this.windowsService.findOngoingWindow();
     const before = ongoingWindow?.endAt;
-    const after =
-      ongoingWindow?.startAt ?? this.windowsService.findStartOfWeek();
+    const after = ongoingWindow?.startAt ?? findStartOfWeek();
     const numberOfSubmissionsForThisWindowOrWeek = await this.queryBuilder
       .reset()
       .forUser(userId)

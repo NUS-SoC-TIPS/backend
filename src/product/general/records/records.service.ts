@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 
+import { findStartOfWeek } from '../../../utils';
 import { WindowsService } from '../../../windows/windows.service';
 
 import { RecordsQueryBuilder } from './builders';
@@ -18,8 +19,7 @@ export class RecordsService {
     // controller handle it.
     const ongoingWindow = await this.windowsService.findOngoingWindow();
     const before = ongoingWindow?.endAt;
-    const after =
-      ongoingWindow?.startAt ?? this.windowsService.findStartOfWeek();
+    const after = ongoingWindow?.startAt ?? findStartOfWeek();
     const numberOfRecordsForThisWindowOrWeek = await this.queryBuilder
       .reset()
       .forUser(userId)
