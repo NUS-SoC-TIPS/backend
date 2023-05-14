@@ -90,21 +90,6 @@ export class SubmissionsService {
   async findStats(userId: string): Promise<SubmissionStatsEntity> {
     const [numberOfSubmissionsForThisWindowOrWeek, isWindow] =
       await this.countSubmissionsForThisWindowOrWeek(userId);
-    const latestSubmission = await this.prismaService.questionSubmission
-      .findFirst({
-        where: { userId },
-        include: { question: true },
-        orderBy: { createdAt: 'desc' },
-        take: 1,
-      })
-      .catch((e) => {
-        this.logger.error(
-          'Failed to find latest submission',
-          e instanceof Error ? e.stack : undefined,
-          SubmissionsService.name,
-        );
-        throw e;
-      });
     // TODO: Rewrite this to be paginated, perhaps as part of a separate endpoint
     const allSubmissions = await this.prismaService.questionSubmission
       .findMany({
@@ -120,6 +105,9 @@ export class SubmissionsService {
         );
         throw e;
       });
+    // TODO: When allSubmissions is paginated, rewrite this into a single query
+    const latestSubmission =
+      allSubmissions.length > 0 ? allSubmissions[0] : null;
     // TODO: When allSubmissions is paginated, rewrite this into a count query
     const stats = allSubmissions.reduce(
       (acc, curr) => {

@@ -1,15 +1,14 @@
 import { Logger, Module } from '@nestjs/common';
 
-import { WindowsModule } from '../../../windows/windows.module';
+import { ResultsModule } from '../../../productinfra/results/results.module';
 
-import { RecordsQueryBuilder } from './builders';
 import { RecordsController } from './records.controller';
 import { RecordsService } from './records.service';
 
 @Module({
-  providers: [RecordsService, RecordsQueryBuilder, Logger],
+  providers: [RecordsService, Logger],
   controllers: [RecordsController],
-  imports: [WindowsModule],
+  imports: [ResultsModule],
   exports: [RecordsService],
 })
 export class RecordsModule {}
