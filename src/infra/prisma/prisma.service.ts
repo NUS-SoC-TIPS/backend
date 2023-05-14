@@ -360,6 +360,9 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
             where: {
               userId: studentResult.student.userId,
               isInterviewer: false,
+              // Note: The matching logic here is the legacy one, which calculates based on when the
+              // room record was created. Moving forward, this will be calculated based on when the
+              // room was closed, i.e. when the interview was completed.
               roomRecord: {
                 createdAt: {
                   gte: studentResult.window.startAt,
