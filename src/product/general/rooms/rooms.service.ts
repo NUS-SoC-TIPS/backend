@@ -10,6 +10,7 @@ import {
 import { PrismaService } from '../../../infra/prisma/prisma.service';
 
 import { CreateRecordDto, CreateRoomUserDto } from './dtos';
+import { MINIMUM_VALID_INTERVIEW_DURATION } from './rooms.constants';
 
 @Injectable()
 export class RoomsService {
@@ -142,6 +143,9 @@ export class RoomsService {
         this.prismaService.roomRecord.create({
           data: {
             ...recordData,
+            isValid:
+              recordData.duration >= MINIMUM_VALID_INTERVIEW_DURATION &&
+              roomRecordUsers.length === 2,
             roomRecordUsers: {
               createMany: {
                 data: roomRecordUsers,

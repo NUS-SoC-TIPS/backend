@@ -5,7 +5,7 @@ import {
   OnModuleInit,
 } from '@nestjs/common';
 
-import { MINIMUM_INTERVIEW_DURATION } from '../../product/general/records/records.constants';
+import { MINIMUM_VALID_INTERVIEW_DURATION } from '../../product/general/rooms/rooms.constants';
 import { DataService } from '../data/data.service';
 
 import { Prisma, PrismaClient, Question, UserRole } from './generated';
@@ -287,7 +287,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
           },
         },
         duration: {
-          gte: MINIMUM_INTERVIEW_DURATION,
+          gte: MINIMUM_VALID_INTERVIEW_DURATION,
         },
       },
       include: { roomRecordUsers: true },
@@ -364,9 +364,6 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
                 createdAt: {
                   gte: studentResult.window.startAt,
                   lte: studentResult.window.endAt,
-                },
-                duration: {
-                  gte: MINIMUM_INTERVIEW_DURATION,
                 },
                 isValid: true,
               },

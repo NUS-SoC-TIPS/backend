@@ -25,3 +25,4 @@ export const ROOM_EVENTS = {
 };
 
 export const ROOM_AUTOCLOSE_DURATION = 300000; // 5 minutes in milliseconds
+export const MINIMUM_VALID_INTERVIEW_DURATION = 900000; // 15 minutes in milliseconds
