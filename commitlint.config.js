@@ -24,6 +24,7 @@ const Configuration = {
         'prisma',
         'questions',
         'records',
+        'results',
         'rooms',
         'submissions',
         'tasks',

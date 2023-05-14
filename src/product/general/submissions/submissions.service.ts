@@ -3,6 +3,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { SubmissionWithQuestion } from '../../../infra/interfaces/interface';
 import { QuestionSubmission, Window } from '../../../infra/prisma/generated';
 import { PrismaService } from '../../../infra/prisma/prisma.service';
+import { ResultsService } from '../../../productinfra/results/results.service';
 import { WindowsService } from '../../../windows/windows.service';
 
 import { SubmissionsQueryBuilder } from './builders';
@@ -14,16 +15,17 @@ export class SubmissionsService {
   constructor(
     private readonly logger: Logger,
     private readonly prismaService: PrismaService,
+    private readonly resultsService: ResultsService,
     private readonly windowsService: WindowsService,
     private readonly queryBuilder: SubmissionsQueryBuilder,
   ) {}
 
-  create(
+  async create(
     createSubmissionDto: CreateSubmissionDto,
     userId: string,
   ): Promise<QuestionSubmission> {
     createSubmissionDto.codeWritten = createSubmissionDto.codeWritten.trim();
-    return this.prismaService.questionSubmission
+    const submission = await this.prismaService.questionSubmission
       .create({
         data: {
           ...createSubmissionDto,
@@ -38,6 +40,7 @@ export class SubmissionsService {
         );
         throw e;
       });
+    return this.resultsService.maybeMatchQuestionSubmission(submission, userId);
   }
 
   async update(
