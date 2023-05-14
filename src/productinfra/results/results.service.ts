@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 
 import {
   QuestionSubmission,
+  RoomRecordUser,
   StudentResult,
 } from '../../infra/prisma/generated';
 import { PrismaService } from '../../infra/prisma/prisma.service';
@@ -17,9 +18,10 @@ export class ResultsService {
 
   async maybeMatchQuestionSubmission(
     submission: QuestionSubmission,
-    userId: string,
   ): Promise<QuestionSubmission> {
-    const studentResult = await this.findStudentResultForOngoingWindow(userId);
+    const studentResult = await this.findStudentResultForOngoingWindow(
+      submission.userId,
+    );
     if (studentResult == null) {
       return submission;
     }
@@ -35,6 +37,34 @@ export class ResultsService {
       .catch((e) => {
         this.logger.error(
           'Failed to update question submission',
+          e instanceof Error ? e.stack : undefined,
+          ResultsService.name,
+        );
+        throw e;
+      });
+  }
+
+  async maybeMatchRoomRecordUser(
+    recordUser: RoomRecordUser,
+  ): Promise<RoomRecordUser> {
+    const studentResult = await this.findStudentResultForOngoingWindow(
+      recordUser.userId,
+    );
+    if (studentResult == null) {
+      return recordUser;
+    }
+    return this.prismaService.roomRecordUser
+      .update({
+        where: {
+          id: recordUser.id,
+        },
+        data: {
+          studentResultId: studentResult.id,
+        },
+      })
+      .catch((e) => {
+        this.logger.error(
+          'Failed to update room record user',
           e instanceof Error ? e.stack : undefined,
           ResultsService.name,
         );

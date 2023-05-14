@@ -39,7 +39,7 @@ export class SubmissionsService {
         );
         throw e;
       });
-    return this.resultsService.maybeMatchQuestionSubmission(submission, userId);
+    return this.resultsService.maybeMatchQuestionSubmission(submission);
   }
 
   async update(
