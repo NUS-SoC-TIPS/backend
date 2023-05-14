@@ -19,6 +19,7 @@ export class TasksController {
   @UseFilters(BadRequestExceptionFilter)
   async findStats(@GetUserRest('id') userId: string): Promise<TaskStatsEntity> {
     this.logger.log('GET /tasks/stats', TasksController.name);
-    return this.tasksService.findStats(userId);
+    // TODO: Replace with the actual cohort ID
+    return this.tasksService.findStats(userId, 1);
   }
 }
