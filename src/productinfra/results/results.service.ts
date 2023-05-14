@@ -42,9 +42,17 @@ export class ResultsService {
       });
   }
 
-  private async findStudentResultForOngoingWindow(
-    userId: string,
-  ): Promise<StudentResult | null> {
+  async findStudentResultForOngoingWindow(userId: string): Promise<
+    | (StudentResult & {
+        _count: {
+          questionSubmissions: number;
+          roomRecordUsers: number;
+        };
+      })
+    | null
+  > {
+    // Finding window may throw. We will not catch here and instead let the
+    // controller handle it.
     const ongoingWindow = await this.windowsService.findOngoingWindow();
     if (ongoingWindow == null) {
       this.logger.log('No ongoing window', ResultsService.name);
@@ -79,6 +87,11 @@ export class ResultsService {
           studentId_windowId: {
             studentId: student.id,
             windowId: ongoingWindow.id,
+          },
+        },
+        include: {
+          _count: {
+            select: { questionSubmissions: true, roomRecordUsers: true },
           },
         },
       })

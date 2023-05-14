@@ -1,7 +1,6 @@
 import { Logger, Module } from '@nestjs/common';
 
 import { ResultsModule } from '../../../productinfra/results/results.module';
-import { WindowsModule } from '../../../productinfra/windows/windows.module';
 
 import { SubmissionsController } from './submissions.controller';
 import { SubmissionsService } from './submissions.service';
@@ -9,7 +8,7 @@ import { SubmissionsService } from './submissions.service';
 @Module({
   controllers: [SubmissionsController],
   providers: [SubmissionsService, Logger],
-  imports: [ResultsModule, WindowsModule],
+  imports: [ResultsModule],
   exports: [SubmissionsService],
 })
 export class SubmissionsModule {}

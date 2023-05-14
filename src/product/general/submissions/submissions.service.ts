@@ -6,7 +6,6 @@ import {
 } from '../../../infra/prisma/generated';
 import { PrismaService } from '../../../infra/prisma/prisma.service';
 import { ResultsService } from '../../../productinfra/results/results.service';
-import { WindowsService } from '../../../productinfra/windows/windows.service';
 import { findStartOfWeek } from '../../../utils';
 
 import { CreateSubmissionDto, UpdateSubmissionDto } from './dtos';
@@ -18,7 +17,6 @@ export class SubmissionsService {
     private readonly logger: Logger,
     private readonly prismaService: PrismaService,
     private readonly resultsService: ResultsService,
-    private readonly windowsService: WindowsService,
   ) {}
 
   async create(
@@ -122,6 +120,7 @@ export class SubmissionsService {
         );
         throw e;
       });
+    // TODO: When allSubmissions is paginated, rewrite this into a count query
     const stats = allSubmissions.reduce(
       (acc, curr) => {
         switch (curr.question.difficulty) {
@@ -150,45 +149,10 @@ export class SubmissionsService {
   private async countSubmissionsForThisWindowOrWeek(
     userId: string,
   ): Promise<[number, boolean]> {
-    // Finding window may throw. We will not catch here and instead let the
-    // controller handle it.
-    const ongoingWindow = await this.windowsService.findOngoingWindow();
-    if (ongoingWindow != null) {
-      const student = await this.prismaService.student
-        .findUnique({
-          where: {
-            userId_cohortId: { userId, cohortId: ongoingWindow.cohortId },
-          },
-        })
-        .catch((e) => {
-          this.logger.error(
-            'Failed to find nullable student',
-            e instanceof Error ? e.stack : undefined,
-            SubmissionsService.name,
-          );
-          throw e;
-        });
-      if (student != null) {
-        const studentRecord = await this.prismaService.studentResult
-          .findUniqueOrThrow({
-            where: {
-              studentId_windowId: {
-                studentId: student.id,
-                windowId: ongoingWindow.id,
-              },
-            },
-            include: { _count: { select: { questionSubmissions: true } } },
-          })
-          .catch((e) => {
-            this.logger.error(
-              'Failed to count number of submissions for this window',
-              e instanceof Error ? e.stack : undefined,
-              SubmissionsService.name,
-            );
-            throw e;
-          });
-        return [studentRecord._count.questionSubmissions, true];
-      }
+    const studentRecord =
+      await this.resultsService.findStudentResultForOngoingWindow(userId);
+    if (studentRecord != null) {
+      return [studentRecord._count.questionSubmissions, true];
     }
     return [
       await this.prismaService.questionSubmission
