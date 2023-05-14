@@ -83,10 +83,13 @@ model RoomRecord {
   id              Int              @id @default(autoincrement())
   createdAt       DateTime         @default(now()) @map("created_at")
   updatedAt       DateTime         @updatedAt @map("updated_at")
-  isRoleplay      Boolean          @default(false) @map("is_roleplay")
+  isRoleplay      Boolean          @default(false) @map("is_roleplay") // TODO: Consider whether to remove this
   duration        Float // In milliseconds. Time taken for both users if general, else time taken for specific turn.
   codeWritten     String           @map("code_written") // Code written by both users if general, else by interviewee
-  isSolved        Boolean          @default(false) @map("is_solved")
+  isSolved        Boolean          @default(false) @map("is_solved") // TODO: Consider whether to remove this
+  // Whether the record is long enough + with two participants
+  // Ideally, this should be computed from duration and len(roomRecordUsers), but Prisma limitations make the latter hard to query without a raw query
+  isValid         Boolean          @default(false) @map("is_valid")
   roomId          Int              @map("room_id")
   questionSlug    String?          @map("question_slug")
   language        Language

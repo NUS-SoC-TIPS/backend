@@ -26,6 +26,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
     await this.seedKattis();
     await this.seedStudents();
     await this.seedStudentResults();
+    await this.seedIsValidForRecords();
     await this.matchSubmissionsAndRecordsToStudentResults();
     this.logger.log('All data seeded', PrismaService.name);
   }
@@ -266,6 +267,49 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
     });
   }
 
+  private async seedIsValidForRecords(): Promise<void> {
+    const numIsValid = await this.roomRecord.count({
+      where: { isValid: true },
+    });
+    if (numIsValid > 0) {
+      this.logger.log(
+        'Valid records have already been marked!',
+        PrismaService.name,
+      );
+      return;
+    }
+
+    const roomRecords = await this.roomRecord.findMany({
+      where: {
+        roomRecordUsers: {
+          some: {
+            isInterviewer: false,
+          },
+        },
+        duration: {
+          gte: MINIMUM_INTERVIEW_DURATION,
+        },
+      },
+      include: { roomRecordUsers: true },
+    });
+    const validRoomRecords = roomRecords.filter(
+      (roomRecord) => roomRecord.roomRecordUsers.length === 2,
+    );
+    return Promise.all(
+      validRoomRecords.map((roomRecord) =>
+        this.roomRecord.update({
+          where: { id: roomRecord.id },
+          data: { isValid: true },
+        }),
+      ),
+    ).then((result) => {
+      this.logger.log(
+        `${result.length} valid records updated!`,
+        PrismaService.name,
+      );
+    });
+  }
+
   private async matchSubmissionsAndRecordsToStudentResults(): Promise<void> {
     const numMatchedSubmissions = await this.questionSubmission.count({
       where: {
@@ -296,57 +340,39 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
     });
     return Promise.all(
       studentResults.map(async (studentResult) => {
-        await this.questionSubmission.updateMany({
-          data: {
-            studentResultId: studentResult.id,
-          },
-          where: {
-            userId: studentResult.student.userId,
-            createdAt: {
-              gte: studentResult.window.startAt,
-              lte: studentResult.window.endAt,
+        return Promise.all([
+          this.questionSubmission.updateMany({
+            data: {
+              studentResultId: studentResult.id,
             },
-          },
-        });
-        const roomRecords = this.roomRecord.findMany({
-          where: {
-            roomRecordUsers: {
-              some: {
-                userId: studentResult.student.userId,
-                isInterviewer: false,
+            where: {
+              userId: studentResult.student.userId,
+              createdAt: {
+                gte: studentResult.window.startAt,
+                lte: studentResult.window.endAt,
               },
             },
-            createdAt: {
-              gte: studentResult.window.startAt,
-              lte: studentResult.window.endAt,
+          }),
+          this.roomRecordUser.updateMany({
+            data: {
+              studentResultId: studentResult.id,
             },
-            duration: {
-              gte: MINIMUM_INTERVIEW_DURATION,
+            where: {
+              userId: studentResult.student.userId,
+              isInterviewer: false,
+              roomRecord: {
+                createdAt: {
+                  gte: studentResult.window.startAt,
+                  lte: studentResult.window.endAt,
+                },
+                duration: {
+                  gte: MINIMUM_INTERVIEW_DURATION,
+                },
+                isValid: true,
+              },
             },
-          },
-          include: { roomRecordUsers: { include: { user: true } } },
-        });
-        const validRoomRecords = (await roomRecords).filter(
-          (record) => record.roomRecordUsers.length === 2,
-        );
-        return Promise.all(
-          validRoomRecords
-            .flatMap((record) => record.roomRecordUsers)
-            .filter(
-              (recordUser) =>
-                recordUser.userId === studentResult.student.userId,
-            )
-            .map((recordUser) =>
-              this.roomRecordUser.update({
-                where: {
-                  id: recordUser.id,
-                },
-                data: {
-                  studentResultId: studentResult.id,
-                },
-              }),
-            ),
-        );
+          }),
+        ]);
       }),
     ).then(() => {
       this.logger.log('Submissions and records matched!', PrismaService.name);
