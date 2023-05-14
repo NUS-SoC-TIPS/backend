@@ -8,6 +8,7 @@ import {
   User,
 } from '../../../infra/prisma/generated';
 import { PrismaService } from '../../../infra/prisma/prisma.service';
+import { ResultsService } from '../../../productinfra/results/results.service';
 
 import { CreateRecordDto, CreateRoomUserDto } from './dtos';
 import { MINIMUM_VALID_INTERVIEW_DURATION } from './rooms.constants';
@@ -17,6 +18,7 @@ export class RoomsService {
   constructor(
     private readonly logger: Logger,
     private readonly prismaService: PrismaService,
+    private readonly resultsService: ResultsService,
   ) {}
 
   async create(userId: string): Promise<Room> {
@@ -138,7 +140,7 @@ export class RoomsService {
 
   async closeRoom(dto: CreateRecordDto, isAuto: boolean): Promise<void> {
     const { roomRecordUsers, ...recordData } = dto;
-    await this.prismaService
+    const [roomRecord, _] = await this.prismaService
       .$transaction([
         this.prismaService.roomRecord.create({
           data: {
@@ -152,6 +154,7 @@ export class RoomsService {
               },
             },
           },
+          include: { roomRecordUsers: true },
         }),
         this.prismaService.room.update({
           where: {
@@ -173,6 +176,13 @@ export class RoomsService {
         );
         throw e;
       });
+    if (roomRecord.isValid) {
+      await Promise.all(
+        roomRecord.roomRecordUsers.map((roomRecordUser) =>
+          this.resultsService.maybeMatchRoomRecordUser(roomRecordUser),
+        ),
+      );
+    }
   }
 
   /**
