@@ -88,7 +88,7 @@ export class SubmissionsService {
   }
 
   async findStats(userId: string): Promise<SubmissionStatsEntity> {
-    const [numberOfSubmissionsForThisWindowOrWeek, isWindow] =
+    const [numberOfSubmissionsForThisWindowOrWeek, numQuestions] =
       await this.countSubmissionsForThisWindowOrWeek(userId);
     // TODO: Rewrite this to be paginated, perhaps as part of a separate endpoint
     const allSubmissions = await this.prismaService.questionSubmission
@@ -127,20 +127,28 @@ export class SubmissionsService {
     );
     return {
       numberOfSubmissionsForThisWindowOrWeek,
-      isWindow,
+      numQuestions,
       stats,
       latestSubmission,
       allSubmissions,
     };
   }
 
+  /**
+   * Returns the number of submissions for this window (if any) or week (if no window), along with
+   * the number of questions this window requires. If no window is ongoing, then the second value
+   * would be null.
+   */
   private async countSubmissionsForThisWindowOrWeek(
     userId: string,
-  ): Promise<[number, boolean]> {
-    const studentRecord =
+  ): Promise<[number, number | null]> {
+    const [studentRecord, ongoingWindow] =
       await this.resultsService.findStudentResultForOngoingWindow(userId);
     if (studentRecord != null) {
-      return [studentRecord._count.questionSubmissions, true];
+      return [
+        studentRecord._count.questionSubmissions,
+        ongoingWindow?.numQuestions ?? null,
+      ];
     }
     return [
       await this.prismaService.questionSubmission
@@ -155,7 +163,7 @@ export class SubmissionsService {
           );
           throw e;
         }),
-      false,
+      null,
     ];
   }
 }

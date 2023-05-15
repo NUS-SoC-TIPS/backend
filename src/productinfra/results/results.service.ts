@@ -4,6 +4,7 @@ import {
   QuestionSubmission,
   RoomRecordUser,
   StudentResult,
+  Window,
 } from '../../infra/prisma/generated';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { WindowsService } from '../windows/windows.service';
@@ -19,7 +20,7 @@ export class ResultsService {
   async maybeMatchQuestionSubmission(
     submission: QuestionSubmission,
   ): Promise<QuestionSubmission> {
-    const studentResult = await this.findStudentResultForOngoingWindow(
+    const [studentResult, _] = await this.findStudentResultForOngoingWindow(
       submission.userId,
     );
     if (studentResult == null) {
@@ -47,7 +48,7 @@ export class ResultsService {
   async maybeMatchRoomRecordUser(
     recordUser: RoomRecordUser,
   ): Promise<RoomRecordUser> {
-    const studentResult = await this.findStudentResultForOngoingWindow(
+    const [studentResult, _] = await this.findStudentResultForOngoingWindow(
       recordUser.userId,
     );
     if (studentResult == null) {
@@ -72,21 +73,29 @@ export class ResultsService {
       });
   }
 
+  /**
+   * Returns the student result for the given userId (if any) and the ongoing cohort window (if any).
+   */
   async findStudentResultForOngoingWindow(userId: string): Promise<
-    | (StudentResult & {
-        _count: {
-          questionSubmissions: number;
-          roomRecordUsers: number;
-        };
-      })
-    | null
+    [
+      (
+        | (StudentResult & {
+            _count: {
+              questionSubmissions: number;
+              roomRecordUsers: number;
+            };
+          })
+        | null
+      ),
+      Window | null,
+    ]
   > {
     // Finding window may throw. We will not catch here and instead let the
     // controller handle it.
     const ongoingWindow = await this.windowsService.findOngoingWindow();
     if (ongoingWindow == null) {
       this.logger.log('No ongoing window', ResultsService.name);
-      return null;
+      return [null, null];
     }
 
     const student = await this.prismaService.student
@@ -108,30 +117,33 @@ export class ResultsService {
         'User is not a student of ongoing cohort',
         ResultsService.name,
       );
-      return null;
+      return [null, ongoingWindow];
     }
 
-    return this.prismaService.studentResult
-      .findUniqueOrThrow({
-        where: {
-          studentId_windowId: {
-            studentId: student.id,
-            windowId: ongoingWindow.id,
+    return [
+      await this.prismaService.studentResult
+        .findUniqueOrThrow({
+          where: {
+            studentId_windowId: {
+              studentId: student.id,
+              windowId: ongoingWindow.id,
+            },
           },
-        },
-        include: {
-          _count: {
-            select: { questionSubmissions: true, roomRecordUsers: true },
+          include: {
+            _count: {
+              select: { questionSubmissions: true, roomRecordUsers: true },
+            },
           },
-        },
-      })
-      .catch((e) => {
-        this.logger.error(
-          'Failed to find student result',
-          e instanceof Error ? e.stack : undefined,
-          ResultsService.name,
-        );
-        throw e;
-      });
+        })
+        .catch((e) => {
+          this.logger.error(
+            'Failed to find student result',
+            e instanceof Error ? e.stack : undefined,
+            ResultsService.name,
+          );
+          throw e;
+        }),
+      ongoingWindow,
+    ];
   }
 }

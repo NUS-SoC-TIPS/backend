@@ -15,7 +15,7 @@ export class RecordsService {
   ) {}
 
   async findStats(userId: string): Promise<RecordStatsEntity> {
-    const [numberOfRecordsForThisWindowOrWeek, isWindow] =
+    const [numberOfRecordsForThisWindowOrWeek, requireInterview] =
       await this.countRecordsForThisWindowOrWeek(userId);
     const allRecords = await this.prismaService.roomRecord
       .findMany({
@@ -42,20 +42,28 @@ export class RecordsService {
       allRecords.length;
     return {
       numberOfRecordsForThisWindowOrWeek,
-      isWindow,
+      requireInterview,
       latestRecord: latestRecord,
       averageInterviewDurationMs,
       allRecords: allRecords,
     };
   }
 
+  /**
+   * Returns the number of records for this window (if any) or week (if no window), along with
+   * whether this window requires an interview. If no window is ongoing, then the second value
+   * would be null.
+   */
   private async countRecordsForThisWindowOrWeek(
     userId: string,
-  ): Promise<[number, boolean]> {
-    const studentRecord =
+  ): Promise<[number, boolean | null]> {
+    const [studentRecord, ongoingWindow] =
       await this.resultsService.findStudentResultForOngoingWindow(userId);
     if (studentRecord != null) {
-      return [studentRecord._count.roomRecordUsers, true];
+      return [
+        studentRecord._count.roomRecordUsers,
+        ongoingWindow?.requireInterview ?? null,
+      ];
     }
     return [
       await this.prismaService.roomRecord
@@ -74,7 +82,7 @@ export class RecordsService {
           );
           throw e;
         }),
-      false,
+      null,
     ];
   }
 }
