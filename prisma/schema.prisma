@@ -29,7 +29,6 @@ model User {
   name                String
   role                UserRole             @default(NORMAL)
   settings            Settings?
-  exclusions          Exclusion[]
   questionSubmissions QuestionSubmission[]
   roomRecordUsers     RoomRecordUser[]
   roomUsers           RoomUser[]
@@ -141,6 +140,7 @@ model Student {
   user                   User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   cohort                 Cohort          @relation(fields: [cohortId], references: [id], onDelete: Cascade)
   results                StudentResult[]
+  exclusion              Exclusion?
 
   @@unique([userId, cohortId])
   @@map("students")
@@ -155,9 +155,9 @@ model Window {
   cohortId         Int             @map("cohort_id")
   requireInterview Boolean         @map("require_interview")
   numQuestions     Int             @default(7) @map("num_questions")
-  exclusions       Exclusion[]
   cohort           Cohort          @relation(fields: [cohortId], references: [id], onDelete: Cascade)
   studentResults   StudentResult[]
+  exclusions       Exclusion[]
 
   @@map("windows")
 }
@@ -217,13 +217,13 @@ model Exclusion {
   id        Int      @id @default(autoincrement())
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
-  userId    String   @map("user_id")
+  // Match it to student for now, since each student can only be excluded
+  studentId Int      @unique @map("student_id")
   windowId  Int      @map("window_id")
   reason    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
   window    Window   @relation(fields: [windowId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, windowId])
   @@map("exclusions")
 }
 
