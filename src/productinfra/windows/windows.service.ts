@@ -10,6 +10,19 @@ export class WindowsService {
     private readonly prismaService: PrismaService,
   ) {}
 
+  findOrThrow(windowId: number): Promise<Window> {
+    return this.prismaService.window
+      .findUniqueOrThrow({ where: { id: windowId } })
+      .catch((e) => {
+        this.logger.error(
+          `Failed to find window with ID: ${windowId}`,
+          e instanceof Error ? e.stack : undefined,
+          WindowsService.name,
+        );
+        throw e;
+      });
+  }
+
   findOngoingWindow(): Promise<Window | null> {
     const currentDate = new Date();
     return this.prismaService.window
