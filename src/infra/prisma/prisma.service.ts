@@ -310,44 +310,45 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
         student: true,
       },
     });
-    return Promise.all(
-      studentResults.map(async (studentResult) => {
-        return Promise.all([
-          this.questionSubmission.updateMany({
-            data: {
-              studentResultId: studentResult.id,
+
+    for (let i = 0; i < studentResults.length; i++) {
+      const studentResult = studentResults[i];
+      await Promise.all([
+        this.questionSubmission.updateMany({
+          data: {
+            studentResultId: studentResult.id,
+          },
+          where: {
+            studentResultId: null,
+            userId: studentResult.student.userId,
+            createdAt: {
+              gte: studentResult.window.startAt,
+              lte: studentResult.window.endAt,
             },
-            where: {
-              userId: studentResult.student.userId,
+          },
+        }),
+        this.roomRecordUser.updateMany({
+          data: {
+            studentResultId: studentResult.id,
+          },
+          where: {
+            studentResultId: null,
+            userId: studentResult.student.userId,
+            isInterviewer: false,
+            // Note: The matching logic here is the legacy one, which calculates based on when the
+            // room record was created. Moving forward, this will be calculated based on when the
+            // room was closed, i.e. when the interview was completed.
+            roomRecord: {
               createdAt: {
                 gte: studentResult.window.startAt,
                 lte: studentResult.window.endAt,
               },
+              isValid: true,
             },
-          }),
-          this.roomRecordUser.updateMany({
-            data: {
-              studentResultId: studentResult.id,
-            },
-            where: {
-              userId: studentResult.student.userId,
-              isInterviewer: false,
-              // Note: The matching logic here is the legacy one, which calculates based on when the
-              // room record was created. Moving forward, this will be calculated based on when the
-              // room was closed, i.e. when the interview was completed.
-              roomRecord: {
-                createdAt: {
-                  gte: studentResult.window.startAt,
-                  lte: studentResult.window.endAt,
-                },
-                isValid: true,
-              },
-            },
-          }),
-        ]);
-      }),
-    ).then(() => {
-      this.logger.log('Submissions and records matched!', PrismaService.name);
-    });
+          },
+        }),
+      ]);
+    }
+    this.logger.log('Submissions and records matched!', PrismaService.name);
   }
 }
