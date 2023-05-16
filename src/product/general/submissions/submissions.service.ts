@@ -142,11 +142,11 @@ export class SubmissionsService {
   private async countSubmissionsForThisWindowOrWeek(
     userId: string,
   ): Promise<[number, number | null]> {
-    const [studentRecord, ongoingWindow] =
+    const [studentResult, ongoingWindow] =
       await this.resultsService.findStudentResultForOngoingWindow(userId);
-    if (studentRecord != null) {
+    if (studentResult != null) {
       return [
-        studentRecord._count.questionSubmissions,
+        studentResult._count.questionSubmissions,
         ongoingWindow?.numQuestions ?? null,
       ];
     }

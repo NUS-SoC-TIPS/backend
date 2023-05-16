@@ -57,11 +57,11 @@ export class RecordsService {
   private async countRecordsForThisWindowOrWeek(
     userId: string,
   ): Promise<[number, boolean | null]> {
-    const [studentRecord, ongoingWindow] =
+    const [studentResult, ongoingWindow] =
       await this.resultsService.findStudentResultForOngoingWindow(userId);
-    if (studentRecord != null) {
+    if (studentResult != null) {
       return [
-        studentRecord._count.roomRecordUsers,
+        studentResult._count.roomRecordUsers,
         ongoingWindow?.requireInterview ?? null,
       ];
     }
