@@ -188,11 +188,6 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
   }
 
   private async seedStudents(): Promise<void> {
-    const numStudents = await this.student.count();
-    if (numStudents > 0) {
-      this.logger.log('Students have already been seeded', PrismaService.name);
-      return;
-    }
     // The following code seeds the students of the first cohort.
     const firstCohort = await this.cohort.findFirst();
     if (firstCohort == null) {
@@ -206,11 +201,22 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
       this.dataService.getStudentData().map(async (student) => {
         const user = await this.user.findFirst({
           where: {
-            githubUsername: student.githubUsername,
+            githubUsername: {
+              equals: student.githubUsername,
+              mode: 'insensitive',
+            },
           },
         });
         if (user == null) {
           return Promise.resolve(null);
+        }
+        const existingStudent = await this.student.findUnique({
+          where: {
+            userId_cohortId: { userId: user.id, cohortId: firstCohort.id },
+          },
+        });
+        if (existingStudent != null) {
+          return Promise.resolve(existingStudent);
         }
         return this.student.create({
           data: {
@@ -233,19 +239,17 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
   }
 
   private async seedStudentResults(): Promise<void> {
-    const numStudentResults = await this.studentResult.count();
-    if (numStudentResults > 0) {
-      this.logger.log(
-        'Student records have already been seeded',
-        PrismaService.name,
-      );
-      return;
-    }
     const students = await this.student.findMany();
     // We can assume all windows are for the first cohort, for now.
     const windows = await this.window.findMany();
     return Promise.all(
       students.map(async (student) => {
+        const existingStudentResults = await this.studentResult.findMany({
+          where: { studentId: student.id },
+        });
+        if (existingStudentResults.length > 0) {
+          return existingStudentResults;
+        }
         const studentResults = await Promise.all(
           windows.map((window) =>
             this.studentResult.create({
@@ -268,17 +272,6 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
   }
 
   private async seedIsValidForRecords(): Promise<void> {
-    const numIsValid = await this.roomRecord.count({
-      where: { isValid: true },
-    });
-    if (numIsValid > 0) {
-      this.logger.log(
-        'Valid records have already been marked!',
-        PrismaService.name,
-      );
-      return;
-    }
-
     const roomRecords = await this.roomRecord.findMany({
       where: {
         roomRecordUsers: {
@@ -304,78 +297,58 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
       ),
     ).then((result) => {
       this.logger.log(
-        `${result.length} valid records updated!`,
+        `${result.length} valid records updated`,
         PrismaService.name,
       );
     });
   }
 
   private async matchSubmissionsAndRecordsToStudentResults(): Promise<void> {
-    const numMatchedSubmissions = await this.questionSubmission.count({
-      where: {
-        studentResultId: {
-          not: null,
-        },
-      },
-    });
-    const numMatchedRecords = await this.roomRecordUser.count({
-      where: {
-        studentResultId: {
-          not: null,
-        },
-      },
-    });
-    if (numMatchedSubmissions > 0 || numMatchedRecords > 0) {
-      this.logger.log(
-        'Submissions and records have already been matched!',
-        PrismaService.name,
-      );
-      return;
-    }
     const studentResults = await this.studentResult.findMany({
       include: {
         window: true,
         student: true,
       },
     });
-    return Promise.all(
-      studentResults.map(async (studentResult) => {
-        return Promise.all([
-          this.questionSubmission.updateMany({
-            data: {
-              studentResultId: studentResult.id,
+
+    for (let i = 0; i < studentResults.length; i++) {
+      const studentResult = studentResults[i];
+      await Promise.all([
+        this.questionSubmission.updateMany({
+          data: {
+            studentResultId: studentResult.id,
+          },
+          where: {
+            studentResultId: null,
+            userId: studentResult.student.userId,
+            createdAt: {
+              gte: studentResult.window.startAt,
+              lte: studentResult.window.endAt,
             },
-            where: {
-              userId: studentResult.student.userId,
+          },
+        }),
+        this.roomRecordUser.updateMany({
+          data: {
+            studentResultId: studentResult.id,
+          },
+          where: {
+            studentResultId: null,
+            userId: studentResult.student.userId,
+            isInterviewer: false,
+            // Note: The matching logic here is the legacy one, which calculates based on when the
+            // room record was created. Moving forward, this will be calculated based on when the
+            // room was closed, i.e. when the interview was completed.
+            roomRecord: {
               createdAt: {
                 gte: studentResult.window.startAt,
                 lte: studentResult.window.endAt,
               },
+              isValid: true,
             },
-          }),
-          this.roomRecordUser.updateMany({
-            data: {
-              studentResultId: studentResult.id,
-            },
-            where: {
-              userId: studentResult.student.userId,
-              isInterviewer: false,
-              // Note: The matching logic here is the legacy one, which calculates based on when the
-              // room record was created. Moving forward, this will be calculated based on when the
-              // room was closed, i.e. when the interview was completed.
-              roomRecord: {
-                createdAt: {
-                  gte: studentResult.window.startAt,
-                  lte: studentResult.window.endAt,
-                },
-                isValid: true,
-              },
-            },
-          }),
-        ]);
-      }),
-    ).then(() => {
-      this.logger.log('Submissions and records matched!', PrismaService.name);
-    });
+          },
+        }),
+      ]);
+    }
+    this.logger.log('Submissions and records matched!', PrismaService.name);
   }
 }
