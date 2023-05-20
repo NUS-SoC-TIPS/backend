@@ -1,8 +1,8 @@
 import { Controller, Get, Logger, UseFilters, UseGuards } from '@nestjs/common';
 
+import { GetUserRest } from '../../../productinfra/decorators';
+import { JwtRestGuard } from '../../../productinfra/guards';
 import { BadRequestExceptionFilter } from '../../../utils';
-import { GetUserRest } from '../auth/decorators';
-import { JwtRestGuard } from '../auth/guards';
 
 import { RecordStatsEntity } from './entities';
 import { RecordsService } from './records.service';

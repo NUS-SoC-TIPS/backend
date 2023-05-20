@@ -5,8 +5,8 @@ import {
   WebSocketGateway,
 } from '@nestjs/websockets';
 
-import { GetUserWs } from '../auth/decorators';
-import { AuthWsGuard } from '../auth/guards';
+import { GetUserWs } from '../../../productinfra/decorators';
+import { AuthWsGuard } from '../../../productinfra/guards';
 import { GetRoom } from '../rooms/decorators';
 import { InRoomGuard } from '../rooms/guards';
 

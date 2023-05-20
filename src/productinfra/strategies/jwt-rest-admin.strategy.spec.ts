@@ -2,17 +2,16 @@ import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { DataModule } from '../../../../infra/data/data.module';
-import { User, UserRole } from '../../../../infra/prisma/generated';
-import { PrismaService } from '../../../../infra/prisma/prisma.service';
-import { AuthDto } from '../dtos';
+import { DataModule } from '../../infra/data/data.module';
+import { User, UserRole } from '../../infra/prisma/generated';
+import { PrismaService } from '../../infra/prisma/prisma.service';
 
 import { JwtRestAdminStrategy } from './jwt-rest-admin.strategy';
 
 describe('JwtRestAdminStrategy', () => {
   let strategy: JwtRestAdminStrategy;
   let prisma: PrismaService;
-  const adminData: Omit<AuthDto, 'token'> & { id: string; role: UserRole } = {
+  const adminData: Omit<User, 'createdAt' | 'updatedAt'> = {
     id: '1',
     githubUsername: 'hello',
     name: 'world',
@@ -20,7 +19,7 @@ describe('JwtRestAdminStrategy', () => {
     profileUrl: 'https://github.com/zhuhanming',
     role: UserRole.ADMIN,
   };
-  const normalData: Omit<AuthDto, 'token'> & { id: string; role: UserRole } = {
+  const normalData: Omit<User, 'createdAt' | 'updatedAt'> = {
     ...adminData,
     id: '2',
     githubUsername: 'world',

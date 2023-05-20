@@ -1,6 +1,6 @@
 import { Controller, UseGuards } from '@nestjs/common';
 
-import { isGuarded } from '../../../../utils';
+import { isGuarded } from '../../utils';
 
 import { JwtRestAdminGuard } from './jwt-rest-admin.guard';
 

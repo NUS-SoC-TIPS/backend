@@ -1,8 +1,8 @@
 import { Controller, Get, Logger, UseFilters, UseGuards } from '@nestjs/common';
 
 import { Question } from '../../../infra/prisma/generated';
+import { JwtRestGuard } from '../../../productinfra/guards';
 import { BadRequestExceptionFilter } from '../../../utils';
-import { JwtRestGuard } from '../auth/guards';
 
 import { QuestionsService } from './questions.service';
 

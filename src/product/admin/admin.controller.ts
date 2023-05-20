@@ -11,8 +11,8 @@ import {
 } from '@nestjs/common';
 
 import { Exclusion, Window } from '../../infra/prisma/generated';
+import { JwtRestAdminGuard } from '../../productinfra/guards';
 import { BadRequestExceptionFilter } from '../../utils';
-import { JwtRestAdminGuard } from '../general/auth/guards';
 
 import { AdminService } from './admin.service';
 import { CreateExclusionDto } from './dtos';

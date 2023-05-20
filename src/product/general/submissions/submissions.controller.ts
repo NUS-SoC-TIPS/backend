@@ -11,9 +11,9 @@ import {
 } from '@nestjs/common';
 
 import { QuestionSubmission } from '../../../infra/prisma/generated';
+import { GetUserRest } from '../../../productinfra/decorators';
+import { JwtRestGuard } from '../../../productinfra/guards';
 import { BadRequestExceptionFilter } from '../../../utils';
-import { GetUserRest } from '../auth/decorators';
-import { JwtRestGuard } from '../auth/guards';
 
 import { CreateSubmissionDto, UpdateSubmissionDto } from './dtos';
 import { SubmissionStatsEntity } from './entities';

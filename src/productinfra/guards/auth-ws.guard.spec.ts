@@ -1,6 +1,6 @@
 import { Controller, UseGuards } from '@nestjs/common';
 
-import { isGuarded } from '../../../../utils';
+import { isGuarded } from '../../utils';
 
 import { AuthWsGuard } from './auth-ws.guard';
 

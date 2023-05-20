@@ -8,9 +8,9 @@ import {
 } from '@nestjs/common';
 
 import { Room } from '../../../infra/prisma/generated';
+import { GetUserRest } from '../../../productinfra/decorators';
+import { JwtRestGuard } from '../../../productinfra/guards';
 import { BadRequestExceptionFilter } from '../../../utils';
-import { GetUserRest } from '../auth/decorators';
-import { JwtRestGuard } from '../auth/guards';
 
 import { RoomsService } from './rooms.service';
 

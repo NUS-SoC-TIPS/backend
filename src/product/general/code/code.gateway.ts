@@ -16,8 +16,8 @@ import { Server } from 'socket.io';
 
 import { ISocket } from '../../../infra/interfaces/socket';
 import { Language, Room } from '../../../infra/prisma/generated';
+import { AuthWsGuard } from '../../../productinfra/guards';
 import { CallbackDto } from '../../../productinfra/judge0/dtos';
-import { AuthWsGuard } from '../auth/guards';
 import { GetRoom } from '../rooms/decorators';
 import { InRoomGuard } from '../rooms/guards';
 

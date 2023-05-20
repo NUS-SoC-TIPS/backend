@@ -18,8 +18,8 @@ import { Server } from 'socket.io';
 import { ISocket } from '../../../infra/interfaces/socket';
 import { Room, RoomStatus, User } from '../../../infra/prisma/generated';
 import { AgoraService } from '../../../productinfra/agora/agora.service';
-import { GetUserWs } from '../auth/decorators';
-import { AuthWsGuard } from '../auth/guards';
+import { GetUserWs } from '../../../productinfra/decorators';
+import { AuthWsGuard } from '../../../productinfra/guards';
 import { CodeService } from '../code/code.service';
 import { NotesService } from '../notes/notes.service';
 

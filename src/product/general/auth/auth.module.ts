@@ -7,7 +7,6 @@ import { UsersModule } from '../users/users.module';
 import { AuthController } from './auth.controller';
 import { AuthGateway } from './auth.gateway';
 import { AuthService } from './auth.service';
-import { JwtRestAdminStrategy, JwtRestStrategy } from './strategies';
 
 @Module({
   imports: [
@@ -22,13 +21,7 @@ import { JwtRestAdminStrategy, JwtRestStrategy } from './strategies';
     }),
     UsersModule,
   ],
-  providers: [
-    AuthService,
-    AuthGateway,
-    JwtRestStrategy,
-    JwtRestAdminStrategy,
-    Logger,
-  ],
+  providers: [AuthService, AuthGateway, Logger],
   controllers: [AuthController],
 })
 export class AuthModule {}

@@ -3,11 +3,14 @@ import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 
-import { User } from '../../../../infra/prisma/generated';
-import { PrismaService } from '../../../../infra/prisma/prisma.service';
+import { User, UserRole } from '../../infra/prisma/generated';
+import { PrismaService } from '../../infra/prisma/prisma.service';
 
 @Injectable()
-export class JwtRestStrategy extends PassportStrategy(Strategy, 'jwt-rest') {
+export class JwtRestAdminStrategy extends PassportStrategy(
+  Strategy,
+  'jwt-rest-admin',
+) {
   constructor(config: ConfigService, private prisma: PrismaService) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
@@ -16,9 +19,10 @@ export class JwtRestStrategy extends PassportStrategy(Strategy, 'jwt-rest') {
   }
 
   validate(payload: { sub: string }): Promise<User | null> {
-    return this.prisma.user.findUnique({
+    return this.prisma.user.findFirst({
       where: {
         id: payload.sub,
+        role: UserRole.ADMIN,
       },
     });
   }

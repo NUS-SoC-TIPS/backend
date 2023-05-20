@@ -5,6 +5,11 @@ import { FirebaseModule } from './firebase/firebase.module';
 import { Judge0Module } from './judge0/judge0.module';
 import { ResultsModule } from './results/results.module';
 import { WindowsModule } from './windows/windows.module';
+import {
+  JwtRestAdminStrategy,
+  JwtRestStrategy,
+  JwtRestStudentStrategy,
+} from './strategies';
 
 @Module({
   imports: [
@@ -14,5 +19,6 @@ import { WindowsModule } from './windows/windows.module';
     ResultsModule,
     WindowsModule,
   ],
+  providers: [JwtRestStrategy, JwtRestAdminStrategy, JwtRestStudentStrategy],
 })
 export class ProductInfraModule {}
