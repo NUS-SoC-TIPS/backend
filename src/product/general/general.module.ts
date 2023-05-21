@@ -2,9 +2,9 @@ import { Module } from '@nestjs/common';
 
 import { AuthModule } from './auth/auth.module';
 import { CodeModule } from './code/code.module';
+import { InterviewsModule } from './interviews/interviews.module';
 import { NotesModule } from './notes/notes.module';
 import { QuestionsModule } from './questions/questions.module';
-import { RecordsModule } from './records/records.module';
 import { RoomsModule } from './rooms/rooms.module';
 import { SubmissionsModule } from './submissions/submissions.module';
 import { UsersModule } from './users/users.module';
@@ -14,11 +14,11 @@ import { UsersModule } from './users/users.module';
     AuthModule,
     CodeModule,
     NotesModule,
-    QuestionsModule,
-    RecordsModule,
     RoomsModule,
-    SubmissionsModule,
     UsersModule,
+    QuestionsModule,
+    InterviewsModule,
+    SubmissionsModule,
   ],
 })
 export class GeneralModule {}

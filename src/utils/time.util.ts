@@ -8,3 +8,11 @@ export const findStartOfWeek = (): Date => {
   date.setHours(0, 0, 0, 0);
   return date;
 };
+
+export const findEndOfWeek = (): Date => {
+  const startOfWeek = findStartOfWeek();
+  const endOfWeek = new Date();
+  endOfWeek.setDate(startOfWeek.getDate() + 6); // This will bring us to Sunday
+  endOfWeek.setHours(23, 59, 59, 999);
+  return endOfWeek;
+};
