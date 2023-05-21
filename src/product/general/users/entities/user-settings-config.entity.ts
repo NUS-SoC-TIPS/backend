@@ -1,6 +1,13 @@
-import { Settings, User } from '../../../../infra/prisma/generated';
+import { BaseUser } from '../../../../infra/interfaces/interface';
+import {
+  KeyBinding,
+  Language,
+  UserRole,
+} from '../../../../infra/prisma/generated';
 
-export interface UserWithSettings extends User {
-  settings: Settings | null;
+export interface SelfUser extends BaseUser {
+  role: UserRole;
   isStudent: boolean;
+  preferredInterviewLanguage: Language | null;
+  preferredKeyBinding: KeyBinding;
 }
