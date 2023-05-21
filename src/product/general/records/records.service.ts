@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 
 import { PrismaService } from '../../../infra/prisma/prisma.service';
 import { ResultsService } from '../../../productinfra/results/results.service';
@@ -9,7 +9,6 @@ import { RecordStatsEntity } from './entities';
 @Injectable()
 export class RecordsService {
   constructor(
-    private readonly logger: Logger,
     private readonly prismaService: PrismaService,
     private readonly resultsService: ResultsService,
   ) {}
@@ -27,15 +26,7 @@ export class RecordsService {
         roomRecords.map((roomRecord) =>
           transformRoomRecord(roomRecord, userId),
         ),
-      )
-      .catch((e) => {
-        this.logger.error(
-          'Failed to find all room records',
-          e instanceof Error ? e.stack : undefined,
-          RecordsService.name,
-        );
-        throw e;
-      });
+      );
     const latestRecord = allRecords.length > 0 ? allRecords[0] : null;
     const averageInterviewDurationMs =
       allRecords.reduce((acc, curr) => acc + curr.duration, 0) /
@@ -66,22 +57,13 @@ export class RecordsService {
       ];
     }
     return [
-      await this.prismaService.roomRecord
-        .count({
-          where: {
-            roomRecordUsers: { some: { userId } },
-            isValid: true,
-            createdAt: { gte: findStartOfWeek() },
-          },
-        })
-        .catch((e) => {
-          this.logger.error(
-            'Failed to count number of records for this week',
-            e instanceof Error ? e.stack : undefined,
-            RecordsService.name,
-          );
-          throw e;
-        }),
+      await this.prismaService.roomRecord.count({
+        where: {
+          roomRecordUsers: { some: { userId } },
+          isValid: true,
+          createdAt: { gte: findStartOfWeek() },
+        },
+      }),
       null,
     ];
   }

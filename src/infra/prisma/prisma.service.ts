@@ -39,18 +39,12 @@ export class PrismaService
         },
       ],
     });
-    this.$on('query', (e) => {
-      this.logger.debug(e, PrismaService.name);
-    });
-    this.$on('info', (e) => {
-      this.logger.log(e, PrismaService.name);
-    });
-    this.$on('warn', (e) => {
-      this.logger.warn(e, PrismaService.name);
-    });
-    this.$on('error', (e) => {
-      this.logger.error(e, undefined, PrismaService.name);
-    });
+    this.$on('query', (e) => this.logger.debug(e, PrismaService.name));
+    this.$on('info', (e) => this.logger.log(e, PrismaService.name));
+    this.$on('warn', (e) => this.logger.warn(e, PrismaService.name));
+    this.$on('error', (e) =>
+      this.logger.error(e, undefined, PrismaService.name),
+    );
   }
 
   async onModuleInit(): Promise<void> {
@@ -96,56 +90,23 @@ export class PrismaService
       deleteRooms,
       deleteSettings,
       deleteUsers,
-    ])
-      .catch((e) => {
-        this.logger.error(
-          'Failed to clean DB',
-          e instanceof Error ? e.stack : undefined,
-          PrismaService.name,
-        );
-        throw e;
-      })
-      .then((result) => {
-        this.logger.log('DB cleaned', PrismaService.name);
-        return result;
-      });
+    ]).then((result) => {
+      this.logger.log('DB cleaned', PrismaService.name);
+      return result;
+    });
   }
 
   private async seedAdmins(): Promise<void> {
-    await this.user
-      .updateMany({
-        data: {
-          role: UserRole.NORMAL,
+    await this.user.updateMany({ data: { role: UserRole.NORMAL } });
+    await this.user.updateMany({
+      where: {
+        githubUsername: {
+          in: this.dataService.getAdminData(),
+          mode: 'insensitive',
         },
-      })
-      .catch((e) => {
-        this.logger.error(
-          'Failed to update all users to NORMAL during admin seeding',
-          e instanceof Error ? e.stack : undefined,
-          PrismaService.name,
-        );
-        throw e;
-      });
-    await this.user
-      .updateMany({
-        where: {
-          githubUsername: {
-            in: this.dataService.getAdminData(),
-            mode: 'insensitive',
-          },
-        },
-        data: {
-          role: UserRole.ADMIN,
-        },
-      })
-      .catch((e) => {
-        this.logger.error(
-          'Failed to update admin users to ADMIN during admin seeding',
-          e instanceof Error ? e.stack : undefined,
-          PrismaService.name,
-        );
-        throw e;
-      });
+      },
+      data: { role: UserRole.ADMIN },
+    });
     this.logger.log('Admins seeded', PrismaService.name);
   }
 
@@ -153,29 +114,11 @@ export class PrismaService
     return Promise.all(
       this.dataService.getLeetCodeData().map((question) => {
         const { slug, source, ...questionData } = question;
-        return this.question
-          .upsert({
-            create: {
-              ...question,
-            },
-            update: {
-              ...questionData,
-            },
-            where: {
-              slug_source: {
-                slug,
-                source,
-              },
-            },
-          })
-          .catch((e) => {
-            this.logger.error(
-              `Failed to upsert LeetCode question with slug: ${slug}`,
-              e instanceof Error ? e.stack : undefined,
-              PrismaService.name,
-            );
-            throw e;
-          });
+        return this.question.upsert({
+          create: { ...question },
+          update: { ...questionData },
+          where: { slug_source: { slug, source } },
+        });
       }),
     ).then((result) => {
       this.logger.log('LeetCode questions seeded', PrismaService.name);
@@ -187,29 +130,11 @@ export class PrismaService
     return Promise.all(
       this.dataService.getKattisData().map((question) => {
         const { slug, source, ...questionData } = question;
-        return this.question
-          .upsert({
-            create: {
-              ...question,
-            },
-            update: {
-              ...questionData,
-            },
-            where: {
-              slug_source: {
-                slug,
-                source,
-              },
-            },
-          })
-          .catch((e) => {
-            this.logger.error(
-              `Failed to upsert Kattis question with slug: ${slug}`,
-              e instanceof Error ? e.stack : undefined,
-              PrismaService.name,
-            );
-            throw e;
-          });
+        return this.question.upsert({
+          create: { ...question },
+          update: { ...questionData },
+          where: { slug_source: { slug, source } },
+        });
       }),
     ).then((result) => {
       this.logger.log('Kattis questions seeded', PrismaService.name);

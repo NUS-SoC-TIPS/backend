@@ -26,23 +26,10 @@ export class ResultsService {
     if (studentResult == null) {
       return submission;
     }
-    return this.prismaService.questionSubmission
-      .update({
-        where: {
-          id: submission.id,
-        },
-        data: {
-          studentResultId: studentResult.id,
-        },
-      })
-      .catch((e) => {
-        this.logger.error(
-          'Failed to update question submission',
-          e instanceof Error ? e.stack : undefined,
-          ResultsService.name,
-        );
-        throw e;
-      });
+    return this.prismaService.questionSubmission.update({
+      where: { id: submission.id },
+      data: { studentResultId: studentResult.id },
+    });
   }
 
   async maybeMatchRoomRecordUser(
@@ -54,23 +41,10 @@ export class ResultsService {
     if (studentResult == null) {
       return recordUser;
     }
-    return this.prismaService.roomRecordUser
-      .update({
-        where: {
-          id: recordUser.id,
-        },
-        data: {
-          studentResultId: studentResult.id,
-        },
-      })
-      .catch((e) => {
-        this.logger.error(
-          'Failed to update room record user',
-          e instanceof Error ? e.stack : undefined,
-          ResultsService.name,
-        );
-        throw e;
-      });
+    return this.prismaService.roomRecordUser.update({
+      where: { id: recordUser.id },
+      data: { studentResultId: studentResult.id },
+    });
   }
 
   /**
@@ -98,20 +72,10 @@ export class ResultsService {
       return [null, null];
     }
 
-    const student = await this.prismaService.student
-      .findUnique({
-        where: {
-          userId_cohortId: { userId, cohortId: ongoingWindow.cohortId },
-        },
-      })
-      .catch((e) => {
-        this.logger.error(
-          'Failed to find nullable student',
-          e instanceof Error ? e.stack : undefined,
-          ResultsService.name,
-        );
-        throw e;
-      });
+    const student = await this.prismaService.student.findUnique({
+      where: { userId_cohortId: { userId, cohortId: ongoingWindow.cohortId } },
+    });
+
     if (student == null) {
       this.logger.log(
         'User is not a student of ongoing cohort',
@@ -121,28 +85,19 @@ export class ResultsService {
     }
 
     return [
-      await this.prismaService.studentResult
-        .findUniqueOrThrow({
-          where: {
-            studentId_windowId: {
-              studentId: student.id,
-              windowId: ongoingWindow.id,
-            },
+      await this.prismaService.studentResult.findUniqueOrThrow({
+        where: {
+          studentId_windowId: {
+            studentId: student.id,
+            windowId: ongoingWindow.id,
           },
-          include: {
-            _count: {
-              select: { questionSubmissions: true, roomRecordUsers: true },
-            },
+        },
+        include: {
+          _count: {
+            select: { questionSubmissions: true, roomRecordUsers: true },
           },
-        })
-        .catch((e) => {
-          this.logger.error(
-            'Failed to find student result',
-            e instanceof Error ? e.stack : undefined,
-            ResultsService.name,
-          );
-          throw e;
-        }),
+        },
+      }),
       ongoingWindow,
     ];
   }

@@ -16,10 +16,6 @@ export class JwtRestStrategy extends PassportStrategy(Strategy, 'jwt-rest') {
   }
 
   validate(payload: { sub: string }): Promise<User | null> {
-    return this.prisma.user.findUnique({
-      where: {
-        id: payload.sub,
-      },
-    });
+    return this.prisma.user.findUnique({ where: { id: payload.sub } });
   }
 }

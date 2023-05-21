@@ -1,5 +1,4 @@
 import { Logger, UseFilters } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
 import {
   ConnectedSocket,
   MessageBody,
@@ -10,9 +9,9 @@ import {
 } from '@nestjs/websockets';
 
 import { ISocket } from '../../../infra/interfaces/socket';
-import { PrismaService } from '../../../infra/prisma/prisma.service';
 
 import { AUTH_EVENTS, AUTO_KICK_WAIT_TIME_MS } from './auth.constants';
+import { AuthService } from './auth.service';
 import { JsonWebTokenExceptionFilter } from './filters';
 
 @WebSocketGateway({
@@ -23,8 +22,7 @@ import { JsonWebTokenExceptionFilter } from './filters';
 export class AuthGateway implements OnGatewayConnection {
   constructor(
     private readonly logger: Logger,
-    private readonly jwtService: JwtService,
-    private readonly prismaService: PrismaService,
+    private readonly authService: AuthService,
   ) {}
 
   @SubscribeMessage(AUTH_EVENTS.AUTHENTICATE)
@@ -34,19 +32,11 @@ export class AuthGateway implements OnGatewayConnection {
     @ConnectedSocket() socket: ISocket,
   ): Promise<void> {
     this.logger.log(AUTH_EVENTS.AUTHENTICATE, AuthGateway.name);
-    const payload = await this.jwtService.verifyAsync(token).catch((e) => {
-      this.logger.error(
-        'Failed to verify token async',
-        e instanceof Error ? e.stack : undefined,
-        AuthGateway.name,
-      );
-      throw new WsException('Invalid token');
-    });
 
-    const user = await this.prismaService.user.findUnique({
-      where: {
-        id: payload.sub,
-      },
+    const user = await this.authService.authenticate(token).catch((e) => {
+      if (e instanceof Error) {
+        throw new WsException(e.message);
+      }
     });
     if (!user) {
       this.logger.error(

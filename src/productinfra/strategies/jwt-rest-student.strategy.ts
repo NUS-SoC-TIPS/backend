@@ -20,10 +20,7 @@ export class JwtRestStudentStrategy extends PassportStrategy(
 
   validate(payload: { sub: string }): Promise<User | null> {
     return this.prisma.user.findFirst({
-      where: {
-        id: payload.sub,
-        students: { some: {} },
-      },
+      where: { id: payload.sub, students: { some: {} } },
     });
   }
 }

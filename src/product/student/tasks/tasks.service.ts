@@ -10,6 +10,7 @@ export class TasksService {
   constructor(private readonly prismaService: PrismaService) {}
 
   async findStats(userId: string, cohortId: number): Promise<TaskStatsEntity> {
+    // This query is... TODO: Refactor
     const student = await this.prismaService.student.findUniqueOrThrow({
       where: {
         userId_cohortId: {

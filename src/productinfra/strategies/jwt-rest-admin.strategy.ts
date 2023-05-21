@@ -20,10 +20,7 @@ export class JwtRestAdminStrategy extends PassportStrategy(
 
   validate(payload: { sub: string }): Promise<User | null> {
     return this.prisma.user.findFirst({
-      where: {
-        id: payload.sub,
-        role: UserRole.ADMIN,
-      },
+      where: { id: payload.sub, role: UserRole.ADMIN },
     });
   }
 }

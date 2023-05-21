@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 
 import {
   QuestionDifficulty,
@@ -14,7 +14,6 @@ import { SubmissionStatsEntity } from './entities';
 @Injectable()
 export class SubmissionsService {
   constructor(
-    private readonly logger: Logger,
     private readonly prismaService: PrismaService,
     private readonly resultsService: ResultsService,
   ) {}
@@ -24,21 +23,9 @@ export class SubmissionsService {
     userId: string,
   ): Promise<QuestionSubmission> {
     createSubmissionDto.codeWritten = createSubmissionDto.codeWritten.trim();
-    const submission = await this.prismaService.questionSubmission
-      .create({
-        data: {
-          ...createSubmissionDto,
-          userId,
-        },
-      })
-      .catch((e) => {
-        this.logger.error(
-          `Failed to create new submission for user with ID: ${userId}`,
-          e instanceof Error ? e.stack : undefined,
-          SubmissionsService.name,
-        );
-        throw e;
-      });
+    const submission = await this.prismaService.questionSubmission.create({
+      data: { ...createSubmissionDto, userId },
+    });
     return this.resultsService.maybeMatchQuestionSubmission(submission);
   }
 
@@ -47,19 +34,9 @@ export class SubmissionsService {
     updateSubmissionDto: UpdateSubmissionDto,
     userId: string,
   ): Promise<QuestionSubmission> {
-    const submission = await this.prismaService.questionSubmission
-      .findUniqueOrThrow({
-        where: {
-          id: submissionId,
-        },
-      })
-      .catch((e) => {
-        this.logger.error(
-          `Failed to find non-null submission with ID: ${submissionId}`,
-          e instanceof Error ? e.stack : undefined,
-          SubmissionsService.name,
-        );
-        throw e;
+    const submission =
+      await this.prismaService.questionSubmission.findUniqueOrThrow({
+        where: { id: submissionId },
       });
     if (submission.userId !== userId) {
       // We won't differentiate on the client-side
@@ -68,43 +45,23 @@ export class SubmissionsService {
     if (updateSubmissionDto.codeWritten) {
       updateSubmissionDto.codeWritten = updateSubmissionDto.codeWritten.trim();
     }
-    return this.prismaService.questionSubmission
-      .update({
-        where: {
-          id: submissionId,
-        },
-        data: {
-          ...updateSubmissionDto,
-        },
-      })
-      .catch((e) => {
-        this.logger.error(
-          `Failed to update submission with ID: ${submissionId}`,
-          e instanceof Error ? e.stack : undefined,
-          SubmissionsService.name,
-        );
-        throw e;
-      });
+    return this.prismaService.questionSubmission.update({
+      where: { id: submissionId },
+      data: { ...updateSubmissionDto },
+    });
   }
 
   async findStats(userId: string): Promise<SubmissionStatsEntity> {
     const [numberOfSubmissionsForThisWindowOrWeek, numQuestions] =
       await this.countSubmissionsForThisWindowOrWeek(userId);
     // TODO: Rewrite this to be paginated, perhaps as part of a separate endpoint
-    const allSubmissions = await this.prismaService.questionSubmission
-      .findMany({
+    const allSubmissions = await this.prismaService.questionSubmission.findMany(
+      {
         where: { userId },
         include: { question: true },
         orderBy: { createdAt: 'desc' },
-      })
-      .catch((e) => {
-        this.logger.error(
-          'Failed to find all submissions',
-          e instanceof Error ? e.stack : undefined,
-          SubmissionsService.name,
-        );
-        throw e;
-      });
+      },
+    );
     // TODO: When allSubmissions is paginated, rewrite this into a single query
     const latestSubmission =
       allSubmissions.length > 0 ? allSubmissions[0] : null;
@@ -151,18 +108,9 @@ export class SubmissionsService {
       ];
     }
     return [
-      await this.prismaService.questionSubmission
-        .count({
-          where: { userId, createdAt: { gte: findStartOfWeek() } },
-        })
-        .catch((e) => {
-          this.logger.error(
-            'Failed to count number of submissions for this week',
-            e instanceof Error ? e.stack : undefined,
-            SubmissionsService.name,
-          );
-          throw e;
-        }),
+      await this.prismaService.questionSubmission.count({
+        where: { userId, createdAt: { gte: findStartOfWeek() } },
+      }),
       null,
     ];
   }

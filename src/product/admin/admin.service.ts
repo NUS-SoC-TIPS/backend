@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { transformRoomRecord } from 'src/utils';
 
 import { Exclusion, Window } from '../../infra/prisma/generated';
@@ -11,7 +11,6 @@ import { AdminStatsEntity } from './entities';
 @Injectable()
 export class AdminService {
   constructor(
-    private readonly logger: Logger,
     private readonly prismaService: PrismaService,
     private readonly windowsService: WindowsService,
   ) {}
@@ -39,76 +38,25 @@ export class AdminService {
     if (existingExclusion) {
       // Update if we're going for an earlier exclusion than the existing one for
       // the same cohort.
-      return this.prismaService.exclusion
-        .update({
-          data: {
-            windowId: dto.windowId,
-            reason: dto.reason,
-          },
-          where: {
-            id: existingExclusion.id,
-          },
-        })
-        .catch((e) => {
-          this.logger.error(
-            'Failed to shift exclusion',
-            e instanceof Error ? e.stack : undefined,
-            AdminService.name,
-          );
-          throw e;
-        });
-    }
-    return await this.prismaService.exclusion
-      .create({
-        data: {
-          ...dto,
-        },
-      })
-      .catch((e) => {
-        this.logger.error(
-          'Failed to create exclusion',
-          e instanceof Error ? e.stack : undefined,
-          AdminService.name,
-        );
-        throw e;
+      return this.prismaService.exclusion.update({
+        data: { windowId: dto.windowId, reason: dto.reason },
+        where: { id: existingExclusion.id },
       });
+    }
+
+    return await this.prismaService.exclusion.create({ data: { ...dto } });
   }
 
   async removeExclusion(exclusionId: number): Promise<void> {
-    await this.prismaService.exclusion
-      .delete({ where: { id: exclusionId } })
-      .catch((e) => {
-        this.logger.error(
-          'Attempted to delete non-existing exclusion',
-          e instanceof Error ? e.stack : undefined,
-          AdminService.name,
-        );
-        throw e;
-      });
+    await this.prismaService.exclusion.delete({ where: { id: exclusionId } });
   }
 
   async findWindows(): Promise<Window[]> {
-    return this.prismaService.window
-      .findMany({
-        where: {
-          // TODO: Replace the hardcoded cohort ID with a variable one
-          cohortId: 1,
-          startAt: {
-            lte: new Date(),
-          },
-        },
-        orderBy: {
-          startAt: 'asc',
-        },
-      })
-      .catch((e) => {
-        this.logger.error(
-          'Failed to find windows',
-          e instanceof Error ? e.stack : undefined,
-          AdminService.name,
-        );
-        throw e;
-      });
+    // TODO: Replace the hardcoded cohort ID with a variable one
+    return this.prismaService.window.findMany({
+      where: { cohortId: 1, startAt: { lte: new Date() } },
+      orderBy: { startAt: 'asc' },
+    });
   }
 
   async findStats(windowId: number): Promise<AdminStatsEntity> {
