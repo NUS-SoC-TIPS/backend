@@ -16,10 +16,9 @@ import { Server } from 'socket.io';
 
 import { ISocket } from '../../../infra/interfaces/socket';
 import { Language, Room } from '../../../infra/prisma/generated';
-import { AuthWsGuard } from '../../../productinfra/guards';
+import { GetRoom } from '../../../productinfra/decorators';
+import { AuthWsGuard, InRoomGuard } from '../../../productinfra/guards';
 import { CallbackDto as Judge0CallbackDto } from '../../../productinfra/judge0/dtos';
-import { GetRoom } from '../rooms/decorators';
-import { InRoomGuard } from '../rooms/guards';
 
 import {
   CODE_EVENTS,

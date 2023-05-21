@@ -7,7 +7,7 @@ import { CurrentService } from './current.service';
 
 // windows, ongoing cohorts, matching new submissions/records.
 @Module({
-  providers: [Logger],
+  providers: [CurrentService, Logger],
   exports: [CurrentService],
 })
 export class CurrentModule {}

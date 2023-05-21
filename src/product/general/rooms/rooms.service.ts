@@ -1,5 +1,4 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { generateSlug } from 'random-word-slugs';
 
 import {
   Room,
@@ -8,9 +7,9 @@ import {
   User,
 } from '../../../infra/prisma/generated';
 import { PrismaService } from '../../../infra/prisma/prisma.service';
-import { ResultsService } from '../../../productinfra/results/results.service';
+import { CurrentService } from '../../../productinfra/current/current.service';
 
-import { CreateRecordDto, CreateRoomUserDto } from './dtos';
+import { CreateRecordEntity, CreateRoomUserEntity } from './entities';
 import { MINIMUM_VALID_INTERVIEW_DURATION } from './rooms.constants';
 
 @Injectable()
@@ -18,31 +17,14 @@ export class RoomsService {
   constructor(
     private readonly logger: Logger,
     private readonly prismaService: PrismaService,
-    private readonly resultsService: ResultsService,
+    private readonly currentService: CurrentService,
   ) {}
 
-  async create(userId: string): Promise<Room> {
-    const currentRoomUser = await this.findCurrentRoomUser(userId);
-    if (currentRoomUser) {
-      this.logger.error(
-        'Failed to create room as user is already in an open room',
-        undefined,
-        RoomsService.name,
-      );
-      throw new Error('User is already in an open room');
-    }
-
-    return await this.prismaService.room.create({
-      data: {
-        slug: await this.generateRoomSlug(),
-        roomUsers: { create: { userId } },
-      },
-    });
-  }
-
-  async createRoomUser(dto: CreateRoomUserDto): Promise<RoomUser> {
-    const currentRoomUser = await this.findCurrentRoomUser(dto.userId);
-    if (currentRoomUser?.roomId === dto.roomId) {
+  async createRoomUser(entity: CreateRoomUserEntity): Promise<RoomUser> {
+    const currentRoomUser = await this.findCurrentRoomUserAndRoomForUser(
+      entity.userId,
+    );
+    if (currentRoomUser?.roomId === entity.roomId) {
       this.logger.log('User is already in this room', RoomsService.name);
       return currentRoomUser;
     }
@@ -55,37 +37,42 @@ export class RoomsService {
       throw new Error('User is already in an open room');
     }
 
-    return this.prismaService.roomUser.create({ data: { ...dto } });
+    return this.prismaService.roomUser.create({ data: { ...entity } });
   }
 
-  async findCurrent(userId: string): Promise<Room | null> {
-    return (await this.findCurrentRoomUser(userId))?.room ?? null;
+  /**
+   * Finds the active room user for the user, and also returns the room.
+   */
+  async findCurrentRoomUserAndRoomForUser(
+    userId: string,
+  ): Promise<(RoomUser & { room: Room }) | null> {
+    return this.prismaService.roomUser.findFirst({
+      where: { userId, room: { status: RoomStatus.OPEN } },
+      include: { room: true },
+    });
   }
 
   /**
    * Takes the latest room with the slug. Room may be closed.
    * Will also fetch the room users.
    */
-  findBySlug(
+  findRoomAndRoomUsersBySlug(
     slug: string,
   ): Promise<(Room & { roomUsers: (RoomUser & { user: User })[] }) | null> {
     return this.prismaService.room.findFirst({
-      where: { slug },
+      where: { slug }, // Technically, it should be unique, but it's not enforced at DB-level.
       orderBy: { createdAt: 'desc' },
       take: 1,
       include: { roomUsers: { include: { user: true } } },
     });
   }
 
-  findById(roomId: number): Promise<Room | null> {
-    return this.prismaService.room.findFirst({
-      where: { id: roomId },
-      take: 1,
-    });
+  findRoomById(roomId: number): Promise<Room | null> {
+    return this.prismaService.room.findUnique({ where: { id: roomId } });
   }
 
-  async closeRoom(dto: CreateRecordDto, isAuto: boolean): Promise<void> {
-    const { roomRecordUsers, ...recordData } = dto;
+  async closeRoom(entity: CreateRecordEntity, isAuto: boolean): Promise<void> {
+    const { roomRecordUsers, ...recordData } = entity;
     const [roomRecord, _] = await this.prismaService.$transaction([
       this.prismaService.roomRecord.create({
         data: {
@@ -98,7 +85,7 @@ export class RoomsService {
         include: { roomRecordUsers: true },
       }),
       this.prismaService.room.update({
-        where: { id: dto.roomId },
+        where: { id: entity.roomId },
         data: {
           status: isAuto
             ? RoomStatus.CLOSED_AUTOMATICALLY
@@ -110,35 +97,9 @@ export class RoomsService {
     if (roomRecord.isValid) {
       await Promise.all(
         roomRecord.roomRecordUsers.map((roomRecordUser) =>
-          this.resultsService.maybeMatchRoomRecordUser(roomRecordUser),
+          this.currentService.maybeAddRoomRecordUserToResult(roomRecordUser),
         ),
       );
     }
-  }
-
-  /**
-   * Finds the active room user for the user, and also returns the room.
-   */
-  private findCurrentRoomUser(
-    userId: string,
-  ): Promise<(RoomUser & { room: Room }) | null> {
-    return this.prismaService.roomUser.findFirst({
-      where: { userId, room: { status: RoomStatus.OPEN } },
-      include: { room: true },
-    });
-  }
-
-  private async generateRoomSlug(): Promise<string> {
-    let slug: string;
-    let existingRoom: Room | null;
-
-    do {
-      slug = generateSlug();
-      existingRoom = await this.prismaService.room.findFirst({
-        where: { slug, status: RoomStatus.OPEN },
-      });
-    } while (existingRoom != null);
-
-    return slug;
   }
 }

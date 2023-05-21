@@ -1,7 +1,7 @@
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { WsException } from '@nestjs/websockets';
 
-import { ISocket } from '../../../../infra/interfaces/socket';
+import { ISocket } from '../../infra/interfaces/socket';
 
 @Injectable()
 export class InRoomGuard implements CanActivate {

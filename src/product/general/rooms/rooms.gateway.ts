@@ -18,15 +18,13 @@ import { Server } from 'socket.io';
 import { ISocket } from '../../../infra/interfaces/socket';
 import { Room, RoomStatus, User } from '../../../infra/prisma/generated';
 import { AgoraService } from '../../../productinfra/agora/agora.service';
-import { GetUserWs } from '../../../productinfra/decorators';
-import { AuthWsGuard } from '../../../productinfra/guards';
+import { GetRoom, GetUserWs } from '../../../productinfra/decorators';
+import { AuthWsGuard, InRoomGuard } from '../../../productinfra/guards';
 import { CodeService } from '../code/code.service';
 import { NotesService } from '../notes/notes.service';
 
-import { GetRoom } from './decorators';
-import { CreateRecordDto } from './dtos';
+import { CreateRecordEntity } from './entities';
 import { CloseRoomExceptionFilter, JoinRoomExceptionFilter } from './filters';
-import { InRoomGuard } from './guards';
 import { ROOM_AUTOCLOSE_DURATION, ROOM_EVENTS } from './rooms.constants';
 import { RoomsService } from './rooms.service';
 
@@ -61,14 +59,16 @@ export class RoomsGateway implements OnGatewayDisconnect, OnModuleDestroy {
     @ConnectedSocket() socket: ISocket,
   ): Promise<void> {
     this.logger.log(ROOM_EVENTS.JOIN_ROOM, RoomsGateway.name);
-    const room = await this.roomsService.findBySlug(slug);
+    const room = await this.roomsService.findRoomAndRoomUsersBySlug(slug);
     if (!room) {
       socket.emit(ROOM_EVENTS.ROOM_DOES_NOT_EXIST);
       return;
     }
 
     // Do corresponding checks
-    const userCurrentRoom = await this.roomsService.findCurrent(user.id);
+    const userCurrentRoom = (
+      await this.roomsService.findCurrentRoomUserAndRoomForUser(user.id)
+    )?.room;
     const userInAnotherRoom = userCurrentRoom && userCurrentRoom.slug !== slug;
     if (userInAnotherRoom) {
       socket.emit(ROOM_EVENTS.ALREADY_IN_ROOM, { slug: userCurrentRoom.slug });
@@ -156,7 +156,7 @@ export class RoomsGateway implements OnGatewayDisconnect, OnModuleDestroy {
     this.logger.log('Destroying module...', RoomsGateway.name);
     return Promise.all(
       [...this.roomIdToSockets.keys()].map((roomId) =>
-        this.roomsService.findById(roomId).then((room) => {
+        this.roomsService.findRoomById(roomId).then((room) => {
           if (room) {
             return this.closeRoomHelper(room, true).catch((e) => {
               // We will consume the error here. It'll be a best effort attempt at closing room.
@@ -176,7 +176,7 @@ export class RoomsGateway implements OnGatewayDisconnect, OnModuleDestroy {
     this.server.to(`${room.id}`).emit(ROOM_EVENTS.CLOSING_ROOM);
     const { code, language } = this.codeService.getCodeAndLanguage(room);
     const userNotes = this.notesService.getNotes(room.id);
-    const recordData: CreateRecordDto = {
+    const recordData: CreateRecordEntity = {
       isRoleplay: false,
       duration: new Date().getTime() - room.createdAt.getTime(),
       roomId: room.id,

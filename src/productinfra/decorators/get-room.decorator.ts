@@ -1,6 +1,6 @@
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
 
-import { ISocket } from '../../../../infra/interfaces/socket';
+import { ISocket } from '../../infra/interfaces/socket';
 
 export const GetRoom = createParamDecorator(
   (data: string | undefined, ctx: ExecutionContext): any => {
