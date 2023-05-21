@@ -9,7 +9,7 @@ import { WindowsModule } from './windows/windows.module';
 import {
   JwtRestAdminStrategy,
   JwtRestStrategy,
-  JwtRestStudentStrategy,
+  JwtRestStudentOrAdminStrategy,
 } from './strategies';
 
 @Module({
@@ -21,6 +21,10 @@ import {
     WindowsModule,
     FirebaseModule,
   ],
-  providers: [JwtRestStrategy, JwtRestAdminStrategy, JwtRestStudentStrategy],
+  providers: [
+    JwtRestStrategy,
+    JwtRestAdminStrategy,
+    JwtRestStudentOrAdminStrategy,
+  ],
 })
 export class ProductInfraModule {}

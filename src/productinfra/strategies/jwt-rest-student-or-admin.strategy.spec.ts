@@ -6,10 +6,10 @@ import { DataModule } from '../../infra/data/data.module';
 import { User, UserRole } from '../../infra/prisma/generated';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 
-import { JwtRestStudentStrategy } from './jwt-rest-student.strategy';
+import { JwtRestStudentOrAdminStrategy } from './jwt-rest-student-or-admin.strategy';
 
-describe('JwtRestStudentStrategy', () => {
-  let strategy: JwtRestStudentStrategy;
+describe('JwtRestStudentOrAdminStrategy', () => {
+  let strategy: JwtRestStudentOrAdminStrategy;
   let prisma: PrismaService;
   const studentUserData: Omit<User, 'createdAt' | 'updatedAt'> = {
     id: '1',
@@ -24,13 +24,26 @@ describe('JwtRestStudentStrategy', () => {
     id: '2',
     githubUsername: 'world',
   };
+  const adminUserData: Omit<User, 'createdAt' | 'updatedAt'> = {
+    ...studentUserData,
+    id: '3',
+    githubUsername: 'world',
+    role: UserRole.ADMIN,
+  };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [JwtRestStudentStrategy, ConfigService, PrismaService, Logger],
+      providers: [
+        JwtRestStudentOrAdminStrategy,
+        ConfigService,
+        PrismaService,
+        Logger,
+      ],
       imports: [DataModule],
     }).compile();
-    strategy = module.get<JwtRestStudentStrategy>(JwtRestStudentStrategy);
+    strategy = module.get<JwtRestStudentOrAdminStrategy>(
+      JwtRestStudentOrAdminStrategy,
+    );
     prisma = module.get<PrismaService>(PrismaService);
   });
 
@@ -42,14 +55,12 @@ describe('JwtRestStudentStrategy', () => {
 
   describe('validation', () => {
     let studentUser: User;
+    let adminUser: User;
 
     beforeAll(async () => {
       await prisma.cleanDb();
-      studentUser = await prisma.user.create({
-        data: {
-          ...studentUserData,
-        },
-      });
+      studentUser = await prisma.user.create({ data: { ...studentUserData } });
+      adminUser = await prisma.user.create({ data: { ...adminUserData } });
       const cohort = await prisma.cohort.create({
         data: { name: 'Test cohort' },
       });
@@ -61,11 +72,7 @@ describe('JwtRestStudentStrategy', () => {
           coursemologyProfileUrl: '',
         },
       });
-      await prisma.user.create({
-        data: {
-          ...nonStudentUserData,
-        },
-      });
+      await prisma.user.create({ data: { ...nonStudentUserData } });
     });
 
     it('should return the user if they exist and is student', async () => {
@@ -78,8 +85,13 @@ describe('JwtRestStudentStrategy', () => {
       expect(result).toBeNull();
     });
 
-    it('should return null if user does not exist', async () => {
+    it('should return the user if they exist and is admin', async () => {
       const result = await strategy.validate({ sub: '3' });
+      expect(result).toMatchObject(adminUser);
+    });
+
+    it('should return null if user does not exist', async () => {
+      const result = await strategy.validate({ sub: '4' });
       expect(result).toBeNull();
     });
   });

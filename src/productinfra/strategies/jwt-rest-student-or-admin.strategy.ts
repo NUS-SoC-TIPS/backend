@@ -3,13 +3,13 @@ import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 
-import { User } from '../../infra/prisma/generated';
+import { User, UserRole } from '../../infra/prisma/generated';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 
 @Injectable()
-export class JwtRestStudentStrategy extends PassportStrategy(
+export class JwtRestStudentOrAdminStrategy extends PassportStrategy(
   Strategy,
-  'jwt-rest-student',
+  'jwt-rest-student-or-admin',
 ) {
   constructor(config: ConfigService, private prisma: PrismaService) {
     super({
@@ -19,8 +19,17 @@ export class JwtRestStudentStrategy extends PassportStrategy(
   }
 
   validate(payload: { sub: string }): Promise<User | null> {
-    return this.prisma.user.findFirst({
-      where: { id: payload.sub, students: { some: {} } },
-    });
+    return this.prisma.user
+      .findFirst({
+        where: { id: payload.sub, students: { some: {} } },
+      })
+      .then((user) => {
+        if (user == null) {
+          return this.prisma.user.findFirst({
+            where: { id: payload.sub, role: UserRole.ADMIN },
+          });
+        }
+        return user;
+      });
   }
 }

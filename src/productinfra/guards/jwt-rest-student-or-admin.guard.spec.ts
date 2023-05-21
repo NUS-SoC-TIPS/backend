@@ -2,32 +2,35 @@ import { Controller, UseGuards } from '@nestjs/common';
 
 import { isGuarded } from '../../utils';
 
-import { JwtRestStudentGuard } from './jwt-rest-student.guard';
+import { JwtRestStudentOrAdminGuard } from './jwt-rest-student-or-admin.guard';
 
 @Controller()
 class TestController1 {
-  @UseGuards(JwtRestStudentGuard)
+  @UseGuards(JwtRestStudentOrAdminGuard)
   testMethod(): void {
     return;
   }
 }
 
 @Controller()
-@UseGuards(JwtRestStudentGuard)
+@UseGuards(JwtRestStudentOrAdminGuard)
 class TestController2 {
   testMethod(): void {
     return;
   }
 }
 
-describe('JwtRestStudentGuard', () => {
+describe('JwtRestStudentOrAdminGuard', () => {
   it('should apply to methods', async () => {
     expect(
-      isGuarded(TestController1.prototype.testMethod, JwtRestStudentGuard),
+      isGuarded(
+        TestController1.prototype.testMethod,
+        JwtRestStudentOrAdminGuard,
+      ),
     ).toBe(true);
   });
 
   it('should apply to classes', async () => {
-    expect(isGuarded(TestController2, JwtRestStudentGuard)).toBe(true);
+    expect(isGuarded(TestController2, JwtRestStudentOrAdminGuard)).toBe(true);
   });
 });
