@@ -52,6 +52,7 @@ async function bootstrap(): Promise<void> {
         combinedTransport,
         new winston.transports.Console({
           format: getWinstonFormat(true),
+          // info < verbose < debug
           level: process.env.NODE_ENV === 'production' ? 'info' : 'debug',
         }),
       ],

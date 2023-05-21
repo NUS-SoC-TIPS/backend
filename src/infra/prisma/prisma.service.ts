@@ -5,18 +5,52 @@ import {
   OnModuleInit,
 } from '@nestjs/common';
 
-import { MINIMUM_VALID_INTERVIEW_DURATION } from '../../product/general/rooms/rooms.constants';
 import { DataService } from '../data/data.service';
 
+import { PrismaClientOptions } from './generated/runtime';
 import { Prisma, PrismaClient, Question, UserRole } from './generated';
 
 @Injectable()
-export class PrismaService extends PrismaClient implements OnModuleInit {
+export class PrismaService
+  extends PrismaClient<PrismaClientOptions, 'query' | 'info' | 'warn' | 'error'>
+  implements OnModuleInit
+{
   constructor(
     private readonly logger: Logger,
     private readonly dataService: DataService,
   ) {
-    super();
+    super({
+      log: [
+        {
+          emit: 'event',
+          level: 'query',
+        },
+        {
+          emit: 'event',
+          level: 'info',
+        },
+        {
+          emit: 'event',
+          level: 'warn',
+        },
+        {
+          emit: 'event',
+          level: 'error',
+        },
+      ],
+    });
+    this.$on('query', (e) => {
+      this.logger.debug(e, PrismaService.name);
+    });
+    this.$on('info', (e) => {
+      this.logger.log(e, PrismaService.name);
+    });
+    this.$on('warn', (e) => {
+      this.logger.warn(e, PrismaService.name);
+    });
+    this.$on('error', (e) => {
+      this.logger.error(e, undefined, PrismaService.name);
+    });
   }
 
   async onModuleInit(): Promise<void> {
@@ -24,10 +58,6 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
     await this.seedAdmins();
     await this.seedLeetCode();
     await this.seedKattis();
-    await this.seedStudents();
-    await this.seedStudentResults();
-    await this.seedIsValidForRecords();
-    await this.matchSubmissionsAndRecordsToStudentResults();
     this.logger.log('All data seeded', PrismaService.name);
   }
 
@@ -185,170 +215,5 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
       this.logger.log('Kattis questions seeded', PrismaService.name);
       return result;
     });
-  }
-
-  private async seedStudents(): Promise<void> {
-    // The following code seeds the students of the first cohort.
-    const firstCohort = await this.cohort.findFirst();
-    if (firstCohort == null) {
-      this.logger.log(
-        'There should be an existing cohort, something is wrong',
-        PrismaService.name,
-      );
-      return;
-    }
-    return Promise.all(
-      this.dataService.getStudentData().map(async (student) => {
-        const user = await this.user.findFirst({
-          where: {
-            githubUsername: {
-              equals: student.githubUsername,
-              mode: 'insensitive',
-            },
-          },
-        });
-        if (user == null) {
-          return Promise.resolve(null);
-        }
-        const existingStudent = await this.student.findUnique({
-          where: {
-            userId_cohortId: { userId: user.id, cohortId: firstCohort.id },
-          },
-        });
-        if (existingStudent != null) {
-          return Promise.resolve(existingStudent);
-        }
-        return this.student.create({
-          data: {
-            userId: user.id,
-            cohortId: firstCohort.id,
-            coursemologyName: student.name,
-            coursemologyProfileUrl: student.coursemologyProfile,
-          },
-        });
-      }),
-    ).then((result) => {
-      const numSeeded = result.filter((student) => student != null).length;
-      this.logger.log(`${numSeeded} students seeded`, PrismaService.name);
-      const numNotSeeded = result.length - numSeeded;
-      this.logger.log(
-        `${numNotSeeded} students could not be found`,
-        PrismaService.name,
-      );
-    });
-  }
-
-  private async seedStudentResults(): Promise<void> {
-    const students = await this.student.findMany();
-    // We can assume all windows are for the first cohort, for now.
-    const windows = await this.window.findMany();
-    return Promise.all(
-      students.map(async (student) => {
-        const existingStudentResults = await this.studentResult.findMany({
-          where: { studentId: student.id },
-        });
-        if (existingStudentResults.length > 0) {
-          return existingStudentResults;
-        }
-        const studentResults = await Promise.all(
-          windows.map((window) =>
-            this.studentResult.create({
-              data: {
-                windowId: window.id,
-                studentId: student.id,
-              },
-            }),
-          ),
-        );
-        return studentResults;
-      }),
-    ).then((result) => {
-      const numStudentResultsSeeded = result.reduce((a, b) => a + b.length, 0);
-      this.logger.log(
-        `${numStudentResultsSeeded} student results seeded`,
-        PrismaService.name,
-      );
-    });
-  }
-
-  private async seedIsValidForRecords(): Promise<void> {
-    const roomRecords = await this.roomRecord.findMany({
-      where: {
-        roomRecordUsers: {
-          some: {
-            isInterviewer: false,
-          },
-        },
-        duration: {
-          gte: MINIMUM_VALID_INTERVIEW_DURATION,
-        },
-      },
-      include: { roomRecordUsers: true },
-    });
-    const validRoomRecords = roomRecords.filter(
-      (roomRecord) => roomRecord.roomRecordUsers.length === 2,
-    );
-    return Promise.all(
-      validRoomRecords.map((roomRecord) =>
-        this.roomRecord.update({
-          where: { id: roomRecord.id },
-          data: { isValid: true },
-        }),
-      ),
-    ).then((result) => {
-      this.logger.log(
-        `${result.length} valid records updated`,
-        PrismaService.name,
-      );
-    });
-  }
-
-  private async matchSubmissionsAndRecordsToStudentResults(): Promise<void> {
-    const studentResults = await this.studentResult.findMany({
-      include: {
-        window: true,
-        student: true,
-      },
-    });
-
-    for (let i = 0; i < studentResults.length; i++) {
-      const studentResult = studentResults[i];
-      await Promise.all([
-        this.questionSubmission.updateMany({
-          data: {
-            studentResultId: studentResult.id,
-          },
-          where: {
-            studentResultId: null,
-            userId: studentResult.student.userId,
-            createdAt: {
-              gte: studentResult.window.startAt,
-              lte: studentResult.window.endAt,
-            },
-          },
-        }),
-        this.roomRecordUser.updateMany({
-          data: {
-            studentResultId: studentResult.id,
-          },
-          where: {
-            studentResultId: null,
-            userId: studentResult.student.userId,
-            isInterviewer: false,
-            // Note: The matching logic here is the legacy one, which calculates based on when the
-            // room record was created. Moving forward, this will be calculated based on when the
-            // room was closed, i.e. when the interview was completed.
-            roomRecord: {
-              createdAt: {
-                gte: studentResult.window.startAt,
-                lte: studentResult.window.endAt,
-              },
-              isValid: true,
-            },
-          },
-        }),
-      ]);
-    }
-    this.logger.log('Submissions and records matched!', PrismaService.name);
   }
 }

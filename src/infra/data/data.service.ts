@@ -6,14 +6,8 @@ import {
   QuestionType,
 } from '../prisma/generated';
 
-import { AdminData, ConfigData, QuestionData, StudentData } from './entities';
-import {
-  adminsJson,
-  configJson,
-  kattisJson,
-  leetCodeJson,
-  studentsJson,
-} from './jsons';
+import { AdminData, ConfigData, QuestionData } from './entities';
+import { adminsJson, configJson, kattisJson, leetCodeJson } from './jsons';
 
 @Injectable()
 export class DataService {
@@ -21,7 +15,6 @@ export class DataService {
   private configData: ConfigData;
   private leetCodeData: QuestionData;
   private kattisData: QuestionData;
-  private studentData: StudentData;
 
   constructor() {
     this.adminData = adminsJson;
@@ -37,10 +30,6 @@ export class DataService {
       difficulty: QuestionDifficulty[k.difficulty],
       type: QuestionType[k.type],
       source: QuestionSource.KATTIS,
-    }));
-    this.studentData = studentsJson.map((s) => ({
-      ...s,
-      coursemologyProfile: `${this.configData.coursemology}/users/${s.id}`,
     }));
   }
 
@@ -58,9 +47,5 @@ export class DataService {
 
   getKattisData(): QuestionData {
     return this.kattisData;
-  }
-
-  getStudentData(): StudentData {
-    return this.studentData;
   }
 }
