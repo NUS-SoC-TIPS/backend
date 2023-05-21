@@ -10,12 +10,14 @@ import {
 import { PrismaService } from '../../../infra/prisma/prisma.service';
 import { CurrentService } from '../../../productinfra/current/current.service';
 import { findEndOfWeek, findStartOfWeek } from '../../../utils';
-
 import {
-  InterviewEntity,
-  InterviewStatsEntity,
-  InterviewStatsProgressEntity,
-} from './entities';
+  InterviewItem,
+  makeUserBase,
+  StudentBase,
+  UserBase,
+} from '../../interfaces';
+
+import { InterviewStatsEntity, InterviewStatsProgressEntity } from './entities';
 
 @Injectable()
 export class InterviewsService {
@@ -27,39 +29,12 @@ export class InterviewsService {
 
   async findStats(userId: string): Promise<InterviewStatsEntity> {
     const progress = await this.findProgress(userId);
-    const roomRecordAggregate = await this.prismaService.roomRecord.aggregate({
-      where: { roomRecordUsers: { some: { userId } }, isValid: true },
-      _avg: { duration: true },
-    });
-    // We don't have pairing as of now, so we'll just return the latest partner
-    const latestRoomRecord = await this.prismaService.roomRecord.findFirst({
-      where: { roomRecordUsers: { some: { userId } }, isValid: true },
-      orderBy: { createdAt: 'desc' },
-      include: {
-        roomRecordUsers: { include: { user: { include: { students: true } } } },
-      },
-    });
-    const latestPartner = latestRoomRecord?.roomRecordUsers?.filter(
-      (u) => u.userId !== userId,
-    )[0];
-
-    return {
-      progress,
-      averageDurationMs: roomRecordAggregate._avg.duration ?? 0,
-      pairedOrLatestPartner:
-        latestPartner != null
-          ? {
-              name: latestPartner.user.name,
-              githubUsername: latestPartner.user.githubUsername,
-              profileUrl: latestPartner.user.profileUrl,
-              photoUrl: latestPartner.user.photoUrl,
-              coursemologyProfileUrl: null,
-            }
-          : null,
-    };
+    const averageDurationMs = await this.findAverageDurationMs(userId);
+    const pairedOrLatestPartner = await this.findPairedOrLatestPartner(userId);
+    return { progress, averageDurationMs, pairedOrLatestPartner };
   }
 
-  async findInterview(id: number, userId: string): Promise<InterviewEntity> {
+  async findInterview(id: number, userId: string): Promise<InterviewItem> {
     const roomRecord = await this.prismaService.roomRecord.findFirst({
       where: { id, isValid: true, roomRecordUsers: { some: { userId } } },
       include: { roomRecordUsers: { include: { user: true } }, room: true },
@@ -112,20 +87,16 @@ export class InterviewsService {
     userId: string,
   ): Promise<InterviewStatsProgressEntity> {
     const ongoingWindow = await this.currentService.findOngoingWindow();
-    const isWindow = ongoingWindow != null;
-    if (isWindow) {
-      return {
-        isWindow,
-        ...(await this.findWindowProgress(userId, ongoingWindow)),
-      };
+    if (ongoingWindow != null) {
+      return this.findWindowProgress(userId, ongoingWindow);
     }
-    return { isWindow, ...(await this.findWeekProgress(userId)) };
+    return this.findWeekProgress(userId);
   }
 
   private async findWindowProgress(
     userId: string,
     window: Window,
-  ): Promise<Omit<InterviewStatsProgressEntity, 'isWindow'>> {
+  ): Promise<InterviewStatsProgressEntity> {
     const studentResultWithInterviewCount =
       await this.prismaService.studentResult.findFirst({
         where: {
@@ -135,17 +106,18 @@ export class InterviewsService {
         include: { _count: { select: { roomRecordUsers: true } } },
       });
     return {
+      numInterviewsThisWindowOrWeek:
+        studentResultWithInterviewCount?._count?.roomRecordUsers ?? 0,
       isInterviewRequired: window.requireInterview,
       startOfWindowOrWeek: window.startAt,
       endOfWindowOrWeek: window.endAt,
-      numInterviewsThisWindowOrWeek:
-        studentResultWithInterviewCount?._count?.roomRecordUsers ?? 0,
+      isWindow: true,
     };
   }
 
   private async findWeekProgress(
     userId: string,
-  ): Promise<Omit<InterviewStatsProgressEntity, 'isWindow'>> {
+  ): Promise<InterviewStatsProgressEntity> {
     const startOfWeek = findStartOfWeek();
     const endOfWeek = findEndOfWeek();
     const numInterviewsThisWeek = await this.prismaService.roomRecord.count({
@@ -156,11 +128,35 @@ export class InterviewsService {
       },
     });
     return {
+      numInterviewsThisWindowOrWeek: numInterviewsThisWeek,
       isInterviewRequired: null,
       startOfWindowOrWeek: startOfWeek,
       endOfWindowOrWeek: endOfWeek,
-      numInterviewsThisWindowOrWeek: numInterviewsThisWeek,
+      isWindow: false,
     };
+  }
+
+  private async findAverageDurationMs(userId: string): Promise<number> {
+    const roomRecordAggregate = await this.prismaService.roomRecord.aggregate({
+      where: { roomRecordUsers: { some: { userId } }, isValid: true },
+      _avg: { duration: true },
+    });
+    return roomRecordAggregate._avg.duration ?? 0;
+  }
+
+  private async findPairedOrLatestPartner(
+    userId: string,
+  ): Promise<UserBase | StudentBase | null> {
+    // We don't have pairing as of now, so we'll just return the latest partner
+    const latestRoomRecord = await this.prismaService.roomRecord.findFirst({
+      where: { roomRecordUsers: { some: { userId } }, isValid: true },
+      orderBy: { createdAt: 'desc' },
+      include: { roomRecordUsers: { include: { user: true } } },
+    });
+    const latestPartnerUser = latestRoomRecord?.roomRecordUsers?.filter(
+      (u) => u.userId !== userId,
+    )[0].user;
+    return latestPartnerUser != null ? makeUserBase(latestPartnerUser) : null;
   }
 
   /**

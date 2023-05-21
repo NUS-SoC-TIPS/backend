@@ -20,6 +20,7 @@ import { Room, RoomStatus, User } from '../../../infra/prisma/generated';
 import { AgoraService } from '../../../productinfra/agora/agora.service';
 import { GetRoom, GetUserWs } from '../../../productinfra/decorators';
 import { AuthWsGuard, InRoomGuard } from '../../../productinfra/guards';
+import { makeUserBase } from '../../interfaces';
 import { CodeService } from '../code/code.service';
 import { NotesService } from '../notes/notes.service';
 
@@ -80,7 +81,7 @@ export class RoomsGateway implements OnGatewayDisconnect, OnModuleDestroy {
     }
     if (room.roomUsers.length === 2 && userCurrentRoom == null) {
       socket.emit(ROOM_EVENTS.ROOM_IS_FULL, {
-        users: room.roomUsers.map((u) => u.user),
+        users: room.roomUsers.map((u) => makeUserBase(u.user)),
       });
       return;
     }
@@ -99,7 +100,8 @@ export class RoomsGateway implements OnGatewayDisconnect, OnModuleDestroy {
     this.roomsService.createRoomUser({ roomId: room.id, userId: user.id });
     socket.broadcast
       .to(`${room.id}`)
-      .emit(ROOM_EVENTS.JOINED_ROOM, { partner: user });
+      // TODO: Consider adding other properties if e.g. UI is redesigned
+      .emit(ROOM_EVENTS.JOINED_ROOM, { partner: { name: user.name } });
 
     const language = await this.codeService.findOrInitLanguage(
       room.id,
@@ -114,7 +116,7 @@ export class RoomsGateway implements OnGatewayDisconnect, OnModuleDestroy {
 
     socket.emit(ROOM_EVENTS.JOIN_ROOM, {
       id: room.id,
-      partner,
+      partner: { name: partner.name },
       videoToken,
       language,
       notes,

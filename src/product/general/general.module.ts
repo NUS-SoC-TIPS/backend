@@ -6,7 +6,6 @@ import { InterviewsModule } from './interviews/interviews.module';
 import { NotesModule } from './notes/notes.module';
 import { QuestionsModule } from './questions/questions.module';
 import { RoomsModule } from './rooms/rooms.module';
-import { SubmissionsModule } from './submissions/submissions.module';
 import { UsersModule } from './users/users.module';
 
 @Module({
@@ -18,7 +17,6 @@ import { UsersModule } from './users/users.module';
     UsersModule,
     QuestionsModule,
     InterviewsModule,
-    SubmissionsModule,
   ],
 })
 export class GeneralModule {}

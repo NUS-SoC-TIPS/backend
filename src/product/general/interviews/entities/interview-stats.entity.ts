@@ -1,4 +1,4 @@
-import { BaseUser } from '../../../../infra/interfaces/interface';
+import { StudentBase, UserBase } from '../../../interfaces';
 
 export interface InterviewStatsProgressEntity {
   // If currently in the middle of a window, the number will be returned
@@ -13,9 +13,5 @@ export interface InterviewStatsProgressEntity {
 export interface InterviewStatsEntity {
   progress: InterviewStatsProgressEntity;
   averageDurationMs: number; // 0 if no interviews done
-  pairedOrLatestPartner:
-    | (BaseUser & {
-        coursemologyProfileUrl: string | null;
-      })
-    | null;
+  pairedOrLatestPartner: UserBase | StudentBase | null;
 }

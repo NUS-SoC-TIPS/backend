@@ -11,8 +11,9 @@ import {
 import { GetUserRest } from '../../../productinfra/decorators';
 import { JwtRestGuard } from '../../../productinfra/guards';
 import { BadRequestExceptionFilter } from '../../../utils';
+import { InterviewItem } from '../../interfaces';
 
-import { InterviewEntity, InterviewStatsEntity } from './entities';
+import { InterviewStatsEntity } from './entities';
 import { InterviewsService } from './interviews.service';
 
 @UseGuards(JwtRestGuard)
@@ -31,17 +32,19 @@ export class InterviewsController {
   }
 
   @Get(':id')
-  find(
+  findInterview(
     @Param('id') id: string,
     @GetUserRest('id') userId: string,
-  ): Promise<InterviewEntity> {
+  ): Promise<InterviewItem> {
     this.logger.log('GET /interviews/:id', InterviewsController.name);
     return this.interviewsService.findInterview(+id, userId);
   }
 
   @Post('rooms')
   @UseFilters(BadRequestExceptionFilter)
-  async create(@GetUserRest('id') userId: string): Promise<{ slug: string }> {
+  async createRoom(
+    @GetUserRest('id') userId: string,
+  ): Promise<{ slug: string }> {
     this.logger.log('POST /interviews/rooms', InterviewsController.name);
     const slug = await this.interviewsService.createRoom(userId);
     return { slug: slug };
@@ -49,7 +52,7 @@ export class InterviewsController {
 
   @Get('rooms')
   @UseFilters(BadRequestExceptionFilter)
-  async findCurrent(
+  async findCurrentRoom(
     @GetUserRest('id') userId: string,
   ): Promise<{ slug: string } | null> {
     this.logger.log('GET /interviews/rooms', InterviewsController.name);

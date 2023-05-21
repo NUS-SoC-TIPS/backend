@@ -12,9 +12,9 @@ import { User } from '../../../infra/prisma/generated';
 import { GetUserRest } from '../../../productinfra/decorators';
 import { JwtRestGuard } from '../../../productinfra/guards';
 import { BadRequestExceptionFilter } from '../../../utils';
+import { UserSelf } from '../../interfaces';
 
 import { UpdateSettingsDto } from './dtos';
-import { SelfUser } from './entities';
 import { UsersService } from './users.service';
 
 @UseGuards(JwtRestGuard)
@@ -27,7 +27,7 @@ export class UsersController {
 
   @Get('self')
   @UseFilters(BadRequestExceptionFilter)
-  async findSelf(@GetUserRest() user: User): Promise<SelfUser> {
+  async findSelf(@GetUserRest() user: User): Promise<UserSelf> {
     this.logger.log('GET /users/self', UsersController.name);
     return this.usersService.findSelf(user);
   }

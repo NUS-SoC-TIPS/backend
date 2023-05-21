@@ -1,9 +1,22 @@
-import { Controller, Get, Logger, UseFilters, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Logger,
+  Param,
+  Patch,
+  Post,
+  UseFilters,
+  UseGuards,
+} from '@nestjs/common';
 
-import { Question } from '../../../infra/prisma/generated';
+import { GetUserRest } from '../../../productinfra/decorators';
 import { JwtRestGuard } from '../../../productinfra/guards';
 import { BadRequestExceptionFilter } from '../../../utils';
+import { QuestionBase, SubmissionItem } from '../../interfaces';
 
+import { CreateSubmissionDto, UpdateSubmissionDto } from './dtos';
+import { QuestionStatsEntity } from './entities';
 import { QuestionsService } from './questions.service';
 
 @UseGuards(JwtRestGuard)
@@ -16,8 +29,48 @@ export class QuestionsController {
 
   @Get()
   @UseFilters(BadRequestExceptionFilter)
-  findAll(): Promise<Question[]> {
+  findAll(): Promise<QuestionBase[]> {
     this.logger.log('GET /questions', QuestionsController.name);
-    return this.questionsService.findAll();
+    return this.questionsService.findAllQuestions();
+  }
+
+  @Get('stats')
+  @UseFilters(BadRequestExceptionFilter)
+  findStats(@GetUserRest('id') userId: string): Promise<QuestionStatsEntity> {
+    this.logger.log('GET /questions/stats', QuestionsController.name);
+    return this.questionsService.findStats(userId);
+  }
+
+  @Post('submissions')
+  @UseFilters(BadRequestExceptionFilter)
+  createSubmission(
+    @Body() dto: CreateSubmissionDto,
+    @GetUserRest('id') userId: string,
+  ): Promise<void> {
+    this.logger.log('POST /questions/submissions', QuestionsController.name);
+    return this.questionsService.createSubmission(dto, userId);
+  }
+
+  @Get('submissions/:id')
+  @UseFilters(BadRequestExceptionFilter)
+  findSubmission(
+    @Param('id') id: string,
+    @GetUserRest('id') userId: string,
+  ): Promise<SubmissionItem> {
+    this.logger.log('GET /questions/submissions/:id', QuestionsController.name);
+    return this.questionsService.findSubmission(+id, userId);
+  }
+
+  @Patch('submissions/:id')
+  updateSubmission(
+    @Param('id') id: string,
+    @Body() dto: UpdateSubmissionDto,
+    @GetUserRest('id') userId: string,
+  ): Promise<void> {
+    this.logger.log(
+      'PATCH questions/submissions/:id',
+      QuestionsController.name,
+    );
+    return this.questionsService.updateSubmission(+id, dto, userId);
   }
 }

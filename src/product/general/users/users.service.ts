@@ -1,29 +1,20 @@
 import { Injectable } from '@nestjs/common';
 
-import { KeyBinding, Settings, User } from '../../../infra/prisma/generated';
+import { Settings, User } from '../../../infra/prisma/generated';
 import { PrismaService } from '../../../infra/prisma/prisma.service';
+import { makeUserSelf, UserSelf } from '../../interfaces';
 
 import { UpdateSettingsDto } from './dtos';
-import { SelfUser } from './entities';
 
 @Injectable()
 export class UsersService {
   constructor(private readonly prismaService: PrismaService) {}
 
-  async findSelf(user: User): Promise<SelfUser> {
-    const { id, name, githubUsername, profileUrl, photoUrl, role } = user;
+  async findSelf(user: User): Promise<UserSelf> {
+    const { id } = user;
     const settings = await this.findSettings(id);
     const isStudent = await this.findIsStudent(id);
-    return {
-      name,
-      githubUsername,
-      profileUrl,
-      photoUrl,
-      role,
-      isStudent,
-      preferredInterviewLanguage: settings?.preferredInterviewLanguage ?? null,
-      preferredKeyBinding: settings?.preferredKeyBinding ?? KeyBinding.STANDARD,
-    };
+    return makeUserSelf({ ...user, settings }, isStudent);
   }
 
   async updateSettings(user: User, dto: UpdateSettingsDto): Promise<void> {
