@@ -1,17 +1,21 @@
 import { Injectable, Logger } from '@nestjs/common';
 import * as decoding from 'lib0/decoding';
 import * as encoding from 'lib0/encoding';
+import { PrismaService } from 'src/infra/prisma/prisma.service';
 import * as awarenessProtocol from 'y-protocols/awareness';
 import * as syncProtocol from 'y-protocols/sync';
 
 import { ISocket } from '../../../infra/interfaces/socket';
 import { Language, Room } from '../../../infra/prisma/generated';
-import { CallbackDto } from '../../../productinfra/judge0/dtos';
+import { CallbackDto as Judge0CallbackDto } from '../../../productinfra/judge0/dtos';
 import { ExecutionResultEntity } from '../../../productinfra/judge0/entities';
 import { Judge0Service } from '../../../productinfra/judge0/judge0.service';
-import { UsersService } from '../users/users.service';
 
-import { MESSAGE_AWARENESS, MESSAGE_SYNC } from './code.constants';
+import {
+  DEFAULT_LANGUAGE,
+  MESSAGE_AWARENESS,
+  MESSAGE_SYNC,
+} from './code.constants';
 import { YjsDoc } from './code.yjs';
 
 @Injectable()
@@ -21,8 +25,8 @@ export class CodeService {
 
   constructor(
     private readonly logger: Logger,
-    private readonly usersService: UsersService,
     private readonly judge0Service: Judge0Service,
+    private readonly prismaService: PrismaService,
   ) {
     this.roomToLanguage = new Map();
     this.roomToDoc = new Map();
@@ -60,6 +64,7 @@ export class CodeService {
       );
       awareness = encoding.toUint8Array(encoder);
     }
+
     return { sync, awareness };
   }
 
@@ -139,19 +144,11 @@ export class CodeService {
   async findOrInitLanguage(roomId: number, userId: string): Promise<Language> {
     let language = this.roomToLanguage.get(roomId);
     if (language == null) {
-      language = Language.PYTHON_THREE;
-      await this.usersService
-        .findSettings(userId)
-        .then((userSettings) => {
-          language = userSettings?.preferredInterviewLanguage ?? language;
-        })
-        .catch(() => {
-          // We will consume the error here instead of propagating it up further.
-          this.logger.warn(
-            'Failed to find preferred interview language setting, using default',
-            CodeService.name,
-          );
-        });
+      language = DEFAULT_LANGUAGE;
+      const userSettings = await this.prismaService.settings.findUnique({
+        where: { userId },
+      });
+      language = userSettings?.preferredInterviewLanguage ?? language;
       this.roomToLanguage.set(roomId, language);
     }
     return language;
@@ -175,7 +172,7 @@ export class CodeService {
   }
 
   getCodeAndLanguage(room: Room): { code: string; language: Language } {
-    const language = this.roomToLanguage.get(room.id) ?? Language.PYTHON_THREE;
+    const language = this.roomToLanguage.get(room.id) ?? DEFAULT_LANGUAGE;
     const doc = this.roomToDoc.get(room.id);
     if (doc == null) {
       this.logger.warn(
@@ -201,6 +198,7 @@ export class CodeService {
   }
 
   // Sends the code over to Judge0 for execution and returns the submission token
+
   async executeCodeAsync(room: Room): Promise<string | null> {
     const { code, language } = this.getCodeAndLanguage(room);
     if (code === '') {
@@ -227,7 +225,7 @@ export class CodeService {
 
   // Methods that wrap around Judge0Service
 
-  interpretResults(dto: CallbackDto): ExecutionResultEntity {
+  interpretResults(dto: Judge0CallbackDto): ExecutionResultEntity {
     return this.judge0Service.interpretResults(dto);
   }
 

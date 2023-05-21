@@ -17,7 +17,7 @@ import { Server } from 'socket.io';
 import { ISocket } from '../../../infra/interfaces/socket';
 import { Language, Room } from '../../../infra/prisma/generated';
 import { AuthWsGuard } from '../../../productinfra/guards';
-import { CallbackDto } from '../../../productinfra/judge0/dtos';
+import { CallbackDto as Judge0CallbackDto } from '../../../productinfra/judge0/dtos';
 import { GetRoom } from '../rooms/decorators';
 import { InRoomGuard } from '../rooms/guards';
 
@@ -132,7 +132,7 @@ export class CodeGateway implements OnModuleDestroy {
     this.roomIdToCodeExecutionTimeouts.set(room.id, timeout);
   }
 
-  completeExecution(dto: CallbackDto): void {
+  completeExecution(dto: Judge0CallbackDto): void {
     const roomId = this.submissionTokenToRoomId.get(dto.token);
     if (roomId == null) {
       this.logger.warn(
