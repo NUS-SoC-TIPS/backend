@@ -6,19 +6,17 @@ import {
   QuestionType,
 } from '../prisma/generated';
 
-import { AdminData, ConfigData, QuestionData } from './entities';
-import { adminsJson, configJson, kattisJson, leetCodeJson } from './jsons';
+import { AdminData, QuestionData } from './entities';
+import { adminsJson, kattisJson, leetCodeJson } from './jsons';
 
 @Injectable()
 export class DataService {
   private adminData: AdminData;
-  private configData: ConfigData;
   private leetCodeData: QuestionData;
   private kattisData: QuestionData;
 
   constructor() {
     this.adminData = adminsJson;
-    this.configData = configJson;
     this.leetCodeData = leetCodeJson.map((l) => ({
       ...l,
       difficulty: QuestionDifficulty[l.difficulty],
@@ -35,10 +33,6 @@ export class DataService {
 
   getAdminData(): AdminData {
     return this.adminData;
-  }
-
-  getConfigData(): ConfigData {
-    return this.configData;
   }
 
   getLeetCodeData(): QuestionData {

@@ -42,6 +42,8 @@ export class Judge0Service {
       return Promise.resolve(null);
     }
     const submission = await this.createSubmissionObject(code, language);
+    // We alternate between the two because the quotas for single and batched
+    // submissions are separate, and we want to save money T_T.
     this.useBatchSubmission = !this.useBatchSubmission;
     if (this.useBatchSubmission) {
       this.logger.log(
@@ -86,6 +88,7 @@ export class Judge0Service {
   }
 
   // Returns a map of language to Judge0 language name
+  // TODO: Compute and cache it until it gets refreshed.
   async getExecutableLanguages(): Promise<{ [language: string]: string }> {
     await this.refreshLanguagesIfNecessary();
     const languages = {};
