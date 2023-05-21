@@ -5,6 +5,7 @@ import {
 import { Exclusion, User, Window } from '../../../infra/prisma/generated';
 
 export interface UserWithWindowData extends User {
+  studentId: number;
   coursemologyName: string;
   coursemologyProfileUrl: string;
   submissions: SubmissionWithQuestion[];

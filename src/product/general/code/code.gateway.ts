@@ -175,5 +175,6 @@ export class CodeGateway implements OnModuleDestroy {
   private clearRoomTimeout(roomId: number): void {
     clearTimeout(this.roomIdToCodeExecutionTimeouts.get(roomId));
     this.roomIdToCodeExecutionTimeouts.delete(roomId);
+    // The callback token isn't cleared here - we'll lazily clear it in completeExecution.
   }
 }

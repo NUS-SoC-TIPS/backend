@@ -1,9 +1,9 @@
 import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
 
 export class CreateExclusionDto {
-  @IsString()
+  @IsNumber()
   @IsNotEmpty()
-  userId: string;
+  studentId: number;
 
   @IsNumber()
   @IsNotEmpty()

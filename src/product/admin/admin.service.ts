@@ -19,36 +19,14 @@ export class AdminService {
   async createExclusion(dto: CreateExclusionDto): Promise<Exclusion> {
     const window = await this.windowsService.findOrThrow(dto.windowId);
     const student = await this.prismaService.student.findUnique({
-      where: {
-        userId_cohortId: { userId: dto.userId, cohortId: window.cohortId },
-      },
+      where: { id: dto.studentId },
+      include: { exclusion: { include: { window: true } } },
     });
     if (!student) {
-      throw new Error('User is not a student');
+      throw new Error('Student does not exist');
     }
 
-    const existingExclusion = await this.prismaService.exclusion
-      .findFirst({
-        where: {
-          userId: dto.userId,
-          window: {
-            cohortId: {
-              equals: window.cohortId,
-            },
-          },
-        },
-        include: {
-          window: true,
-        },
-      })
-      .catch((e) => {
-        this.logger.error(
-          'Failed to find nullable existing exclusion',
-          e instanceof Error ? e.stack : undefined,
-          AdminService.name,
-        );
-        throw e;
-      });
+    const existingExclusion = student.exclusion;
     if (
       existingExclusion &&
       existingExclusion.window.startAt <= window.startAt
@@ -138,7 +116,9 @@ export class AdminService {
     const studentResults = await this.prismaService.studentResult.findMany({
       where: { windowId: window.id },
       include: {
-        student: { include: { user: true } },
+        student: {
+          include: { user: true, exclusion: { include: { window: true } } },
+        },
         questionSubmissions: { include: { question: true } },
         roomRecordUsers: {
           include: {
@@ -152,6 +132,7 @@ export class AdminService {
 
     const students = studentResults.map((result) => ({
       ...result.student.user,
+      studentId: result.studentId,
       coursemologyName: result.student.coursemologyName,
       coursemologyProfileUrl: result.student.coursemologyProfileUrl,
       submissions: result.questionSubmissions,
@@ -161,6 +142,7 @@ export class AdminService {
       hasCompletedWindow:
         result.questionSubmissions.length >= window.numQuestions &&
         (!window.requireInterview || result.roomRecordUsers.length > 0),
+      exclusion: result.student.exclusion,
     }));
 
     const numberOfStudents = studentResults.length;

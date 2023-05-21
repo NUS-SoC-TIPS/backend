@@ -1,17 +1,15 @@
 import { Injectable, Logger } from '@nestjs/common';
 
-import { DataService } from '../../../infra/data/data.service';
 import { Settings, User } from '../../../infra/prisma/generated';
 import { PrismaService } from '../../../infra/prisma/prisma.service';
 
 import { UpdateSettingsDto, UpsertUserDto } from './dtos';
-import { AppConfig, UserSettingsConfig } from './entities';
+import { UserWithSettings } from './entities';
 
 @Injectable()
 export class UsersService {
   constructor(
     private readonly logger: Logger,
-    private readonly dataService: DataService,
     private readonly prismaService: PrismaService,
   ) {}
 
@@ -45,14 +43,14 @@ export class UsersService {
       });
   }
 
-  findAppConfig(): AppConfig {
-    return this.dataService.getConfigData();
+  async findIsStudent(userId: string): Promise<boolean> {
+    return (await this.prismaService.student.count({ where: { userId } })) > 0;
   }
 
   async updateSettings(
     user: User,
     dto: UpdateSettingsDto,
-  ): Promise<UserSettingsConfig> {
+  ): Promise<UserWithSettings> {
     const { name, photoUrl, preferredInterviewLanguage, preferredKeyBinding } =
       dto;
     // Finding settings may throw. We will not catch here and instead let the controller handle it.
@@ -112,10 +110,13 @@ export class UsersService {
           });
       }
 
+      const isStudent =
+        (await tx.student.count({ where: { userId: user.id } })) > 0;
+
       return {
         ...updatedUser,
         settings: updatedSettings,
-        config: this.findAppConfig(),
+        isStudent,
       };
     });
   }

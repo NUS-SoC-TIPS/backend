@@ -1,19 +1,27 @@
 import { Controller, Get, Logger, UseFilters, UseGuards } from '@nestjs/common';
 
+import { Cohort } from '../../../infra/prisma/generated';
+import { GetUserRest } from '../../../productinfra/decorators';
+import { JwtRestStudentGuard } from '../../../productinfra/guards';
 import { BadRequestExceptionFilter } from '../../../utils';
-import { GetUserRest } from '../../general/auth/decorators';
-import { JwtRestGuard } from '../../general/auth/guards';
 
 import { TaskStatsEntity } from './entities';
 import { TasksService } from './tasks.service';
 
-@UseGuards(JwtRestGuard)
+@UseGuards(JwtRestStudentGuard)
 @Controller('tasks')
 export class TasksController {
   constructor(
     private readonly logger: Logger,
     private readonly tasksService: TasksService,
   ) {}
+
+  @Get('cohorts')
+  @UseFilters(BadRequestExceptionFilter)
+  async findCohorts(): Promise<Cohort[]> {
+    this.logger.log('GET /tasks/cohorts', TasksController.name);
+    return [];
+  }
 
   @Get('stats')
   @UseFilters(BadRequestExceptionFilter)
