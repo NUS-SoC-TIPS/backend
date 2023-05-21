@@ -2,20 +2,19 @@ import { Injectable, Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { generateSlug } from 'random-word-slugs';
 
-import { UpsertUserDto } from '../product/general/users/dtos';
-import { UsersService } from '../product/general/users/users.service';
+import { PrismaService } from '../infra/prisma/prisma.service';
 
 @Injectable()
 export class DevService {
   constructor(
     private readonly jwt: JwtService,
-    private readonly usersService: UsersService,
     private readonly logger: Logger,
+    private readonly prismaService: PrismaService,
   ) {}
 
   async login(): Promise<string> {
     const slug = generateSlug();
-    const userInfo: UpsertUserDto = {
+    const userInfo = {
       id: slug,
       name: 'Dev User',
       githubUsername: slug,
@@ -23,7 +22,7 @@ export class DevService {
         'https://res.cloudinary.com/folio-hnr/image/upload/v1679629122/blob_ycezgh.jpg',
       profileUrl: 'https://github.com',
     };
-    const user = await this.usersService.upsertUser(userInfo);
+    const user = await this.prismaService.user.create({ data: userInfo });
     return this.signToken(user.id);
   }
 

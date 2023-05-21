@@ -4,8 +4,8 @@ import { JwtService } from '@nestjs/jwt';
 import { User } from '../../../infra/prisma/generated';
 import { PrismaService } from '../../../infra/prisma/prisma.service';
 import { FirebaseService } from '../../../productinfra/firebase/firebase.service';
-import { UsersService } from '../users/users.service';
 
+import { UpsertUserEntity } from './entities/upsert-user.entity';
 import { AuthDto } from './dtos';
 
 @Injectable()
@@ -13,7 +13,6 @@ export class AuthService {
   constructor(
     private readonly logger: Logger,
     private readonly jwtService: JwtService,
-    private readonly usersService: UsersService,
     private readonly prismaService: PrismaService,
     private readonly firebaseService: FirebaseService,
   ) {}
@@ -23,7 +22,7 @@ export class AuthService {
     // The following operations all may throw an error. We will not catch the errors
     // here and instead let the controller handle it.
     const uid = await this.firebaseService.verifyToken(token);
-    const user = await this.usersService.upsertUser({ ...userInfo, id: uid });
+    const user = await this.upsertUser({ ...userInfo, id: uid });
     return this.signToken(user.id);
   }
 
@@ -48,6 +47,21 @@ export class AuthService {
         AuthService.name,
       );
       throw e;
+    });
+  }
+
+  private async upsertUser(entity: UpsertUserEntity): Promise<User> {
+    const settings = await this.prismaService.settings.findUnique({
+      where: { userId: entity.id },
+    });
+    return this.prismaService.user.upsert({
+      where: { id: entity.id },
+      update: {
+        ...entity,
+        name: settings?.hasUpdatedName ? undefined : entity.name,
+        photoUrl: settings?.hasUpdatedPhoto ? undefined : entity.photoUrl,
+      },
+      create: { ...entity },
     });
   }
 }
