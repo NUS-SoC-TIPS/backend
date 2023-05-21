@@ -55,3 +55,6 @@ lerna-debug.log*
 script*.py
 *.csv
 students*.json
+
+# Backups
+backups/*
