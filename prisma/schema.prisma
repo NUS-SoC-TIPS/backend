@@ -147,7 +147,7 @@ model Student {
 }
 
 model Window {
-  id               Int             @id
+  id               Int             @id @default(autoincrement())
   createdAt        DateTime        @default(now()) @map("created_at")
   updatedAt        DateTime        @updatedAt @map("updated_at")
   startAt          DateTime        @map("start_at")
@@ -217,7 +217,7 @@ model Exclusion {
   id        Int      @id @default(autoincrement())
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
-  // Match it to student for now, since each student can only be excluded
+  // Match it to student for now, since each student can only be excluded once
   studentId Int      @unique @map("student_id")
   windowId  Int      @map("window_id")
   reason    String
