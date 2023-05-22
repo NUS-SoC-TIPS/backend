@@ -1,12 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
 import * as decoding from 'lib0/decoding';
 import * as encoding from 'lib0/encoding';
-import { PrismaService } from 'src/infra/prisma/prisma.service';
 import * as awarenessProtocol from 'y-protocols/awareness';
 import * as syncProtocol from 'y-protocols/sync';
 
 import { ISocket } from '../../../infra/interfaces/socket';
 import { Language, Room } from '../../../infra/prisma/generated';
+import { PrismaService } from '../../../infra/prisma/prisma.service';
 import { CallbackDto as Judge0CallbackDto } from '../../../productinfra/judge0/dtos';
 import { ExecutionResultEntity } from '../../../productinfra/judge0/entities';
 import { Judge0Service } from '../../../productinfra/judge0/judge0.service';
