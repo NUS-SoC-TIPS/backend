@@ -33,6 +33,7 @@ export class AdminService {
     const nonStudents = await this.prismaService.user
       .findMany({
         where: { students: { none: {} } },
+        orderBy: { createdAt: 'desc' },
       })
       .then((nonStudents) =>
         nonStudents.map((nonStudent) => ({
