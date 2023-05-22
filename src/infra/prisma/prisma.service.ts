@@ -27,7 +27,7 @@ export class PrismaService
         { emit: 'event', level: 'error' },
       ],
     });
-    this.$on('query', (e) => this.logger.debug(e, PrismaService.name));
+    // this.$on('query', (e) => this.logger.debug(e, PrismaService.name));
     this.$on('info', (e) => this.logger.log(e, PrismaService.name));
     this.$on('warn', (e) => this.logger.warn(e, PrismaService.name));
     this.$on('error', (e) =>
