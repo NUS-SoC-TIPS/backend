@@ -163,7 +163,11 @@ export class CohortsService {
           );
         const interviews = await this.prismaService.roomRecord
           .findMany({
-            where: { roomRecordUsers: { some: { userId } }, isValid: true },
+            where: {
+              roomRecordUsers: { some: { userId } },
+              isValid: true,
+              room: { closedAt: { gte: window.startAt, lte: window.endAt } },
+            },
             include: { roomRecordUsers: { include: { user: true } } },
           })
           .then((roomRecords) =>

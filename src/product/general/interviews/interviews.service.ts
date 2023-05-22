@@ -131,7 +131,7 @@ export class InterviewsService {
       where: {
         isValid: true,
         roomRecordUsers: { some: { userId } },
-        createdAt: { gte: startOfWeek, lte: endOfWeek },
+        room: { closedAt: { gte: startOfWeek, lte: endOfWeek } },
       },
     });
     return {
