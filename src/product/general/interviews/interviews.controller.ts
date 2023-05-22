@@ -32,6 +32,7 @@ export class InterviewsController {
   }
 
   @Get()
+  @UseFilters(BadRequestExceptionFilter)
   findInterviews(
     @GetUserRest('id') userId: string,
   ): Promise<InterviewListItem[]> {
@@ -39,7 +40,8 @@ export class InterviewsController {
     return this.interviewsService.findInterviews(userId);
   }
 
-  @Get(':id')
+  @Get('records/:id')
+  @UseFilters(BadRequestExceptionFilter)
   findInterview(
     @Param('id') id: string,
     @GetUserRest('id') userId: string,

@@ -116,7 +116,7 @@ export class RoomsGateway implements OnGatewayDisconnect, OnModuleDestroy {
 
     socket.emit(ROOM_EVENTS.JOIN_ROOM, {
       id: room.id,
-      partner: { name: partner.name },
+      partner: partner != null ? { name: partner.name } : null,
       videoToken,
       language,
       notes,

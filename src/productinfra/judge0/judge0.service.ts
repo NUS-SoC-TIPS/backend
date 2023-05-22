@@ -228,6 +228,7 @@ export class Judge0Service {
           lastUpdated,
         });
       });
+      this.logger.log('Languages refreshed!', Judge0Service.name);
     } catch (e) {
       this.logger.error(
         'Failed to refresh languages',

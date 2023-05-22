@@ -75,6 +75,7 @@ export class QuestionsController {
   }
 
   @Patch('submissions/:id')
+  @UseFilters(BadRequestExceptionFilter)
   updateSubmission(
     @Param('id') id: string,
     @Body() dto: UpdateSubmissionDto,
