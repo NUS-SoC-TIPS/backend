@@ -1,3 +1,5 @@
+import { Language } from '../../../infra/prisma/generated';
+
 export const CODE_EVENTS = {
   // YJS synchronisation
   CONNECT_YJS: 'connect_yjs',
@@ -19,3 +21,5 @@ export const MESSAGE_AUTH = 2;
 export const MESSAGE_QUERY_AWARENESS = 3;
 
 export const CODE_EXECUTION_AUTO_CANCEL_DURATION = 15000; // 15s in milliseconds
+
+export const DEFAULT_LANGUAGE = Language.PYTHON_THREE;

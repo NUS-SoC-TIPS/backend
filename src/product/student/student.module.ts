@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
 
-import { TasksModule } from './tasks/tasks.module';
+import { CohortsModule } from './cohorts/cohorts.module';
 
 @Module({
-  imports: [TasksModule],
+  imports: [CohortsModule],
 })
 export class StudentModule {}

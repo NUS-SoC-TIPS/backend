@@ -16,8 +16,9 @@ export class AgoraService {
     const agoraAppId = this.configService.get('AGORA_APP_ID');
     const agoraAppCertificate = this.configService.get('AGORA_APP_CERTIFICATE');
     if (agoraAppId == null || agoraAppCertificate == null) {
-      this.logger.warn(
+      this.logger.error(
         'Agora app ID or certificate not defined, failed to generate access token.',
+        undefined,
         AgoraService.name,
       );
       return null;
@@ -27,7 +28,7 @@ export class AgoraService {
     return RtcTokenBuilder.buildTokenWithAccount(
       agoraAppId,
       agoraAppCertificate,
-      `${roomId}`,
+      `${roomId}`, // Need to send the same ID to the frontend
       userId,
       RtcRole.PUBLISHER,
       Math.floor(Date.now() / 1000) + AGORA_TOKEN_DURATION, // This is when the token will expire

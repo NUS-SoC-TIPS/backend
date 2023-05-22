@@ -1,5 +1,4 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { generateSlug } from 'random-word-slugs';
 
 import {
   Room,
@@ -8,58 +7,28 @@ import {
   User,
 } from '../../../infra/prisma/generated';
 import { PrismaService } from '../../../infra/prisma/prisma.service';
-import { ResultsService } from '../../../productinfra/results/results.service';
+import { CurrentService } from '../../../productinfra/current/current.service';
 
-import { CreateRecordDto, CreateRoomUserDto } from './dtos';
 import { MINIMUM_VALID_INTERVIEW_DURATION } from './rooms.constants';
+import { CreateRecordData, CreateRoomUserData } from './rooms.interfaces';
 
 @Injectable()
 export class RoomsService {
   constructor(
     private readonly logger: Logger,
     private readonly prismaService: PrismaService,
-    private readonly resultsService: ResultsService,
+    private readonly currentService: CurrentService,
   ) {}
 
-  async create(userId: string): Promise<Room> {
-    const currentRoomUser = await this.findCurrentRoomUser(userId);
-    if (currentRoomUser) {
-      this.logger.error(
-        'Failed to create room as user is already in an open room',
-        undefined,
-        RoomsService.name,
-      );
-      throw new Error('User is already in an open room');
-    }
-
-    return await this.prismaService.room
-      .create({
-        data: {
-          slug: await this.generateRoomSlug(),
-          roomUsers: {
-            create: {
-              userId,
-            },
-          },
-        },
-      })
-      .catch((e) => {
-        this.logger.error(
-          'Failed to find create new room',
-          e instanceof Error ? e.stack : undefined,
-          RoomsService.name,
-        );
-        throw e;
-      });
-  }
-
-  async createRoomUser(dto: CreateRoomUserDto): Promise<RoomUser> {
-    const currentRoomUser = await this.findCurrentRoomUser(dto.userId);
-    if (currentRoomUser?.roomId === dto.roomId) {
+  async createRoomUser(entity: CreateRoomUserData): Promise<RoomUser> {
+    const currentRoomUser = await this.findCurrentRoomUserAndRoomForUser(
+      entity.userId,
+    );
+    if (currentRoomUser?.roomId === entity.roomId) {
       this.logger.log('User is already in this room', RoomsService.name);
       return currentRoomUser;
     }
-    if (currentRoomUser) {
+    if (currentRoomUser != null) {
       this.logger.error(
         'Failed to join room as user is already in an open room',
         undefined,
@@ -68,174 +37,69 @@ export class RoomsService {
       throw new Error('User is already in an open room');
     }
 
-    return this.prismaService.roomUser
-      .create({
-        data: {
-          ...dto,
-        },
-      })
-      .catch((e) => {
-        this.logger.error(
-          `Failed to create room user for user with ID: ${dto.userId} and room with ID: ${dto.roomId}`,
-          e instanceof Error ? e.stack : undefined,
-          RoomsService.name,
-        );
-        throw e;
-      });
+    return this.prismaService.roomUser.create({ data: { ...entity } });
   }
 
-  async findCurrent(userId: string): Promise<Room | null> {
-    return (await this.findCurrentRoomUser(userId))?.room ?? null;
+  /**
+   * Finds the active room user for the user, and also returns the room.
+   */
+  async findCurrentRoomUserAndRoomForUser(
+    userId: string,
+  ): Promise<(RoomUser & { room: Room }) | null> {
+    return this.prismaService.roomUser.findFirst({
+      where: { userId, room: { status: RoomStatus.OPEN } },
+      include: { room: true },
+    });
   }
 
   /**
    * Takes the latest room with the slug. Room may be closed.
    * Will also fetch the room users.
    */
-  findBySlug(
+  findRoomAndRoomUsersBySlug(
     slug: string,
   ): Promise<(Room & { roomUsers: (RoomUser & { user: User })[] }) | null> {
-    return this.prismaService.room
-      .findFirst({
-        where: {
-          slug,
-        },
-        orderBy: {
-          createdAt: 'desc',
-        },
-        take: 1,
-        include: {
-          roomUsers: {
-            include: {
-              user: true,
-            },
-          },
-        },
-      })
-      .catch((e) => {
-        this.logger.error(
-          `Failed to find nullable room by slug for room with slug: ${slug}`,
-          e instanceof Error ? e.stack : undefined,
-          RoomsService.name,
-        );
-        throw e;
-      });
+    return this.prismaService.room.findFirst({
+      where: { slug }, // Technically, it should be unique, but it's not enforced at DB-level.
+      orderBy: { createdAt: 'desc' },
+      take: 1,
+      include: { roomUsers: { include: { user: true } } },
+    });
   }
 
-  findById(roomId: number): Promise<Room | null> {
-    return this.prismaService.room
-      .findFirst({
-        where: { id: roomId },
-        take: 1,
-      })
-      .catch((e) => {
-        this.logger.error(
-          `Failed to find nullable room by ID for room with ID: ${roomId}`,
-          e instanceof Error ? e.stack : undefined,
-          RoomsService.name,
-        );
-        throw e;
-      });
+  findRoomById(roomId: number): Promise<Room | null> {
+    return this.prismaService.room.findUnique({ where: { id: roomId } });
   }
 
-  async closeRoom(dto: CreateRecordDto, isAuto: boolean): Promise<void> {
-    const { roomRecordUsers, ...recordData } = dto;
-    const [roomRecord, _] = await this.prismaService
-      .$transaction([
-        this.prismaService.roomRecord.create({
-          data: {
-            ...recordData,
-            isValid:
-              recordData.duration >= MINIMUM_VALID_INTERVIEW_DURATION &&
-              roomRecordUsers.length === 2,
-            roomRecordUsers: {
-              createMany: {
-                data: roomRecordUsers,
-              },
-            },
-          },
-          include: { roomRecordUsers: true },
-        }),
-        this.prismaService.room.update({
-          where: {
-            id: dto.roomId,
-          },
-          data: {
-            status: isAuto
-              ? RoomStatus.CLOSED_AUTOMATICALLY
-              : RoomStatus.CLOSED_MANUALLY,
-            closedAt: new Date(),
-          },
-        }),
-      ])
-      .catch((e) => {
-        this.logger.error(
-          'Failed to close room',
-          e instanceof Error ? e.stack : undefined,
-          RoomsService.name,
-        );
-        throw e;
-      });
+  async closeRoom(entity: CreateRecordData, isAuto: boolean): Promise<void> {
+    const { roomRecordUsers, ...recordData } = entity;
+    const [roomRecord, _] = await this.prismaService.$transaction([
+      this.prismaService.roomRecord.create({
+        data: {
+          ...recordData,
+          isValid:
+            recordData.duration >= MINIMUM_VALID_INTERVIEW_DURATION &&
+            roomRecordUsers.length === 2,
+          roomRecordUsers: { createMany: { data: roomRecordUsers } },
+        },
+        include: { roomRecordUsers: true },
+      }),
+      this.prismaService.room.update({
+        where: { id: entity.roomId },
+        data: {
+          status: isAuto
+            ? RoomStatus.CLOSED_AUTOMATICALLY
+            : RoomStatus.CLOSED_MANUALLY,
+          closedAt: new Date(),
+        },
+      }),
+    ]);
     if (roomRecord.isValid) {
       await Promise.all(
         roomRecord.roomRecordUsers.map((roomRecordUser) =>
-          this.resultsService.maybeMatchRoomRecordUser(roomRecordUser),
+          this.currentService.maybeAddRoomRecordUserToResult(roomRecordUser),
         ),
       );
     }
-  }
-
-  /**
-   * Finds the active room user for the user, and also returns the room.
-   */
-  private findCurrentRoomUser(
-    userId: string,
-  ): Promise<(RoomUser & { room: Room }) | null> {
-    return this.prismaService.roomUser
-      .findFirst({
-        where: {
-          userId,
-          room: {
-            status: RoomStatus.OPEN,
-          },
-        },
-        include: {
-          room: true,
-        },
-      })
-      .catch((e) => {
-        this.logger.error(
-          `Failed to find nullable current room user with user ID: ${userId}`,
-          e instanceof Error ? e.stack : undefined,
-          RoomsService.name,
-        );
-        throw e;
-      });
-  }
-
-  private async generateRoomSlug(): Promise<string> {
-    let slug: string;
-    let existingRoom: Room | null;
-
-    do {
-      slug = generateSlug();
-      existingRoom = await this.prismaService.room
-        .findFirst({
-          where: {
-            slug,
-            status: RoomStatus.OPEN,
-          },
-        })
-        .catch((e) => {
-          this.logger.error(
-            'Failed to find existing room with slug',
-            e instanceof Error ? e.stack : undefined,
-            RoomsService.name,
-          );
-          throw e;
-        });
-    } while (existingRoom != null);
-
-    return slug;
   }
 }

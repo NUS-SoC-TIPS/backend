@@ -9,12 +9,12 @@ import {
 } from '@nestjs/common';
 
 import { User } from '../../../infra/prisma/generated';
+import { GetUserRest } from '../../../productinfra/decorators';
+import { JwtRestGuard } from '../../../productinfra/guards';
 import { BadRequestExceptionFilter } from '../../../utils';
-import { GetUserRest } from '../auth/decorators';
-import { JwtRestGuard } from '../auth/guards';
+import { UserSelf } from '../../interfaces';
 
 import { UpdateSettingsDto } from './dtos';
-import { UserSettingsConfig } from './entities';
 import { UsersService } from './users.service';
 
 @UseGuards(JwtRestGuard)
@@ -27,11 +27,9 @@ export class UsersController {
 
   @Get('self')
   @UseFilters(BadRequestExceptionFilter)
-  async findSelf(@GetUserRest() user: User): Promise<UserSettingsConfig> {
+  async findSelf(@GetUserRest() user: User): Promise<UserSelf> {
     this.logger.log('GET /users/self', UsersController.name);
-    const settings = await this.usersService.findSettings(user.id);
-    const config = this.usersService.findAppConfig();
-    return { ...user, settings, config };
+    return this.usersService.findSelf(user);
   }
 
   @Patch('settings')
@@ -39,7 +37,7 @@ export class UsersController {
   updateSettings(
     @GetUserRest() user: User,
     @Body() dto: UpdateSettingsDto,
-  ): Promise<UserSettingsConfig> {
+  ): Promise<void> {
     this.logger.log('PATCH /users/settings', UsersController.name);
     return this.usersService.updateSettings(user, dto);
   }

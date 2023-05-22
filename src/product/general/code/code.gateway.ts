@@ -16,10 +16,9 @@ import { Server } from 'socket.io';
 
 import { ISocket } from '../../../infra/interfaces/socket';
 import { Language, Room } from '../../../infra/prisma/generated';
-import { CallbackDto } from '../../../productinfra/judge0/dtos';
-import { AuthWsGuard } from '../auth/guards';
-import { GetRoom } from '../rooms/decorators';
-import { InRoomGuard } from '../rooms/guards';
+import { GetRoom } from '../../../productinfra/decorators';
+import { AuthWsGuard, InRoomGuard } from '../../../productinfra/guards';
+import { CallbackDto as Judge0CallbackDto } from '../../../productinfra/judge0/dtos';
 
 import {
   CODE_EVENTS,
@@ -132,7 +131,7 @@ export class CodeGateway implements OnModuleDestroy {
     this.roomIdToCodeExecutionTimeouts.set(room.id, timeout);
   }
 
-  completeExecution(dto: CallbackDto): void {
+  completeExecution(dto: Judge0CallbackDto): void {
     const roomId = this.submissionTokenToRoomId.get(dto.token);
     if (roomId == null) {
       this.logger.warn(
@@ -175,5 +174,6 @@ export class CodeGateway implements OnModuleDestroy {
   private clearRoomTimeout(roomId: number): void {
     clearTimeout(this.roomIdToCodeExecutionTimeouts.get(roomId));
     this.roomIdToCodeExecutionTimeouts.delete(roomId);
+    // The callback token isn't cleared here - we'll lazily clear it in completeExecution.
   }
 }

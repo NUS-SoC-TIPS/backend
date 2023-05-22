@@ -1,6 +1,6 @@
 import { Body, Controller, Logger, Put, UseFilters } from '@nestjs/common';
 
-import { CallbackDto } from '../../../productinfra/judge0/dtos';
+import { CallbackDto as Judge0CallbackDto } from '../../../productinfra/judge0/dtos';
 import { BadRequestExceptionFilter } from '../../../utils';
 
 import { CodeGateway } from './code.gateway';
@@ -14,7 +14,7 @@ export class CodeController {
 
   @Put('callback')
   @UseFilters(BadRequestExceptionFilter)
-  executionCallback(@Body() dto: CallbackDto): void {
+  executionCallback(@Body() dto: Judge0CallbackDto): void {
     this.logger.log(
       `PUT /code/callback, token: ${dto.token}`,
       CodeController.name,

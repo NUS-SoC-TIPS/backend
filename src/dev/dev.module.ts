@@ -2,8 +2,6 @@ import { Logger, Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 
-import { UsersModule } from '../product/general/users/users.module';
-
 import { DevController } from './dev.controller';
 import { DevService } from './dev.service';
 
@@ -18,7 +16,6 @@ import { DevService } from './dev.service';
       }),
       inject: [ConfigService],
     }),
-    UsersModule,
   ],
   providers: [DevService, Logger],
   controllers: [DevController],
