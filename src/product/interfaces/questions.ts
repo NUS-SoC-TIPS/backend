@@ -2,6 +2,7 @@ import {
   Language,
   QuestionDifficulty,
   QuestionSource,
+  QuestionType,
 } from '../../infra/prisma/generated';
 
 // This is the minimal information needed by the frontend to
@@ -11,6 +12,10 @@ export interface QuestionBase {
   source: QuestionSource;
   difficulty: QuestionDifficulty;
   slug: string;
+}
+
+export interface QuestionListItem extends QuestionBase {
+  type: QuestionType;
 }
 
 // This is the minimal information needed by the frontend to
@@ -24,10 +29,11 @@ export interface SubmissionBase {
 // of submissions for a user
 export interface SubmissionListItem extends SubmissionBase {
   submittedAt: Date;
-  language: Language;
+  languageUsed: Language;
 }
 
 export interface SubmissionItem extends SubmissionListItem {
+  question: QuestionListItem;
   codeWritten: string;
 }
 
@@ -42,6 +48,19 @@ export const makeQuestionBase = (question: {
     source: question.source,
     difficulty: question.difficulty,
     slug: question.slug,
+  };
+};
+
+export const makeQuestionListItem = (question: {
+  name: string;
+  source: QuestionSource;
+  difficulty: QuestionDifficulty;
+  slug: string;
+  type: QuestionType;
+}): QuestionListItem => {
+  return {
+    ...makeQuestionBase(question),
+    type: question.type,
   };
 };
 
@@ -63,7 +82,7 @@ export const makeSubmissionBase = (submission: {
 export const makeSubmissionListItem = (submission: {
   id: number;
   createdAt: Date;
-  language: Language;
+  languageUsed: Language;
   question: {
     name: string;
     source: QuestionSource;
@@ -74,7 +93,7 @@ export const makeSubmissionListItem = (submission: {
   return {
     ...makeSubmissionBase(submission),
     submittedAt: submission.createdAt,
-    language: submission.language,
+    languageUsed: submission.languageUsed,
   };
 };
 
@@ -88,10 +107,12 @@ export const makeSubmissionItem = (submission: {
     source: QuestionSource;
     difficulty: QuestionDifficulty;
     slug: string;
+    type: QuestionType;
   };
 }): SubmissionItem => {
   return {
-    ...makeSubmissionItem(submission),
+    ...makeSubmissionListItem(submission),
+    question: makeQuestionListItem(submission.question),
     codeWritten: submission.codeWritten,
   };
 };

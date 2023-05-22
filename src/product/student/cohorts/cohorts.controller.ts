@@ -23,7 +23,7 @@ export class CohortsController {
     private readonly cohortsService: CohortsService,
   ) {}
 
-  @Get('cohorts')
+  @Get()
   @UseFilters(BadRequestExceptionFilter)
   async findCohorts(
     @GetUserRest('id') userId: string,
@@ -33,7 +33,7 @@ export class CohortsController {
     return this.cohortsService.findCohorts(userId, userRole);
   }
 
-  @Get('cohorts/:id')
+  @Get(':id')
   @UseFilters(BadRequestExceptionFilter)
   async findCohort(
     @Param('id') id: string,

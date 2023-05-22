@@ -12,6 +12,9 @@ import { CurrentService } from '../../../productinfra/current/current.service';
 import { findEndOfWeek, findStartOfWeek } from '../../../utils';
 import {
   InterviewItem,
+  InterviewListItem,
+  makeInterviewItem,
+  makeInterviewListItem,
   makeUserBase,
   StudentBase,
   UserBase,
@@ -37,6 +40,17 @@ export class InterviewsService {
     return { progress, averageDurationMs, pairedOrLatestPartner };
   }
 
+  async findInterviews(userId: string): Promise<InterviewListItem[]> {
+    const roomRecords = await this.prismaService.roomRecord.findMany({
+      where: { isValid: true, roomRecordUsers: { some: { userId } } },
+      include: { roomRecordUsers: { include: { user: true } }, room: true },
+      orderBy: { room: { closedAt: 'desc' } },
+    });
+    return roomRecords.map((roomRecord) =>
+      makeInterviewListItem(roomRecord, userId),
+    );
+  }
+
   async findInterview(id: number, userId: string): Promise<InterviewItem> {
     const roomRecord = await this.prismaService.roomRecord.findFirst({
       where: { id, isValid: true, roomRecordUsers: { some: { userId } } },
@@ -50,15 +64,7 @@ export class InterviewsService {
       );
       throw new Error('Invalid interview accessed');
     }
-    const partner = roomRecord.roomRecordUsers.filter(
-      (u) => u.userId !== userId,
-    )[0];
-    return {
-      completedAt: roomRecord.room.closedAt,
-      partner: { name: partner.user.name, notes: partner.notes },
-      codeWritten: roomRecord.codeWritten,
-      language: roomRecord.language,
-    };
+    return makeInterviewItem(roomRecord, userId);
   }
 
   async createRoom(userId: string): Promise<string> {

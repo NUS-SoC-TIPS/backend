@@ -10,6 +10,7 @@ export interface UserBase {
 }
 
 export interface UserSelf extends UserBase {
+  id: string;
   role: UserRole;
   isStudent: boolean;
   preferredInterviewLanguage: Language | null;
@@ -32,6 +33,7 @@ export const makeUserBase = (user: {
 
 export const makeUserSelf = (
   user: {
+    id: string;
     name: string;
     githubUsername: string;
     profileUrl: string;
@@ -46,6 +48,7 @@ export const makeUserSelf = (
 ): UserSelf => {
   return {
     ...makeUserBase(user),
+    id: user.id,
     role: user.role,
     isStudent,
     preferredInterviewLanguage:

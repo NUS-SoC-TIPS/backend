@@ -5,10 +5,12 @@ import { PrismaService } from '../../../infra/prisma/prisma.service';
 import { CurrentService } from '../../../productinfra/current/current.service';
 import { findEndOfWeek, findStartOfWeek } from '../../../utils';
 import {
-  makeQuestionBase,
+  makeQuestionListItem,
   makeSubmissionItem,
-  QuestionBase,
+  makeSubmissionListItem,
+  QuestionListItem,
   SubmissionItem,
+  SubmissionListItem,
 } from '../../interfaces';
 
 import { CreateSubmissionDto, UpdateSubmissionDto } from './dtos';
@@ -26,33 +28,49 @@ export class QuestionsService {
     private readonly currentService: CurrentService,
   ) {}
 
-  findAllQuestions(): Promise<QuestionBase[]> {
+  findAllQuestions(): Promise<QuestionListItem[]> {
     return this.prismaService.question
       .findMany({
-        select: { name: true, source: true, difficulty: true, slug: true },
+        select: {
+          name: true,
+          source: true,
+          difficulty: true,
+          slug: true,
+          type: true,
+        },
       })
       .then((questions) =>
-        questions.map((question) => makeQuestionBase(question)),
+        questions.map((question) => makeQuestionListItem(question)),
       );
   }
 
   async findStats(userId: string): Promise<QuestionStats> {
     const progress = await this.findProgress(userId);
+    const latestSubmission = await this.findLatestSubmission(userId);
     const languageBreakdown = await this.findLanguageBreakdown(userId);
-    // TODO: Replace difficulty breakdown with something else. Currently can't really
-    // query this efficiently due to limitations with Prisma :(
-    const difficultyBreakdown = { numEasy: 0, numMedium: 0, numHard: 0 };
-    return { progress, difficultyBreakdown, languageBreakdown };
+    return { progress, latestSubmission, languageBreakdown };
   }
 
   async createSubmission(
     dto: CreateSubmissionDto,
     userId: string,
-  ): Promise<void> {
+  ): Promise<{ id: number }> {
     dto.codeWritten = dto.codeWritten.trim();
-    await this.prismaService.questionSubmission.create({
-      data: { ...dto, userId },
+    return this.prismaService.questionSubmission
+      .create({
+        data: { ...dto, userId },
+      })
+      .then((questionSubmission) => ({ id: questionSubmission.id }));
+  }
+
+  // TODO: Add pagination
+  async findSubmissions(userId: string): Promise<SubmissionListItem[]> {
+    const submissions = await this.prismaService.questionSubmission.findMany({
+      where: { userId },
+      include: { question: true },
+      orderBy: { createdAt: 'desc' },
     });
+    return submissions.map(makeSubmissionListItem);
   }
 
   async findSubmission(id: number, userId: string): Promise<SubmissionItem> {
@@ -75,7 +93,7 @@ export class QuestionsService {
     id: number,
     dto: UpdateSubmissionDto,
     userId: string,
-  ): Promise<void> {
+  ): Promise<{ codeWritten: string }> {
     const submission = await this.prismaService.questionSubmission.findFirst({
       where: { id, userId },
     });
@@ -90,10 +108,14 @@ export class QuestionsService {
     if (dto.codeWritten) {
       dto.codeWritten = dto.codeWritten.trim();
     }
-    await this.prismaService.questionSubmission.update({
-      where: { id },
-      data: { ...dto },
-    });
+    return await this.prismaService.questionSubmission
+      .update({
+        where: { id },
+        data: { ...dto },
+      })
+      .then((questionSubmission) => ({
+        codeWritten: questionSubmission.codeWritten,
+      }));
   }
 
   private async findProgress(userId: string): Promise<QuestionStatsProgress> {
@@ -145,6 +167,22 @@ export class QuestionsService {
       endOfWindowOrWeek: endOfWeek,
       isWindow: false,
     };
+  }
+
+  private async findLatestSubmission(
+    userId: string,
+  ): Promise<SubmissionListItem | null> {
+    return this.prismaService.questionSubmission
+      .findFirst({
+        where: { userId },
+        orderBy: { createdAt: 'desc' },
+        include: { question: true },
+      })
+      .then((latestSubmission) =>
+        latestSubmission != null
+          ? makeSubmissionListItem(latestSubmission)
+          : null,
+      );
   }
 
   private async findLanguageBreakdown(

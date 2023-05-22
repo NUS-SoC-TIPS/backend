@@ -23,12 +23,13 @@ export class CohortsService {
   ): Promise<CohortListItem[]> {
     let cohorts;
     if (userRole === UserRole.ADMIN) {
-      cohorts = {
-        ...(await this.prismaService.cohort.findMany({
+      cohorts = await this.prismaService.cohort
+        .findMany({
           include: { windows: { orderBy: { startAt: 'asc' } } },
-        })),
-        exclusion: null,
-      };
+        })
+        .then((cohorts) =>
+          cohorts.map((cohort) => ({ ...cohort, exclusion: null })),
+        );
     } else {
       const students = await this.prismaService.student.findMany({
         where: { userId },

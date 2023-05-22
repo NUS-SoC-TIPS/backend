@@ -11,7 +11,7 @@ import {
 import { GetUserRest } from '../../../productinfra/decorators';
 import { JwtRestGuard } from '../../../productinfra/guards';
 import { BadRequestExceptionFilter } from '../../../utils';
-import { InterviewItem } from '../../interfaces';
+import { InterviewItem, InterviewListItem } from '../../interfaces';
 
 import { InterviewStats } from './interviews.interfaces';
 import { InterviewsService } from './interviews.service';
@@ -29,6 +29,14 @@ export class InterviewsController {
   findStats(@GetUserRest('id') userId: string): Promise<InterviewStats> {
     this.logger.log('GET /interviews/stats', InterviewsController.name);
     return this.interviewsService.findStats(userId);
+  }
+
+  @Get()
+  findInterviews(
+    @GetUserRest('id') userId: string,
+  ): Promise<InterviewListItem[]> {
+    this.logger.log('GET /interviews', InterviewsController.name);
+    return this.interviewsService.findInterviews(userId);
   }
 
   @Get(':id')

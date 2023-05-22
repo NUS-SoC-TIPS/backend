@@ -19,6 +19,7 @@ export interface InterviewListItem extends InterviewBase {
 // To be reworked once replay is introduced
 export interface InterviewItem {
   completedAt: Date;
+  duration: number;
   partner: {
     name: string;
     notes: string;
@@ -65,13 +66,14 @@ export const makeInterviewListItem = (
         photoUrl: string;
       };
     }[];
-    room: { closedAt: Date };
+    room: { closedAt: Date | null };
   },
   userId: string,
 ): InterviewListItem => {
   return {
     ...makeInterviewBase(roomRecord, userId),
-    completedAt: roomRecord.room.closedAt,
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    completedAt: roomRecord.room.closedAt!,
     duration: roomRecord.duration,
     language: roomRecord.language,
   };
@@ -80,6 +82,7 @@ export const makeInterviewListItem = (
 export const makeInterviewItem = (
   roomRecord: {
     id: number;
+    duration: number;
     language: Language;
     codeWritten: string;
     roomRecordUsers: {
@@ -89,7 +92,7 @@ export const makeInterviewItem = (
         name: string;
       };
     }[];
-    room: { closedAt: Date };
+    room: { closedAt: Date | null };
   },
   userId: string,
 ): InterviewItem => {
@@ -97,12 +100,14 @@ export const makeInterviewItem = (
     (roomRecordUser) => roomRecordUser.userId !== userId,
   )[0];
   return {
-    completedAt: roomRecord.room.closedAt,
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    completedAt: roomRecord.room.closedAt!,
     partner: {
       name: partnerRoomRecordUser.user.name,
       notes: partnerRoomRecordUser.notes,
     },
     codeWritten: roomRecord.codeWritten,
     language: roomRecord.language,
+    duration: roomRecord.duration,
   };
 };

@@ -13,7 +13,11 @@ import {
 import { GetUserRest } from '../../../productinfra/decorators';
 import { JwtRestGuard } from '../../../productinfra/guards';
 import { BadRequestExceptionFilter } from '../../../utils';
-import { QuestionBase, SubmissionItem } from '../../interfaces';
+import {
+  QuestionListItem,
+  SubmissionItem,
+  SubmissionListItem,
+} from '../../interfaces';
 
 import { CreateSubmissionDto, UpdateSubmissionDto } from './dtos';
 import { QuestionStats } from './questions.interfaces';
@@ -29,7 +33,7 @@ export class QuestionsController {
 
   @Get()
   @UseFilters(BadRequestExceptionFilter)
-  findAll(): Promise<QuestionBase[]> {
+  findAll(): Promise<QuestionListItem[]> {
     this.logger.log('GET /questions', QuestionsController.name);
     return this.questionsService.findAllQuestions();
   }
@@ -46,9 +50,18 @@ export class QuestionsController {
   createSubmission(
     @Body() dto: CreateSubmissionDto,
     @GetUserRest('id') userId: string,
-  ): Promise<void> {
+  ): Promise<{ id: number }> {
     this.logger.log('POST /questions/submissions', QuestionsController.name);
     return this.questionsService.createSubmission(dto, userId);
+  }
+
+  @Get('submissions')
+  @UseFilters(BadRequestExceptionFilter)
+  findSubmissions(
+    @GetUserRest('id') userId: string,
+  ): Promise<SubmissionListItem[]> {
+    this.logger.log('GET /questions/submissions', QuestionsController.name);
+    return this.questionsService.findSubmissions(userId);
   }
 
   @Get('submissions/:id')
@@ -66,7 +79,7 @@ export class QuestionsController {
     @Param('id') id: string,
     @Body() dto: UpdateSubmissionDto,
     @GetUserRest('id') userId: string,
-  ): Promise<void> {
+  ): Promise<{ codeWritten: string }> {
     this.logger.log(
       'PATCH questions/submissions/:id',
       QuestionsController.name,
