@@ -16,7 +16,7 @@ import { BadRequestExceptionFilter } from '../../../utils';
 import { QuestionBase, SubmissionItem } from '../../interfaces';
 
 import { CreateSubmissionDto, UpdateSubmissionDto } from './dtos';
-import { QuestionStatsEntity } from './entities';
+import { QuestionStats } from './questions.interfaces';
 import { QuestionsService } from './questions.service';
 
 @UseGuards(JwtRestGuard)
@@ -36,7 +36,7 @@ export class QuestionsController {
 
   @Get('stats')
   @UseFilters(BadRequestExceptionFilter)
-  findStats(@GetUserRest('id') userId: string): Promise<QuestionStatsEntity> {
+  findStats(@GetUserRest('id') userId: string): Promise<QuestionStats> {
     this.logger.log('GET /questions/stats', QuestionsController.name);
     return this.questionsService.findStats(userId);
   }

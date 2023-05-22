@@ -1,4 +1,4 @@
-export interface UpsertUserEntity {
+export interface UpsertUserData {
   id: string;
   name: string;
   githubUsername: string;

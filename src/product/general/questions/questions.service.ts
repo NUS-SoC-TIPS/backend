@@ -13,10 +13,10 @@ import {
 
 import { CreateSubmissionDto, UpdateSubmissionDto } from './dtos';
 import {
-  QuestionStatsEntity,
-  QuestionStatsLanguageBreakdownEntity,
-  QuestionStatsProgressEntity,
-} from './entities';
+  QuestionStats,
+  QuestionStatsLanguageBreakdown,
+  QuestionStatsProgress,
+} from './questions.interfaces';
 
 @Injectable()
 export class QuestionsService {
@@ -36,7 +36,7 @@ export class QuestionsService {
       );
   }
 
-  async findStats(userId: string): Promise<QuestionStatsEntity> {
+  async findStats(userId: string): Promise<QuestionStats> {
     const progress = await this.findProgress(userId);
     const languageBreakdown = await this.findLanguageBreakdown(userId);
     // TODO: Replace difficulty breakdown with something else. Currently can't really
@@ -96,9 +96,7 @@ export class QuestionsService {
     });
   }
 
-  private async findProgress(
-    userId: string,
-  ): Promise<QuestionStatsProgressEntity> {
+  private async findProgress(userId: string): Promise<QuestionStatsProgress> {
     const ongoingWindow = await this.currentService.findOngoingWindow();
     if (ongoingWindow != null) {
       return this.findWindowProgress(userId, ongoingWindow);
@@ -109,7 +107,7 @@ export class QuestionsService {
   private async findWindowProgress(
     userId: string,
     window: Window,
-  ): Promise<QuestionStatsProgressEntity> {
+  ): Promise<QuestionStatsProgress> {
     const studentResultWithSubmissionCount =
       await this.prismaService.studentResult.findFirst({
         where: {
@@ -130,7 +128,7 @@ export class QuestionsService {
 
   private async findWeekProgress(
     userId: string,
-  ): Promise<QuestionStatsProgressEntity> {
+  ): Promise<QuestionStatsProgress> {
     const startOfWeek = findStartOfWeek();
     const endOfWeek = findEndOfWeek();
     const numSubmissionsThisWeek =
@@ -151,7 +149,7 @@ export class QuestionsService {
 
   private async findLanguageBreakdown(
     userId: string,
-  ): Promise<QuestionStatsLanguageBreakdownEntity> {
+  ): Promise<QuestionStatsLanguageBreakdown> {
     const submissionAggregate =
       await this.prismaService.questionSubmission.groupBy({
         by: ['languageUsed'],

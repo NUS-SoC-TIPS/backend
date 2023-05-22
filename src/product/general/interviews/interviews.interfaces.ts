@@ -1,6 +1,6 @@
-import { StudentBase, UserBase } from '../../../interfaces';
+import { StudentBase, UserBase } from '../../interfaces';
 
-export interface InterviewStatsProgressEntity {
+export interface InterviewStatsProgress {
   // If currently in the middle of a window, the number will be returned
   // Else if not, it will be the number completed this week, with respect to SG time.
   numInterviewsThisWindowOrWeek: number;
@@ -10,8 +10,8 @@ export interface InterviewStatsProgressEntity {
   isWindow: boolean;
 }
 
-export interface InterviewStatsEntity {
-  progress: InterviewStatsProgressEntity;
+export interface InterviewStats {
+  progress: InterviewStatsProgress;
   averageDurationMs: number; // 0 if no interviews done
   pairedOrLatestPartner: UserBase | StudentBase | null;
 }

@@ -9,8 +9,8 @@ import {
 import { PrismaService } from '../../../infra/prisma/prisma.service';
 import { CurrentService } from '../../../productinfra/current/current.service';
 
-import { CreateRecordEntity, CreateRoomUserEntity } from './entities';
 import { MINIMUM_VALID_INTERVIEW_DURATION } from './rooms.constants';
+import { CreateRecordData, CreateRoomUserData } from './rooms.interfaces';
 
 @Injectable()
 export class RoomsService {
@@ -20,7 +20,7 @@ export class RoomsService {
     private readonly currentService: CurrentService,
   ) {}
 
-  async createRoomUser(entity: CreateRoomUserEntity): Promise<RoomUser> {
+  async createRoomUser(entity: CreateRoomUserData): Promise<RoomUser> {
     const currentRoomUser = await this.findCurrentRoomUserAndRoomForUser(
       entity.userId,
     );
@@ -71,7 +71,7 @@ export class RoomsService {
     return this.prismaService.room.findUnique({ where: { id: roomId } });
   }
 
-  async closeRoom(entity: CreateRecordEntity, isAuto: boolean): Promise<void> {
+  async closeRoom(entity: CreateRecordData, isAuto: boolean): Promise<void> {
     const { roomRecordUsers, ...recordData } = entity;
     const [roomRecord, _] = await this.prismaService.$transaction([
       this.prismaService.roomRecord.create({

@@ -13,7 +13,7 @@ import { JwtRestGuard } from '../../../productinfra/guards';
 import { BadRequestExceptionFilter } from '../../../utils';
 import { InterviewItem } from '../../interfaces';
 
-import { InterviewStatsEntity } from './entities';
+import { InterviewStats } from './interviews.interfaces';
 import { InterviewsService } from './interviews.service';
 
 @UseGuards(JwtRestGuard)
@@ -26,7 +26,7 @@ export class InterviewsController {
 
   @Get('stats')
   @UseFilters(BadRequestExceptionFilter)
-  findStats(@GetUserRest('id') userId: string): Promise<InterviewStatsEntity> {
+  findStats(@GetUserRest('id') userId: string): Promise<InterviewStats> {
     this.logger.log('GET /interviews/stats', InterviewsController.name);
     return this.interviewsService.findStats(userId);
   }

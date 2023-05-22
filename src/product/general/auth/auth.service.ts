@@ -5,7 +5,7 @@ import { User } from '../../../infra/prisma/generated';
 import { PrismaService } from '../../../infra/prisma/prisma.service';
 import { FirebaseService } from '../../../productinfra/firebase/firebase.service';
 
-import { UpsertUserEntity } from './entities/upsert-user.entity';
+import { UpsertUserData } from './auth.interfaces';
 import { AuthDto } from './dtos';
 
 @Injectable()
@@ -50,7 +50,7 @@ export class AuthService {
     });
   }
 
-  private async upsertUser(entity: UpsertUserEntity): Promise<User> {
+  private async upsertUser(entity: UpsertUserData): Promise<User> {
     const settings = await this.prismaService.settings.findUnique({
       where: { userId: entity.id },
     });

@@ -17,7 +17,10 @@ import {
   UserBase,
 } from '../../interfaces';
 
-import { InterviewStatsEntity, InterviewStatsProgressEntity } from './entities';
+import {
+  InterviewStats,
+  InterviewStatsProgress,
+} from './interviews.interfaces';
 
 @Injectable()
 export class InterviewsService {
@@ -27,7 +30,7 @@ export class InterviewsService {
     private readonly currentService: CurrentService,
   ) {}
 
-  async findStats(userId: string): Promise<InterviewStatsEntity> {
+  async findStats(userId: string): Promise<InterviewStats> {
     const progress = await this.findProgress(userId);
     const averageDurationMs = await this.findAverageDurationMs(userId);
     const pairedOrLatestPartner = await this.findPairedOrLatestPartner(userId);
@@ -83,9 +86,7 @@ export class InterviewsService {
     return (await this.findCurrentRoomUser(userId))?.room?.slug ?? null;
   }
 
-  private async findProgress(
-    userId: string,
-  ): Promise<InterviewStatsProgressEntity> {
+  private async findProgress(userId: string): Promise<InterviewStatsProgress> {
     const ongoingWindow = await this.currentService.findOngoingWindow();
     if (ongoingWindow != null) {
       return this.findWindowProgress(userId, ongoingWindow);
@@ -96,7 +97,7 @@ export class InterviewsService {
   private async findWindowProgress(
     userId: string,
     window: Window,
-  ): Promise<InterviewStatsProgressEntity> {
+  ): Promise<InterviewStatsProgress> {
     const studentResultWithInterviewCount =
       await this.prismaService.studentResult.findFirst({
         where: {
@@ -117,7 +118,7 @@ export class InterviewsService {
 
   private async findWeekProgress(
     userId: string,
-  ): Promise<InterviewStatsProgressEntity> {
+  ): Promise<InterviewStatsProgress> {
     const startOfWeek = findStartOfWeek();
     const endOfWeek = findEndOfWeek();
     const numInterviewsThisWeek = await this.prismaService.roomRecord.count({

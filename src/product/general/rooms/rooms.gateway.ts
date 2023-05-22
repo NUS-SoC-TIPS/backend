@@ -24,9 +24,9 @@ import { makeUserBase } from '../../interfaces';
 import { CodeService } from '../code/code.service';
 import { NotesService } from '../notes/notes.service';
 
-import { CreateRecordEntity } from './entities';
 import { CloseRoomExceptionFilter, JoinRoomExceptionFilter } from './filters';
 import { ROOM_AUTOCLOSE_DURATION, ROOM_EVENTS } from './rooms.constants';
+import { CreateRecordData } from './rooms.interfaces';
 import { RoomsService } from './rooms.service';
 
 @WebSocketGateway({
@@ -178,7 +178,7 @@ export class RoomsGateway implements OnGatewayDisconnect, OnModuleDestroy {
     this.server.to(`${room.id}`).emit(ROOM_EVENTS.CLOSING_ROOM);
     const { code, language } = this.codeService.getCodeAndLanguage(room);
     const userNotes = this.notesService.getNotes(room.id);
-    const recordData: CreateRecordEntity = {
+    const recordData: CreateRecordData = {
       isRoleplay: false,
       duration: new Date().getTime() - room.createdAt.getTime(),
       roomId: room.id,
