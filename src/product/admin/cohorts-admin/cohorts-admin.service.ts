@@ -182,6 +182,47 @@ export class CohortsAdminService {
                   studentId: createdStudent.id,
                 })),
               });
+              const studentResults = await tx.studentResult.findMany({
+                where: { studentId: createdStudent.id },
+                include: { window: true },
+              });
+              await Promise.all(
+                studentResults.map((studentResult) =>
+                  Promise.all([
+                    tx.questionSubmission.updateMany({
+                      data: {
+                        studentResultId: studentResult.id,
+                      },
+                      where: {
+                        studentResultId: null,
+                        userId: matchedUser.id,
+                        createdAt: {
+                          gte: studentResult.window.startAt,
+                          lte: studentResult.window.endAt,
+                        },
+                      },
+                    }),
+                    tx.roomRecordUser.updateMany({
+                      data: {
+                        studentResultId: studentResult.id,
+                      },
+                      where: {
+                        studentResultId: null,
+                        userId: matchedUser.id,
+                        roomRecord: {
+                          isValid: true,
+                          room: {
+                            closedAt: {
+                              gte: studentResult.window.startAt,
+                              lte: studentResult.window.endAt,
+                            },
+                          },
+                        },
+                      },
+                    }),
+                  ]),
+                ),
+              );
             })
             .then(() => {
               success.push({
