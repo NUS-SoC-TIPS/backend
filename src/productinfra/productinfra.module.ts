@@ -4,8 +4,6 @@ import { AgoraModule } from './agora/agora.module';
 import { CurrentModule } from './current/current.module';
 import { FirebaseModule } from './firebase/firebase.module';
 import { Judge0Module } from './judge0/judge0.module';
-import { ResultsModule } from './results/results.module';
-import { WindowsModule } from './windows/windows.module';
 import {
   JwtRestAdminStrategy,
   JwtRestStrategy,
@@ -13,14 +11,7 @@ import {
 } from './strategies';
 
 @Module({
-  imports: [
-    AgoraModule,
-    Judge0Module,
-    CurrentModule,
-    ResultsModule,
-    WindowsModule,
-    FirebaseModule,
-  ],
+  imports: [AgoraModule, Judge0Module, CurrentModule, FirebaseModule],
   providers: [
     JwtRestStrategy,
     JwtRestAdminStrategy,
