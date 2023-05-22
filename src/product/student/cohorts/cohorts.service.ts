@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 
+import { UserRole } from '../../../infra/prisma/generated';
 import { PrismaService } from '../../../infra/prisma/prisma.service';
 import {
   makeInterviewBase,
@@ -16,21 +17,35 @@ export class CohortsService {
     private readonly prismaService: PrismaService,
   ) {}
 
-  async findCohorts(userId: string): Promise<CohortListItem[]> {
-    const students = await this.prismaService.student.findMany({
-      where: { userId },
-      include: {
-        cohort: { include: { windows: { orderBy: { startAt: 'asc' } } } },
-        exclusion: true,
-      },
-    });
+  async findCohorts(
+    userId: string,
+    userRole: UserRole,
+  ): Promise<CohortListItem[]> {
+    let cohorts;
+    if (userRole === UserRole.ADMIN) {
+      cohorts = {
+        ...(await this.prismaService.cohort.findMany({
+          include: { windows: { orderBy: { startAt: 'asc' } } },
+        })),
+        exclusion: null,
+      };
+    } else {
+      const students = await this.prismaService.student.findMany({
+        where: { userId },
+        include: {
+          cohort: { include: { windows: { orderBy: { startAt: 'asc' } } } },
+          exclusion: true,
+        },
+      });
+      cohorts = students.map((student) => ({
+        ...student.cohort,
+        exclusion: student.exclusion,
+      }));
+    }
 
     const now = new Date();
-    return students.map((student) => {
-      const {
-        cohort: { id, name, windows },
-        exclusion,
-      } = student;
+    return cohorts.map((cohort) => {
+      const { id, name, windows, exclusion } = cohort;
       const startAt = windows[0].startAt;
       const endAt = windows[windows.length - 1].endAt;
       let status;
@@ -47,7 +62,14 @@ export class CohortsService {
     });
   }
 
-  async findCohort(id: number, userId: string): Promise<CohortItem> {
+  async findCohort(
+    id: number,
+    userId: string,
+    userRole: UserRole,
+  ): Promise<CohortItem> {
+    if (userRole === UserRole.ADMIN) {
+      return this.findCohortForAdmin(id, userId);
+    }
     const student = await this.prismaService.student.findUnique({
       where: { userId_cohortId: { userId, cohortId: id } },
       include: {
@@ -106,6 +128,62 @@ export class CohortsService {
           interviews,
         };
       });
+    return { name: cohort.name, coursemologyUrl: '', windows };
+  }
+
+  private async findCohortForAdmin(
+    id: number,
+    userId: string,
+  ): Promise<CohortItem> {
+    const cohort = await this.prismaService.cohort.findUnique({
+      where: { id },
+      include: { windows: { orderBy: { startAt: 'asc' } } },
+    });
+    if (cohort == null) {
+      this.logger.error(
+        'Invalid cohort accessed',
+        undefined,
+        CohortsService.name,
+      );
+      throw new Error('Invalid cohort accessed');
+    }
+    const windows = await Promise.all(
+      cohort.windows.map(async (window) => {
+        const submissions = await this.prismaService.questionSubmission
+          .findMany({
+            where: {
+              userId,
+              createdAt: { gte: window.startAt, lte: window.endAt },
+            },
+            include: { question: true },
+          })
+          .then((questionSubmissions) =>
+            questionSubmissions.map(makeSubmissionBase),
+          );
+        const interviews = await this.prismaService.roomRecord
+          .findMany({
+            where: { roomRecordUsers: { some: { userId } }, isValid: true },
+            include: { roomRecordUsers: { include: { user: true } } },
+          })
+          .then((roomRecords) =>
+            roomRecords.map((roomRecord) =>
+              makeInterviewBase(roomRecord, userId),
+            ),
+          );
+        const hasCompletedQuestions = submissions.length >= window.numQuestions;
+        const hasCompletedInterview =
+          !window.requireInterview || interviews.length > 0;
+        return {
+          ...makeWindowBase(window),
+          exclusion: null,
+          previouslyExcluded: false,
+          hasCompletedQuestions,
+          hasCompletedInterview,
+          submissions,
+          interviews,
+        };
+      }),
+    );
     return { name: cohort.name, coursemologyUrl: '', windows };
   }
 }

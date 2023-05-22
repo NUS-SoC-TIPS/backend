@@ -7,6 +7,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 
+import { UserRole } from '../../../infra/prisma/generated';
 import { GetUserRest } from '../../../productinfra/decorators';
 import { JwtRestStudentOrAdminGuard } from '../../../productinfra/guards';
 import { BadRequestExceptionFilter } from '../../../utils';
@@ -26,9 +27,10 @@ export class CohortsController {
   @UseFilters(BadRequestExceptionFilter)
   async findCohorts(
     @GetUserRest('id') userId: string,
+    @GetUserRest('role') userRole: UserRole,
   ): Promise<CohortListItem[]> {
     this.logger.log('GET /cohorts', CohortsController.name);
-    return this.cohortsService.findCohorts(userId);
+    return this.cohortsService.findCohorts(userId, userRole);
   }
 
   @Get('cohorts/:id')
@@ -36,8 +38,9 @@ export class CohortsController {
   async findCohort(
     @Param('id') id: string,
     @GetUserRest('id') userId: string,
+    @GetUserRest('role') userRole: UserRole,
   ): Promise<CohortItem> {
     this.logger.log('GET /cohorts/:id', CohortsController.name);
-    return this.cohortsService.findCohort(+id, userId);
+    return this.cohortsService.findCohort(+id, userId, userRole);
   }
 }
