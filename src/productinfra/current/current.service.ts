@@ -1,7 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 
 import {
-  Cohort,
   QuestionSubmission,
   RoomRecordUser,
   StudentResult,
@@ -50,16 +49,6 @@ export class CurrentService {
     const currentDate = new Date();
     return this.prismaService.window.findFirst({
       where: { startAt: { lte: currentDate }, endAt: { gte: currentDate } },
-    });
-  }
-
-  async findOngoingCohort(): Promise<Cohort | null> {
-    const ongoingWindow = await this.findOngoingWindow();
-    if (ongoingWindow == null) {
-      return null;
-    }
-    return this.prismaService.cohort.findUnique({
-      where: { id: ongoingWindow.cohortId },
     });
   }
 
