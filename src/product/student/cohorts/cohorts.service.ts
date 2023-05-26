@@ -212,6 +212,10 @@ export class CohortsService {
         };
       }),
     );
-    return { name: cohort.name, coursemologyUrl: '', windows };
+    return {
+      name: cohort.name,
+      coursemologyUrl: cohort.coursemologyUrl,
+      windows,
+    };
   }
 }
