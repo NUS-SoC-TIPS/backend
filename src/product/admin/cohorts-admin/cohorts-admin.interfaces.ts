@@ -1,6 +1,7 @@
 import { StudentBase, WindowBase } from '../../../product/interfaces';
 
 export interface CohortAdminItem {
+  id: number;
   name: string;
   coursemologyUrl: string;
   windows: WindowBase[];

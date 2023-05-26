@@ -33,6 +33,7 @@ export class CohortsAdminService {
       },
     });
     return {
+      id: cohort.id,
       name: cohort.name,
       coursemologyUrl: cohort.coursemologyUrl,
       windows: cohort.windows.map(makeWindowBase),
