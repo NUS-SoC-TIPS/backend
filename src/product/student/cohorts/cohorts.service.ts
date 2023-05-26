@@ -129,7 +129,11 @@ export class CohortsService {
           interviews,
         };
       });
-    return { name: cohort.name, coursemologyUrl: '', windows };
+    return {
+      name: cohort.name,
+      coursemologyUrl: cohort.coursemologyUrl,
+      windows,
+    };
   }
 
   private async findCohortForAdmin(

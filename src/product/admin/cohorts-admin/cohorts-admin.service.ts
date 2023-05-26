@@ -27,7 +27,7 @@ export class CohortsAdminService {
     });
     return {
       name: cohort.name,
-      coursemologyUrl: '',
+      coursemologyUrl: cohort.coursemologyUrl,
       windows: cohort.windows.map(makeWindowBase),
       students: cohort.students.map((student) => ({
         ...makeUserBase(student.user),
@@ -67,6 +67,7 @@ export class CohortsAdminService {
     await this.prismaService.cohort.create({
       data: {
         name: dto.name,
+        coursemologyUrl: dto.coursemologyUrl,
         windows: {
           create: dto.windows.map((window) => ({
             numQuestions: window.numQuestions,
