@@ -16,3 +16,17 @@ export const findEndOfWeek = (): Date => {
   endOfWeek.setHours(23, 59, 59, 999);
   return endOfWeek;
 };
+
+export const findStartOfDay = (date: Date): Date => {
+  const newDate = new Date(date);
+  // TODO: Do a better conversion in terms of timezone
+  newDate.setHours(0, 0, 0, 0);
+  return newDate;
+};
+
+export const findEndOfDay = (date: Date): Date => {
+  const newDate = new Date(date);
+  // TODO: Do a better conversion in terms of timezone
+  newDate.setHours(23, 59, 59, 999);
+  return newDate;
+};

@@ -13,6 +13,11 @@ export interface CohortAdminItem {
   })[];
 }
 
+export interface CohortAdminUpdateResult {
+  name: string;
+  coursemologyUrl: string;
+}
+
 export interface CohortStudentValidationResult {
   success: (StudentBase & {
     coursemologyName: string;

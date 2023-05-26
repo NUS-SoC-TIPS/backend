@@ -4,6 +4,7 @@ import {
   Get,
   Logger,
   Param,
+  Patch,
   Post,
   UseFilters,
   UseGuards,
@@ -14,10 +15,16 @@ import { BadRequestExceptionFilter } from '../../../utils';
 
 import {
   CohortAdminItem,
+  CohortAdminUpdateResult,
   CohortStudentValidationResult,
 } from './cohorts-admin.interfaces';
 import { CohortsAdminService } from './cohorts-admin.service';
-import { CreateStudentDto, CreateUpdateCohortDto } from './dtos';
+import {
+  CreateCohortDto,
+  CreateStudentDto,
+  CreateUpdateWindowsDto,
+  UpdateCohortDto,
+} from './dtos';
 
 @UseGuards(JwtRestAdminGuard)
 @Controller('cohorts_admin')
@@ -36,9 +43,32 @@ export class CohortsAdminController {
 
   @Post()
   @UseFilters(BadRequestExceptionFilter)
-  createOrUpdateCohort(@Body() dto: CreateUpdateCohortDto): Promise<void> {
+  createCohort(@Body() dto: CreateCohortDto): Promise<{ id: number }> {
     this.logger.log('POST /cohorts_admin', CohortsAdminController.name);
-    return this.cohortsAdminService.createOrUpdateCohort(dto);
+    return this.cohortsAdminService.createCohort(dto);
+  }
+
+  @Patch(':id')
+  @UseFilters(BadRequestExceptionFilter)
+  updateCohort(
+    @Param('id') id: string,
+    @Body() dto: UpdateCohortDto,
+  ): Promise<CohortAdminUpdateResult> {
+    this.logger.log('PATCH /cohorts_admin/:id', CohortsAdminController.name);
+    return this.cohortsAdminService.updateCohort(+id, dto);
+  }
+
+  @Post(':id/windows')
+  @UseFilters(BadRequestExceptionFilter)
+  createOrUpdateWindows(
+    @Param('id') id: string,
+    @Body() dto: CreateUpdateWindowsDto,
+  ): Promise<void> {
+    this.logger.log(
+      'Post /cohorts_admin/:id/windows',
+      CohortsAdminController.name,
+    );
+    return this.cohortsAdminService.createOrUpdateWindows(+id, dto);
   }
 
   @Post(':id/students/validate')

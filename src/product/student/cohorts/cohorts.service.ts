@@ -1,6 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 
-import { UserRole } from '../../../infra/prisma/generated';
+import {
+  Cohort,
+  Exclusion,
+  UserRole,
+  Window,
+} from '../../../infra/prisma/generated';
 import { PrismaService } from '../../../infra/prisma/prisma.service';
 import {
   makeInterviewBase,
@@ -21,7 +26,10 @@ export class CohortsService {
     userId: string,
     userRole: UserRole,
   ): Promise<CohortListItem[]> {
-    let cohorts;
+    let cohorts: (Cohort & {
+      windows: Window[];
+      exclusion: Exclusion | null;
+    })[];
     if (userRole === UserRole.ADMIN) {
       cohorts = await this.prismaService.cohort
         .findMany({
@@ -44,6 +52,17 @@ export class CohortsService {
       }));
     }
 
+    cohorts.sort((a, b) => {
+      if (a.windows.length === 0 && b.windows.length === 0) {
+        return b.createdAt.getTime() - a.createdAt.getTime();
+      } else if (a.windows.length === 0) {
+        return 1; // Sort a to the back
+      } else if (b.windows.length === 0) {
+        return -1; // Sort b to the back
+      }
+      return b.windows[0].startAt.getTime() - a.windows[0].startAt.getTime();
+    });
+
     const now = new Date();
     return cohorts.map((cohort) => {
       const { id, name, windows, exclusion } = cohort;
@@ -52,7 +71,7 @@ export class CohortsService {
       let status;
       if (exclusion != null) {
         status = 'FAILED';
-      } else if (now < startAt) {
+      } else if (startAt == null || endAt == null || now < startAt) {
         status = 'HAS NOT STARTED';
       } else if (now > endAt) {
         status = 'COMPLETED';

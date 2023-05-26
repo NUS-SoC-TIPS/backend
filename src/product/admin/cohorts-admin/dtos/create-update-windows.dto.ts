@@ -6,23 +6,10 @@ import {
   IsNotEmpty,
   IsNumber,
   IsOptional,
-  IsString,
   ValidateNested,
 } from 'class-validator';
 
-export class CreateUpdateCohortDto {
-  @IsNumber()
-  @IsOptional()
-  id: number | null;
-
-  @IsString()
-  @IsNotEmpty()
-  name: string;
-
-  @IsString()
-  @IsNotEmpty()
-  coursemologyUrl: string;
-
+export class CreateUpdateWindowsDto {
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => CreateUpdateWindowDto)

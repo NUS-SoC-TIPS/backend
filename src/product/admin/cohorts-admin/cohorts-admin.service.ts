@@ -1,14 +1,21 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Window } from 'src/infra/prisma/generated';
+import { findEndOfDay, findStartOfDay } from 'src/utils';
 
 import { PrismaService } from '../../../infra/prisma/prisma.service';
 import { makeUserBase, makeWindowBase } from '../../../product/interfaces';
 
 import {
   CohortAdminItem,
+  CohortAdminUpdateResult,
   CohortStudentValidationResult,
 } from './cohorts-admin.interfaces';
-import { CreateStudentDto, CreateUpdateCohortDto } from './dtos';
+import {
+  CreateCohortDto,
+  CreateStudentDto,
+  CreateUpdateWindowsDto,
+  UpdateCohortDto,
+} from './dtos';
 
 @Injectable()
 export class CohortsAdminService {
@@ -40,13 +47,116 @@ export class CohortsAdminService {
     };
   }
 
-  async createOrUpdateCohort(dto: CreateUpdateCohortDto): Promise<void> {
-    // TODO: Add validation
-    if (dto.id == null) {
-      return this.createCohort(dto);
-    } else {
-      return this.updateCohort(dto, dto.id);
+  async createCohort(dto: CreateCohortDto): Promise<{ id: number }> {
+    return this.prismaService.cohort
+      .create({
+        data: {
+          name: dto.name,
+          coursemologyUrl: dto.coursemologyUrl,
+        },
+      })
+      .then((result) => ({ id: result.id }));
+  }
+
+  async updateCohort(
+    id: number,
+    dto: UpdateCohortDto,
+  ): Promise<CohortAdminUpdateResult> {
+    return this.prismaService.cohort
+      .update({
+        where: { id },
+        data: {
+          name: dto.name.trim(),
+          coursemologyUrl: dto.coursemologyUrl.trim(),
+        },
+      })
+      .then((result) => ({
+        name: result.name,
+        coursemologyUrl: result.coursemologyUrl,
+      }));
+  }
+
+  async createOrUpdateWindows(
+    cohortId: number,
+    dto: CreateUpdateWindowsDto,
+  ): Promise<void> {
+    const { windows } = dto;
+    windows.sort((a, b) => a.startAt.getTime() - b.startAt.getTime());
+    if (!this.areWindowsValid(windows)) {
+      throw new Error('Windows are overlapping!');
     }
+
+    const windowsToCreate: {
+      cohortId: number;
+      startAt: Date;
+      endAt: Date;
+      numQuestions: number;
+      requireInterview: boolean;
+    }[] = [];
+    const windowsToUpdate: {
+      id: number;
+      cohortId: number;
+      startAt: Date;
+      endAt: Date;
+      numQuestions: number;
+      requireInterview: boolean;
+    }[] = [];
+    windows.forEach((window) => {
+      window.startAt = findStartOfDay(window.startAt);
+      window.endAt = findEndOfDay(window.endAt);
+      const { id } = window;
+      if (id == null) {
+        windowsToCreate.push({ ...window, cohortId });
+      } else {
+        windowsToUpdate.push({ ...window, id, cohortId });
+      }
+    });
+
+    await this.prismaService.$transaction(async (tx) => {
+      await tx.window.createMany({
+        data: windowsToCreate,
+      });
+      await Promise.all(
+        windowsToUpdate.map(async (window) => {
+          const originalWindow = await tx.window.findUniqueOrThrow({
+            where: { id: window.id },
+          });
+          if (
+            window.startAt === originalWindow.startAt &&
+            window.endAt === originalWindow.endAt &&
+            window.numQuestions === originalWindow.numQuestions &&
+            window.requireInterview === originalWindow.requireInterview
+          ) {
+            this.logger.debug(
+              `No change to window with ID: ${window.id} found. Skipping update.`,
+              CohortsAdminService.name,
+            );
+            return;
+          }
+          if (
+            window.startAt === originalWindow.startAt &&
+            window.endAt === originalWindow.endAt
+          ) {
+            this.logger.log(
+              `Only requirement change to window with ID: ${window.id} found.`,
+              CohortsAdminService.name,
+            );
+            await tx.window.update({
+              where: { id: window.id },
+              data: {
+                numQuestions: window.numQuestions,
+                requireInterview: window.requireInterview,
+              },
+            });
+            // No need to handle submissions/records.
+            return;
+          }
+
+          // TODO: Update then re-pair submissions/records.
+          throw new Error('Incomplete');
+        }),
+      );
+    });
   }
 
   async validateStudents(
@@ -63,64 +173,21 @@ export class CohortsAdminService {
     return this.validateAndMaybeCreateUser(id, dto, true);
   }
 
-  private async createCohort(dto: CreateUpdateCohortDto): Promise<void> {
-    await this.prismaService.cohort.create({
-      data: {
-        name: dto.name,
-        coursemologyUrl: dto.coursemologyUrl,
-        windows: {
-          create: dto.windows.map((window) => ({
-            numQuestions: window.numQuestions,
-            requireInterview: window.requireInterview,
-            startAt: window.startAt,
-            endAt: window.endAt,
-          })),
-        },
-      },
-    });
-  }
-
-  private async updateCohort(
-    dto: CreateUpdateCohortDto,
-    cohortId: number,
-  ): Promise<void> {
-    const cohort = await this.prismaService.cohort.update({
-      where: { id: cohortId },
-      data: { name: dto.name },
-      include: { students: true },
-    });
-    await Promise.all(
-      dto.windows.map(async (window) => {
-        if (window.id == null) {
-          const newWindow = await this.prismaService.window.create({
-            data: {
-              numQuestions: window.numQuestions,
-              requireInterview: window.requireInterview,
-              startAt: window.startAt,
-              endAt: window.endAt,
-              cohortId,
-            },
-          });
-          await this.prismaService.studentResult.createMany({
-            data: cohort.students.map((student) => ({
-              studentId: student.id,
-              windowId: newWindow.id,
-            })),
-          });
-        } else {
-          // We'll just blindly do an update for now.
-          await this.prismaService.window.update({
-            where: { id: window.id },
-            data: {
-              numQuestions: window.numQuestions,
-              requireInterview: window.requireInterview,
-              startAt: window.startAt,
-              endAt: window.endAt,
-            },
-          });
-        }
-      }),
-    );
+  private areWindowsValid(windows: { startAt: Date; endAt: Date }[]): boolean {
+    for (let i = 0; i < windows.length; i++) {
+      const currentWindow = windows[i];
+      if (currentWindow.endAt <= currentWindow.startAt) {
+        return false;
+      }
+      if (i === 0) {
+        continue;
+      }
+      const previousWindow = windows[i - 1];
+      if (currentWindow.startAt <= previousWindow.endAt) {
+        return false;
+      }
+    }
+    return true;
   }
 
   private async validateAndMaybeCreateUser(
@@ -177,16 +244,14 @@ export class CohortsAdminService {
                   coursemologyProfileUrl: student.coursemologyProfileUrl,
                 },
               });
-              await tx.studentResult.createMany({
-                data: windows.map((window) => ({
-                  windowId: window.id,
-                  studentId: createdStudent.id,
-                })),
-              });
-              const studentResults = await tx.studentResult.findMany({
-                where: { studentId: createdStudent.id },
-                include: { window: true },
-              });
+              const studentResults = await Promise.all(
+                windows.map((window) =>
+                  tx.studentResult.create({
+                    data: { windowId: window.id, studentId: createdStudent.id },
+                    include: { window: true },
+                  }),
+                ),
+              );
               await Promise.all(
                 studentResults.map((studentResult) =>
                   Promise.all([
