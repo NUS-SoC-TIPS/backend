@@ -47,8 +47,8 @@ export class CohortsService {
     const now = new Date();
     return cohorts.map((cohort) => {
       const { id, name, windows, exclusion } = cohort;
-      const startAt = windows[0].startAt;
-      const endAt = windows[windows.length - 1].endAt;
+      const startAt = windows[0]?.startAt ?? null;
+      const endAt = windows[windows.length - 1]?.endAt ?? null;
       let status;
       if (exclusion != null) {
         status = 'FAILED';

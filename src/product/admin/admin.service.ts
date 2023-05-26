@@ -19,8 +19,9 @@ export class AdminService {
       })
       .then((cohorts) =>
         cohorts.map((cohort) => {
-          const startAt = cohort.windows[0].startAt;
-          const endAt = cohort.windows[cohort.windows.length - 1].endAt;
+          const startAt = cohort.windows[0]?.startAt ?? null;
+          const endAt =
+            cohort.windows[cohort.windows.length - 1]?.endAt ?? null;
           return {
             id: cohort.id,
             name: cohort.name,

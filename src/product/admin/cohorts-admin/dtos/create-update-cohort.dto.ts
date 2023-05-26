@@ -1,6 +1,5 @@
 import { Type } from 'class-transformer';
 import {
-  ArrayMinSize,
   IsArray,
   IsBoolean,
   IsDate,
@@ -26,7 +25,6 @@ export class CreateUpdateCohortDto {
 
   @IsArray()
   @ValidateNested({ each: true })
-  @ArrayMinSize(1)
   @Type(() => CreateUpdateWindowDto)
   windows: CreateUpdateWindowDto[];
 }
