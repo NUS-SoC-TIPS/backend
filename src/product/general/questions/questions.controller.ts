@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Logger,
   Param,
@@ -86,5 +87,18 @@ export class QuestionsController {
       QuestionsController.name,
     );
     return this.questionsService.updateSubmission(+id, dto, userId);
+  }
+
+  @Delete('submissions/:id')
+  @UseFilters(BadRequestExceptionFilter)
+  deleteSubmission(
+    @Param('id') id: string,
+    @GetUserRest('id') userId: string,
+  ): Promise<void> {
+    this.logger.log(
+      'DELETE questions/submissions/:id',
+      QuestionsController.name,
+    );
+    return this.questionsService.deleteSubmission(+id, userId);
   }
 }

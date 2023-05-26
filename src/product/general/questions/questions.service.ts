@@ -118,6 +118,21 @@ export class QuestionsService {
       }));
   }
 
+  async deleteSubmission(id: number, userId: string): Promise<void> {
+    const submission = await this.prismaService.questionSubmission.findFirst({
+      where: { id, userId },
+    });
+    if (submission == null) {
+      this.logger.error(
+        'Invalid submission accessed',
+        undefined,
+        QuestionsService.name,
+      );
+      throw new Error('Invalid submission accessed');
+    }
+    await this.prismaService.questionSubmission.delete({ where: { id } });
+  }
+
   private async findProgress(userId: string): Promise<QuestionStatsProgress> {
     const ongoingWindow = await this.currentService.findOngoingWindow();
     if (ongoingWindow != null) {
