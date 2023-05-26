@@ -62,7 +62,7 @@ describe('JwtRestStudentOrAdminStrategy', () => {
       studentUser = await prisma.user.create({ data: { ...studentUserData } });
       adminUser = await prisma.user.create({ data: { ...adminUserData } });
       const cohort = await prisma.cohort.create({
-        data: { name: 'Test cohort' },
+        data: { name: 'Test cohort', coursemologyUrl: '' },
       });
       await prisma.student.create({
         data: {
