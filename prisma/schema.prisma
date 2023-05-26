@@ -119,12 +119,13 @@ model Question {
 }
 
 model Cohort {
-  id        Int       @id @default(autoincrement())
-  createdAt DateTime  @default(now()) @map("created_at")
-  updatedAt DateTime  @updatedAt @map("updated_at")
-  name      String    @unique
-  windows   Window[]
-  students  Student[]
+  id              Int       @id @default(autoincrement())
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  name            String    @unique
+  coursemologyUrl String    @unique @map("coursemology_url")
+  windows         Window[]
+  students        Student[]
 
   @@map("cohorts")
 }
