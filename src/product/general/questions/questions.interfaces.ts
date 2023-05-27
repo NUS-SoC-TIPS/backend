@@ -1,4 +1,4 @@
-import { SubmissionListItem } from 'src/product/interfaces';
+import { SubmissionListItem } from '../../interfaces';
 
 export interface QuestionStatsProgress {
   // If currently in the middle of a window, the number will be returned

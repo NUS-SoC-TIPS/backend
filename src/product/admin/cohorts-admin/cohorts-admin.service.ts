@@ -1,9 +1,13 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Window } from 'src/infra/prisma/generated';
-import { findEndOfDay, findStartOfDay } from 'src/utils';
 
+import { Window } from '../../../infra/prisma/generated';
 import { PrismaService } from '../../../infra/prisma/prisma.service';
-import { makeUserBase, makeWindowBase } from '../../../product/interfaces';
+import {
+  makeUserBase,
+  makeWindowBase,
+  WindowBase,
+} from '../../../product/interfaces';
+import { findEndOfDay, findStartOfDay } from '../../../utils';
 
 import {
   CohortAdminItem,
@@ -13,8 +17,9 @@ import {
 import {
   CreateCohortDto,
   CreateStudentDto,
-  CreateUpdateWindowsDto,
+  CreateWindowDto,
   UpdateCohortDto,
+  UpdateWindowDto,
 } from './dtos';
 
 @Injectable()
@@ -77,86 +82,52 @@ export class CohortsAdminService {
       }));
   }
 
-  async createOrUpdateWindows(
+  async createWindow(
     cohortId: number,
-    dto: CreateUpdateWindowsDto,
-  ): Promise<void> {
-    const { windows } = dto;
-    windows.sort((a, b) => a.startAt.getTime() - b.startAt.getTime());
-    if (!this.areWindowsValid(windows)) {
-      throw new Error('Windows are overlapping!');
-    }
-
-    const windowsToCreate: {
-      cohortId: number;
-      startAt: Date;
-      endAt: Date;
-      numQuestions: number;
-      requireInterview: boolean;
-    }[] = [];
-    const windowsToUpdate: {
-      id: number;
-      cohortId: number;
-      startAt: Date;
-      endAt: Date;
-      numQuestions: number;
-      requireInterview: boolean;
-    }[] = [];
-    windows.forEach((window) => {
-      window.startAt = findStartOfDay(window.startAt);
-      window.endAt = findEndOfDay(window.endAt);
-      const { id } = window;
-      if (id == null) {
-        windowsToCreate.push({ ...window, cohortId });
-      } else {
-        windowsToUpdate.push({ ...window, id, cohortId });
-      }
+    dto: CreateWindowDto,
+  ): Promise<WindowBase> {
+    dto.startAt = findStartOfDay(dto.startAt);
+    dto.endAt = findEndOfDay(dto.endAt);
+    return this.prismaService.$transaction(async (tx) => {
+      // TODO: Validate the DTO data relative to existing windows
+      const window = await tx.window.create({ data: { cohortId, ...dto } });
+      // TODO: Create records + do matching
+      return makeWindowBase(window);
     });
+  }
 
-    await this.prismaService.$transaction(async (tx) => {
-      await tx.window.createMany({
-        data: windowsToCreate,
+  async updateWindow(
+    cohortId: number,
+    dto: UpdateWindowDto,
+  ): Promise<WindowBase> {
+    dto.startAt = findStartOfDay(dto.startAt);
+    dto.endAt = findEndOfDay(dto.endAt);
+    return this.prismaService.$transaction(async (tx) => {
+      // TODO: Validate the DTO data relative to existing windows
+      const existingWindow = await tx.window.findUniqueOrThrow({
+        where: { id: dto.id, cohortId },
       });
-      await Promise.all(
-        windowsToUpdate.map(async (window) => {
-          const originalWindow = await tx.window.findUniqueOrThrow({
-            where: { id: window.id },
-          });
-          if (
-            window.startAt === originalWindow.startAt &&
-            window.endAt === originalWindow.endAt &&
-            window.numQuestions === originalWindow.numQuestions &&
-            window.requireInterview === originalWindow.requireInterview
-          ) {
-            this.logger.debug(
-              `No change to window with ID: ${window.id} found. Skipping update.`,
-              CohortsAdminService.name,
-            );
-            return;
-          }
-          if (
-            window.startAt === originalWindow.startAt &&
-            window.endAt === originalWindow.endAt
-          ) {
-            this.logger.log(
-              `Only requirement change to window with ID: ${window.id} found.`,
-              CohortsAdminService.name,
-            );
-            await tx.window.update({
-              where: { id: window.id },
-              data: {
-                numQuestions: window.numQuestions,
-                requireInterview: window.requireInterview,
-              },
-            });
-            // No need to handle submissions/records.
-            return;
-          }
-
-          // TODO: Update then re-pair submissions/records.
-          throw new Error('Incomplete');
-        }),
-      );
+      if (
+        existingWindow.startAt === dto.startAt &&
+        existingWindow.endAt === dto.endAt
+      ) {
+        // Only need to update requirements, which is fast
+        const window = await tx.window.update({
+          where: { id: existingWindow.id },
+          data: {
+            numQuestions: dto.numQuestions,
+            requireInterview: dto.requireInterview,
+          },
+        });
+        return makeWindowBase(window);
+      }
+      // Otherwise, we need to update the window period + re-match records
+      const window = await tx.window.update({
+        where: { id: existingWindow.id },
+        data: { ...dto },
+      });
+      // TODO: Create records + do matching
+      return makeWindowBase(window);
     });
   }
 
@@ -172,23 +143,6 @@ export class CohortsAdminService {
     dto: CreateStudentDto[],
   ): Promise<CohortStudentValidationResult> {
     return this.validateAndMaybeCreateUser(id, dto, true);
-  }
-
-  private areWindowsValid(windows: { startAt: Date; endAt: Date }[]): boolean {
-    for (let i = 0; i < windows.length; i++) {
-      const currentWindow = windows[i];
-      if (currentWindow.endAt <= currentWindow.startAt) {
-        return false;
-      }
-      if (i === 0) {
-        continue;
-      }
-      const previousWindow = windows[i - 1];
-      if (currentWindow.startAt <= previousWindow.endAt) {
-        return false;
-      }
-    }
-    return true;
   }
 
   private async validateAndMaybeCreateUser(

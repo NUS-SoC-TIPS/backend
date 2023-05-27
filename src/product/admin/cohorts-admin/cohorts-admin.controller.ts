@@ -12,6 +12,7 @@ import {
 
 import { JwtRestAdminGuard } from '../../../productinfra/guards';
 import { BadRequestExceptionFilter } from '../../../utils';
+import { WindowBase } from '../../interfaces';
 
 import {
   CohortAdminItem,
@@ -22,8 +23,9 @@ import { CohortsAdminService } from './cohorts-admin.service';
 import {
   CreateCohortDto,
   CreateStudentDto,
-  CreateUpdateWindowsDto,
+  CreateWindowDto,
   UpdateCohortDto,
+  UpdateWindowDto,
 } from './dtos';
 
 @UseGuards(JwtRestAdminGuard)
@@ -60,15 +62,28 @@ export class CohortsAdminController {
 
   @Post(':id/windows')
   @UseFilters(BadRequestExceptionFilter)
-  createOrUpdateWindows(
+  createWindow(
     @Param('id') id: string,
-    @Body() dto: CreateUpdateWindowsDto,
-  ): Promise<void> {
+    @Body() dto: CreateWindowDto,
+  ): Promise<WindowBase> {
     this.logger.log(
-      'Post /cohorts_admin/:id/windows',
+      'POST /cohorts_admin/:id/windows',
       CohortsAdminController.name,
     );
-    return this.cohortsAdminService.createOrUpdateWindows(+id, dto);
+    return this.cohortsAdminService.createWindow(+id, dto);
+  }
+
+  @Patch(':id/windows')
+  @UseFilters(BadRequestExceptionFilter)
+  updateWindow(
+    @Param('id') id: string,
+    @Body() dto: UpdateWindowDto,
+  ): Promise<WindowBase> {
+    this.logger.log(
+      'PATCH /cohorts_admin/:id/windows',
+      CohortsAdminController.name,
+    );
+    return this.cohortsAdminService.updateWindow(+id, dto);
   }
 
   @Post(':id/students/validate')
