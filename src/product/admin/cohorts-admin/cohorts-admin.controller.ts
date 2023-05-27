@@ -34,7 +34,7 @@ export class CohortsAdminController {
     private readonly cohortsAdminService: CohortsAdminService,
   ) {}
 
-  @Get('id')
+  @Get(':id')
   @UseFilters(BadRequestExceptionFilter)
   findCohort(@Param('id') id: string): Promise<CohortAdminItem> {
     this.logger.log('GET /cohorts_admin/:id', CohortsAdminController.name);
