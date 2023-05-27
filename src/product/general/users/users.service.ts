@@ -2,9 +2,9 @@ import { Injectable } from '@nestjs/common';
 
 import { Settings, User } from '../../../infra/prisma/generated';
 import { PrismaService } from '../../../infra/prisma/prisma.service';
-import { makeUserSelf, UserSelf } from '../../interfaces';
 
 import { UpdateSettingsDto } from './dtos';
+import { makeUserSelf, UserSelf } from './users.interfaces';
 
 @Injectable()
 export class UsersService {

@@ -8,7 +8,6 @@ import {
 export interface WindowItem extends WindowBase {
   students: (StudentBase & {
     studentId: number;
-    coursemologyName: string;
     submissions: SubmissionBase[];
     interviews: InterviewBase[];
     exclusion: {

@@ -3,8 +3,8 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../infra/prisma/prisma.service';
 import {
   makeInterviewBase,
+  makeStudentBase,
   makeSubmissionBase,
-  makeUserBase,
   makeWindowBase,
 } from '../../interfaces';
 
@@ -47,10 +47,8 @@ export class WindowsService {
       students: studentResults.map((studentResult) => {
         const { student, questionSubmissions, roomRecordUsers } = studentResult;
         return {
-          ...makeUserBase(student.user),
+          ...makeStudentBase(student),
           studentId: student.id,
-          coursemologyName: student.coursemologyName,
-          coursemologyProfileUrl: student.coursemologyProfileUrl,
           submissions: questionSubmissions.map(makeSubmissionBase),
           interviews: roomRecordUsers.map((roomRecordUser) =>
             makeInterviewBase(roomRecordUser.roomRecord, student.userId),

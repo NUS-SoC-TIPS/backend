@@ -4,7 +4,7 @@ import { DateService } from '../../../infra/date/date.service';
 import { Window } from '../../../infra/prisma/generated';
 import { PrismaService } from '../../../infra/prisma/prisma.service';
 import {
-  makeUserBase,
+  makeStudentBase,
   makeWindowBase,
   WindowBase,
 } from '../../../product/interfaces';
@@ -44,11 +44,9 @@ export class CohortsAdminService {
       coursemologyUrl: cohort.coursemologyUrl,
       windows: cohort.windows.map(makeWindowBase),
       students: cohort.students.map((student) => ({
-        ...makeUserBase(student.user),
+        ...makeStudentBase(student),
         studentId: student.id,
         joinedAt: student.user.createdAt,
-        coursemologyName: student.coursemologyName,
-        coursemologyProfileUrl: student.coursemologyProfileUrl,
         isExcluded: student.exclusion != null,
       })),
     };
@@ -249,11 +247,7 @@ export class CohortsAdminService {
               );
             })
             .then(() => {
-              success.push({
-                ...makeUserBase(matchedUser),
-                coursemologyName: student.coursemologyName,
-                coursemologyProfileUrl: student.coursemologyProfileUrl,
-              });
+              success.push(makeStudentBase({ ...student, user: matchedUser }));
             })
             .catch((e) => {
               this.logger.error(
@@ -264,11 +258,7 @@ export class CohortsAdminService {
               error.push({ ...student, error: 'INVALID DATA' });
             });
         } else {
-          success.push({
-            ...makeUserBase(matchedUser),
-            coursemologyName: student.coursemologyName,
-            coursemologyProfileUrl: student.coursemologyProfileUrl,
-          });
+          success.push(makeStudentBase({ ...student, user: matchedUser }));
         }
       }),
     );

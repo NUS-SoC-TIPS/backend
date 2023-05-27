@@ -9,7 +9,6 @@ export interface CohortAdminItem {
   students: (StudentBase & {
     studentId: number;
     joinedAt: Date;
-    coursemologyName: string;
     isExcluded: boolean;
   })[];
 }
@@ -20,9 +19,7 @@ export interface CohortAdminUpdateResult {
 }
 
 export interface CohortStudentValidationResult {
-  success: (StudentBase & {
-    coursemologyName: string;
-  })[];
+  success: StudentBase[];
   error: {
     githubUsername: string;
     coursemologyName: string;
