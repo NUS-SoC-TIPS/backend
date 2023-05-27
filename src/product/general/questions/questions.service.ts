@@ -1,9 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 
+import { DateService } from '../../../infra/date/date.service';
 import { Window } from '../../../infra/prisma/generated';
 import { PrismaService } from '../../../infra/prisma/prisma.service';
 import { CurrentService } from '../../../productinfra/current/current.service';
-import { findEndOfWeek, findStartOfWeek } from '../../../utils';
 import {
   makeQuestionListItem,
   makeSubmissionItem,
@@ -24,6 +24,7 @@ import {
 export class QuestionsService {
   constructor(
     private readonly logger: Logger,
+    private readonly dateService: DateService,
     private readonly prismaService: PrismaService,
     private readonly currentService: CurrentService,
   ) {}
@@ -166,8 +167,8 @@ export class QuestionsService {
   private async findWeekProgress(
     userId: string,
   ): Promise<QuestionStatsProgress> {
-    const startOfWeek = findStartOfWeek();
-    const endOfWeek = findEndOfWeek();
+    const startOfWeek = this.dateService.findStartOfWeek();
+    const endOfWeek = this.dateService.findEndOfWeek();
     const numSubmissionsThisWeek =
       await this.prismaService.questionSubmission.count({
         where: {

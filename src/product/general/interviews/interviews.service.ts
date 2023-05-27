@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { generateSlug } from 'random-word-slugs';
 
+import { DateService } from '../../../infra/date/date.service';
 import {
   Room,
   RoomStatus,
@@ -9,7 +10,6 @@ import {
 } from '../../../infra/prisma/generated';
 import { PrismaService } from '../../../infra/prisma/prisma.service';
 import { CurrentService } from '../../../productinfra/current/current.service';
-import { findEndOfWeek, findStartOfWeek } from '../../../utils';
 import {
   InterviewItem,
   InterviewListItem,
@@ -29,6 +29,7 @@ import {
 export class InterviewsService {
   constructor(
     private readonly logger: Logger,
+    private readonly dateService: DateService,
     private readonly prismaService: PrismaService,
     private readonly currentService: CurrentService,
   ) {}
@@ -125,8 +126,8 @@ export class InterviewsService {
   private async findWeekProgress(
     userId: string,
   ): Promise<InterviewStatsProgress> {
-    const startOfWeek = findStartOfWeek();
-    const endOfWeek = findEndOfWeek();
+    const startOfWeek = this.dateService.findStartOfWeek();
+    const endOfWeek = this.dateService.findEndOfWeek();
     const numInterviewsThisWeek = await this.prismaService.roomRecord.count({
       where: {
         isValid: true,

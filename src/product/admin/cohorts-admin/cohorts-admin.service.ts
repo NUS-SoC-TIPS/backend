@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 
+import { DateService } from '../../../infra/date/date.service';
 import { Window } from '../../../infra/prisma/generated';
 import { PrismaService } from '../../../infra/prisma/prisma.service';
 import {
@@ -7,7 +8,6 @@ import {
   makeWindowBase,
   WindowBase,
 } from '../../../product/interfaces';
-import { findEndOfDay, findStartOfDay } from '../../../utils';
 
 import {
   CohortAdminItem,
@@ -26,6 +26,7 @@ import {
 export class CohortsAdminService {
   constructor(
     private readonly logger: Logger,
+    private readonly dateService: DateService,
     private readonly prismaService: PrismaService,
   ) {}
 
@@ -86,11 +87,13 @@ export class CohortsAdminService {
     cohortId: number,
     dto: CreateWindowDto,
   ): Promise<WindowBase> {
-    dto.startAt = findStartOfDay(dto.startAt);
-    dto.endAt = findEndOfDay(dto.endAt);
+    const startAt = this.dateService.findStartOfDay(dto.startAt);
+    const endAt = this.dateService.findEndOfDay(dto.endAt);
     return this.prismaService.$transaction(async (tx) => {
       // TODO: Validate the DTO data relative to existing windows
-      const window = await tx.window.create({ data: { cohortId, ...dto } });
+      const window = await tx.window.create({
+        data: { cohortId, ...dto, startAt, endAt },
+      });
       // TODO: Create records + do matching
       return makeWindowBase(window);
     });
@@ -100,16 +103,16 @@ export class CohortsAdminService {
     cohortId: number,
     dto: UpdateWindowDto,
   ): Promise<WindowBase> {
-    dto.startAt = findStartOfDay(dto.startAt);
-    dto.endAt = findEndOfDay(dto.endAt);
+    const startAt = this.dateService.findStartOfDay(dto.startAt);
+    const endAt = this.dateService.findEndOfDay(dto.endAt);
     return this.prismaService.$transaction(async (tx) => {
       // TODO: Validate the DTO data relative to existing windows
       const existingWindow = await tx.window.findUniqueOrThrow({
         where: { id: dto.id, cohortId },
       });
       if (
-        existingWindow.startAt === dto.startAt &&
-        existingWindow.endAt === dto.endAt
+        existingWindow.startAt === startAt &&
+        existingWindow.endAt === endAt
       ) {
         // Only need to update requirements, which is fast
         const window = await tx.window.update({
@@ -124,7 +127,7 @@ export class CohortsAdminService {
       // Otherwise, we need to update the window period + re-match records
       const window = await tx.window.update({
         where: { id: existingWindow.id },
-        data: { ...dto },
+        data: { ...dto, startAt, endAt },
       });
       // TODO: Create records + do matching
       return makeWindowBase(window);

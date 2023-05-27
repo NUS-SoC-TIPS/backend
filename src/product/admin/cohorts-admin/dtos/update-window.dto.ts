@@ -1,4 +1,4 @@
-import { IsBoolean, IsDate, IsNotEmpty, IsNumber } from 'class-validator';
+import { IsBoolean, IsNotEmpty, IsNumber, IsString } from 'class-validator';
 
 export class UpdateWindowDto {
   @IsNumber()
@@ -13,11 +13,11 @@ export class UpdateWindowDto {
   @IsNotEmpty()
   requireInterview: boolean;
 
-  @IsDate()
+  @IsString()
   @IsNotEmpty()
-  startAt: Date;
+  startAt: string;
 
-  @IsDate()
+  @IsString()
   @IsNotEmpty()
-  endAt: Date;
+  endAt: string;
 }
