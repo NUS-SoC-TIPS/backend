@@ -62,6 +62,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["class-transformer", "npm:0.5.1"],\
             ["class-validator", "npm:0.14.0"],\
             ["commitizen", "npm:4.3.0"],\
+            ["dayjs", "npm:1.11.7"],\
             ["dotenv-cli", "npm:7.2.1"],\
             ["eslint", "npm:8.41.0"],\
             ["eslint-config-prettier", "virtual:ddc83d4ef0c92f6c674e3f379a200087374f66d827378f57a7ee4bc60b5eca6cb251490a34955b05d669fb45dc9e38ee9c99f009fecec0ea2b4fd3cc6877ad7b#npm:8.8.0"],\
@@ -5609,6 +5610,15 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
           "packageLocation": "./.yarn/cache/dargs-npm-7.0.0-62701e0c7a-b8f1e3cba5.zip/node_modules/dargs/",\
           "packageDependencies": [\
             ["dargs", "npm:7.0.0"]\
+          ],\
+          "linkType": "HARD"\
+        }]\
+      ]],\
+      ["dayjs", [\
+        ["npm:1.11.7", {\
+          "packageLocation": "./.yarn/cache/dayjs-npm-1.11.7-d5cd5b2919-5003a7c1dd.zip/node_modules/dayjs/",\
+          "packageDependencies": [\
+            ["dayjs", "npm:1.11.7"]\
           ],\
           "linkType": "HARD"\
         }]\
@@ -13022,6 +13032,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["class-transformer", "npm:0.5.1"],\
             ["class-validator", "npm:0.14.0"],\
             ["commitizen", "npm:4.3.0"],\
+            ["dayjs", "npm:1.11.7"],\
             ["dotenv-cli", "npm:7.2.1"],\
             ["eslint", "npm:8.41.0"],\
             ["eslint-config-prettier", "virtual:ddc83d4ef0c92f6c674e3f379a200087374f66d827378f57a7ee4bc60b5eca6cb251490a34955b05d669fb45dc9e38ee9c99f009fecec0ea2b4fd3cc6877ad7b#npm:8.8.0"],\
