@@ -35,7 +35,7 @@ export class CohortsAdminService {
     const cohort = await this.prismaService.cohort.findUniqueOrThrow({
       where: { id },
       include: {
-        windows: { orderBy: { startAt: 'asc' } },
+        windows: { orderBy: { startAt: 'desc' } },
         students: { include: { user: true, exclusion: true } },
       },
     });
@@ -90,7 +90,7 @@ export class CohortsAdminService {
     return this.prismaService.$transaction(async (tx) => {
       // TODO: Validate the DTO data relative to existing windows
       const window = await tx.window.create({
-        data: { cohortId, ...dto, startAt, endAt },
+        data: { ...dto, cohortId, startAt, endAt },
       });
       // TODO: Create records + do matching
       return makeWindowBase(window);
