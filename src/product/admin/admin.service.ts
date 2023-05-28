@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 
+import { UserRole } from '../../infra/prisma/generated';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { makeUserBase } from '../interfaces';
 
@@ -33,7 +34,7 @@ export class AdminService {
       );
     const nonStudents = await this.prismaService.user
       .findMany({
-        where: { students: { none: {} } },
+        where: { students: { none: {} }, role: UserRole.NORMAL },
         orderBy: { createdAt: 'desc' },
       })
       .then((nonStudents) =>

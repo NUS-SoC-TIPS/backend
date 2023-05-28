@@ -4,6 +4,7 @@ import { DateService } from '../../../infra/date/date.service';
 import {
   Student,
   StudentResult,
+  UserRole,
   Window,
 } from '../../../infra/prisma/generated';
 import { PrismaService } from '../../../infra/prisma/prisma.service';
@@ -198,6 +199,10 @@ export class CohortsAdminService {
         });
         if (matchedUser == null) {
           error.push({ ...student, error: 'NOT FOUND' });
+          return;
+        }
+        if (matchedUser.role === UserRole.ADMIN) {
+          error.push({ ...student, error: 'IS ADMIN' });
           return;
         }
         const existingStudent = await this.prismaService.student.findUnique({
