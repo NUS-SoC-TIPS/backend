@@ -1,7 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 
 import { DateService } from '../../../infra/date/date.service';
-import { Window } from '../../../infra/prisma/generated';
+import {
+  Student,
+  StudentResult,
+  Window,
+} from '../../../infra/prisma/generated';
 import { PrismaService } from '../../../infra/prisma/prisma.service';
 import {
   makeStudentBase,
@@ -22,6 +26,11 @@ import {
   UpdateCohortDto,
   UpdateWindowDto,
 } from './dtos';
+
+type Transaction = Omit<
+  PrismaService,
+  '$connect' | '$disconnect' | '$on' | '$transaction' | '$use'
+>;
 
 @Injectable()
 export class CohortsAdminService {
@@ -88,11 +97,13 @@ export class CohortsAdminService {
     const startAt = this.dateService.findStartOfDay(dto.startAt);
     const endAt = this.dateService.findEndOfDay(dto.endAt);
     return this.prismaService.$transaction(async (tx) => {
-      // TODO: Validate the DTO data relative to existing windows
+      if (!this.isValidWindow(tx, cohortId, null, startAt, endAt)) {
+        throw new Error('Invalid window!');
+      }
       const window = await tx.window.create({
         data: { ...dto, cohortId, startAt, endAt },
       });
-      // TODO: Create records + do matching
+      await this.matchForWindow(tx, window);
       return makeWindowBase(window);
     });
   }
@@ -104,15 +115,18 @@ export class CohortsAdminService {
     const startAt = this.dateService.findStartOfDay(dto.startAt);
     const endAt = this.dateService.findEndOfDay(dto.endAt);
     return this.prismaService.$transaction(async (tx) => {
-      // TODO: Validate the DTO data relative to existing windows
+      if (!this.isValidWindow(tx, cohortId, dto.id, startAt, endAt)) {
+        throw new Error('Invalid window!');
+      }
       const existingWindow = await tx.window.findUniqueOrThrow({
         where: { id: dto.id, cohortId },
       });
       if (
-        existingWindow.startAt === startAt &&
-        existingWindow.endAt === endAt
+        existingWindow.startAt.getTime() === startAt.getTime() &&
+        existingWindow.endAt.getTime() === endAt.getTime()
       ) {
         // Only need to update requirements, which is fast
+        this.logger.log('Only updating requirements', CohortsAdminService.name);
         const window = await tx.window.update({
           where: { id: existingWindow.id },
           data: {
@@ -123,11 +137,15 @@ export class CohortsAdminService {
         return makeWindowBase(window);
       }
       // Otherwise, we need to update the window period + re-match records
+      this.logger.log('Updating window completely', CohortsAdminService.name);
       const window = await tx.window.update({
         where: { id: existingWindow.id },
         data: { ...dto, startAt, endAt },
       });
-      // TODO: Create records + do matching
+      // Naive implementation, which is to unmatch and rematch.
+      // TODO: Explore a better solution than this.
+      await this.unmatchForWindow(tx, window);
+      await this.matchForWindow(tx, window);
       return makeWindowBase(window);
     });
   }
@@ -200,51 +218,7 @@ export class CohortsAdminService {
                   coursemologyProfileUrl: student.coursemologyProfileUrl,
                 },
               });
-              const studentResults = await Promise.all(
-                windows.map((window) =>
-                  tx.studentResult.create({
-                    data: { windowId: window.id, studentId: createdStudent.id },
-                    include: { window: true },
-                  }),
-                ),
-              );
-              await Promise.all(
-                studentResults.map((studentResult) =>
-                  Promise.all([
-                    tx.questionSubmission.updateMany({
-                      data: {
-                        studentResultId: studentResult.id,
-                      },
-                      where: {
-                        studentResultId: null,
-                        userId: matchedUser.id,
-                        createdAt: {
-                          gte: studentResult.window.startAt,
-                          lte: studentResult.window.endAt,
-                        },
-                      },
-                    }),
-                    tx.roomRecordUser.updateMany({
-                      data: {
-                        studentResultId: studentResult.id,
-                      },
-                      where: {
-                        studentResultId: null,
-                        userId: matchedUser.id,
-                        roomRecord: {
-                          isValid: true,
-                          room: {
-                            closedAt: {
-                              gte: studentResult.window.startAt,
-                              lte: studentResult.window.endAt,
-                            },
-                          },
-                        },
-                      },
-                    }),
-                  ]),
-                ),
-              );
+              return this.matchForNewStudent(tx, createdStudent, windows);
             })
             .then(() => {
               success.push(makeStudentBase({ ...student, user: matchedUser }));
@@ -263,5 +237,127 @@ export class CohortsAdminService {
       }),
     );
     return { success, error };
+  }
+
+  private async matchForNewStudent(
+    tx: Transaction,
+    student: Student,
+    windows: Window[],
+  ): Promise<void> {
+    const studentResults = await Promise.all(
+      windows.map((window) =>
+        tx.studentResult.create({
+          data: { windowId: window.id, studentId: student.id },
+          include: { window: true, student: true },
+        }),
+      ),
+    );
+    return this.matchForStudentResults(tx, studentResults);
+  }
+
+  private async matchForWindow(tx: Transaction, window: Window): Promise<void> {
+    const students = await tx.student.findMany({
+      where: { cohortId: window.cohortId },
+    });
+    const studentResults = await Promise.all(
+      students.map((student) =>
+        tx.studentResult.upsert({
+          where: {
+            studentId_windowId: { studentId: student.id, windowId: window.id },
+          },
+          create: { studentId: student.id, windowId: window.id },
+          update: { studentId: student.id, windowId: window.id },
+          include: { window: true, student: true },
+        }),
+      ),
+    );
+    return this.matchForStudentResults(tx, studentResults);
+  }
+
+  private async matchForStudentResults(
+    tx: Transaction,
+    studentResults: (StudentResult & { window: Window; student: Student })[],
+  ): Promise<void> {
+    await Promise.all(
+      studentResults.map((studentResult) =>
+        Promise.all([
+          tx.questionSubmission.updateMany({
+            data: { studentResultId: studentResult.id },
+            where: {
+              studentResultId: null,
+              userId: studentResult.student.userId,
+              createdAt: {
+                gte: studentResult.window.startAt,
+                lte: studentResult.window.endAt,
+              },
+            },
+          }),
+          tx.roomRecordUser.updateMany({
+            data: { studentResultId: studentResult.id },
+            where: {
+              studentResultId: null,
+              userId: studentResult.student.userId,
+              roomRecord: {
+                isValid: true,
+                room: {
+                  closedAt: {
+                    gte: studentResult.window.startAt,
+                    lte: studentResult.window.endAt,
+                  },
+                },
+              },
+            },
+          }),
+        ]),
+      ),
+    );
+  }
+
+  private async unmatchForWindow(
+    tx: Transaction,
+    window: Window,
+  ): Promise<void> {
+    const studentResults = await tx.studentResult.findMany({
+      where: { windowId: window.id },
+    });
+    await Promise.all(
+      studentResults.map(async (studentResult) => {
+        return Promise.all([
+          tx.questionSubmission.updateMany({
+            where: { studentResultId: studentResult.id },
+            data: { studentResultId: null },
+          }),
+          tx.roomRecordUser.updateMany({
+            where: { studentResultId: studentResult.id },
+            data: { studentResultId: null },
+          }),
+        ]);
+      }),
+    );
+  }
+
+  private async isValidWindow(
+    tx: Transaction,
+    cohortId: number,
+    windowId: number | null,
+    startAt: Date,
+    endAt: Date,
+  ): Promise<boolean> {
+    if (startAt >= endAt) {
+      return false;
+    }
+    const otherWindows = await tx.window.findMany({
+      where: {
+        cohortId,
+        ...(windowId != null ? { id: { not: windowId } } : {}),
+      },
+    });
+    return otherWindows.every(
+      (window) =>
+        // Either this new window is completely before the existing one
+        (startAt < window.startAt && endAt < window.startAt) ||
+        // Or it's completely after the existing one
+        (startAt > window.endAt && endAt > window.endAt),
+    );
   }
 }
