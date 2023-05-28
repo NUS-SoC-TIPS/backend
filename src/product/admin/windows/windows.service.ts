@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 
+import { TRANSACTION_OPTIONS } from '../../../infra/prisma/prisma.constants';
 import { PrismaService } from '../../../infra/prisma/prisma.service';
 import {
   makeInterviewBase,
@@ -136,7 +137,7 @@ export class WindowsService {
           }
         }),
       );
-    });
+    }, TRANSACTION_OPTIONS);
     return numExcluded;
   }
 }

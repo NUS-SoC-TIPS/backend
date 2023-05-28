@@ -7,6 +7,7 @@ import {
   UserRole,
   Window,
 } from '../../../infra/prisma/generated';
+import { TRANSACTION_OPTIONS } from '../../../infra/prisma/prisma.constants';
 import { PrismaService } from '../../../infra/prisma/prisma.service';
 import {
   makeStudentBase,
@@ -106,7 +107,7 @@ export class CohortsAdminService {
       });
       await this.matchForWindow(tx, window);
       return makeWindowBase(window);
-    });
+    }, TRANSACTION_OPTIONS);
   }
 
   async updateWindow(
@@ -148,7 +149,7 @@ export class CohortsAdminService {
       await this.unmatchForWindow(tx, window);
       await this.matchForWindow(tx, window);
       return makeWindowBase(window);
-    });
+    }, TRANSACTION_OPTIONS);
   }
 
   async validateStudents(
@@ -163,6 +164,20 @@ export class CohortsAdminService {
     dto: CreateStudentDto[],
   ): Promise<CohortStudentValidationResult> {
     return this.validateAndMaybeCreateUser(id, dto, true);
+  }
+
+  async rematchWindows(id: number): Promise<void> {
+    const windows = await this.prismaService.window.findMany({
+      where: { cohortId: id },
+    });
+    await this.prismaService.$transaction(async (tx) => {
+      await Promise.all(
+        windows.map(async (window) => {
+          await this.unmatchForWindow(tx, window);
+          await this.matchForWindow(tx, window);
+        }),
+      );
+    }, TRANSACTION_OPTIONS);
   }
 
   private async validateAndMaybeCreateUser(
@@ -224,7 +239,7 @@ export class CohortsAdminService {
                 },
               });
               return this.matchForNewStudent(tx, createdStudent, windows);
-            })
+            }, TRANSACTION_OPTIONS)
             .then(() => {
               success.push(makeStudentBase({ ...student, user: matchedUser }));
             })

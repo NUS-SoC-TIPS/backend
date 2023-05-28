@@ -86,6 +86,17 @@ export class CohortsAdminController {
     return this.cohortsAdminService.updateWindow(+id, dto);
   }
 
+  // Temp route to remedy some bugs
+  @Post(':id/windows/rematch')
+  @UseFilters(BadRequestExceptionFilter)
+  rematchWindows(@Param('id') id: string): Promise<void> {
+    this.logger.log(
+      'POST /cohorts_admin/:id/windows/rematch',
+      CohortsAdminController.name,
+    );
+    return this.cohortsAdminService.rematchWindows(+id);
+  }
+
   @Post(':id/students/validate')
   @UseFilters(BadRequestExceptionFilter)
   validateStudents(
