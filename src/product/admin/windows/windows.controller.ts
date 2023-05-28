@@ -4,6 +4,7 @@ import {
   Get,
   Logger,
   Param,
+  Post,
   UseFilters,
   UseGuards,
 } from '@nestjs/common';
@@ -34,5 +35,12 @@ export class WindowsController {
   deleteWindow(@Param('id') id: string): Promise<void> {
     this.logger.log('DELETE /windows/:id', WindowsController.name);
     return this.windowsService.deleteWindow(+id);
+  }
+
+  @Post(':id/autoexclude')
+  @UseFilters(BadRequestExceptionFilter)
+  autoExclude(@Param('id') id: string): Promise<number> {
+    this.logger.log('POST /windows/:id/autoexclude', WindowsController.name);
+    return this.windowsService.autoExclude(+id);
   }
 }

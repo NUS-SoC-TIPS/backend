@@ -8,6 +8,11 @@ import {
   makeWindowBase,
 } from '../../interfaces';
 
+import {
+  BOTH_REASON,
+  INTERVIEW_REASON,
+  QUESTIONS_REASON,
+} from './windows.constants';
 import { WindowItem } from './windows.interfaces';
 
 @Injectable()
@@ -71,5 +76,67 @@ export class WindowsService {
 
   async deleteWindow(id: number): Promise<void> {
     await this.prismaService.window.delete({ where: { id } });
+  }
+
+  async autoExclude(id: number): Promise<number> {
+    const studentResults = await this.prismaService.studentResult.findMany({
+      where: { windowId: id },
+      include: {
+        student: { include: { exclusion: { include: { window: true } } } },
+        window: true,
+        _count: {
+          select: { questionSubmissions: true, roomRecordUsers: true },
+        },
+      },
+    });
+    let numExcluded = 0;
+    await this.prismaService.$transaction(async (tx) => {
+      await Promise.all(
+        studentResults.map(async (studentResult) => {
+          const { student, window, _count } = studentResult;
+          const existingExclusion = student.exclusion;
+          if (
+            existingExclusion &&
+            existingExclusion.window.startAt <= window.startAt
+          ) {
+            // Exclusion exists for an earlier window
+            return;
+          }
+          if (
+            _count.questionSubmissions >= window.numQuestions &&
+            (!window.requireInterview || _count.roomRecordUsers >= 1)
+          ) {
+            // Student has met the necessary requirements
+            return;
+          }
+          let reason: string;
+          if (
+            _count.questionSubmissions < window.numQuestions &&
+            window.requireInterview &&
+            _count.roomRecordUsers === 0
+          ) {
+            reason = BOTH_REASON;
+          } else if (_count.questionSubmissions < window.numQuestions) {
+            reason = QUESTIONS_REASON;
+          } else {
+            reason = INTERVIEW_REASON;
+          }
+
+          if (existingExclusion) {
+            await tx.exclusion.update({
+              data: { windowId: id, reason },
+              where: { id: existingExclusion.id },
+            });
+            numExcluded += 1;
+          } else {
+            await tx.exclusion.create({
+              data: { studentId: student.id, windowId: id, reason },
+            });
+            numExcluded += 1;
+          }
+        }),
+      );
+    });
+    return numExcluded;
   }
 }
