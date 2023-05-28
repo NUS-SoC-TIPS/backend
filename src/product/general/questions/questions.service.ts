@@ -58,8 +58,11 @@ export class QuestionsService {
   ): Promise<{ id: number }> {
     dto.codeWritten = dto.codeWritten.trim();
     return this.prismaService.questionSubmission
-      .create({
-        data: { ...dto, userId },
+      .create({ data: { ...dto, userId } })
+      .then((questionSubmission) => {
+        return this.currentService.maybeAddQuestionSubmissionToResult(
+          questionSubmission,
+        );
       })
       .then((questionSubmission) => ({ id: questionSubmission.id }));
   }
