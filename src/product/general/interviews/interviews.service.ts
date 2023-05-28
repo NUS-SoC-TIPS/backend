@@ -6,6 +6,7 @@ import {
   Room,
   RoomStatus,
   RoomUser,
+  Student,
   Window,
 } from '../../../infra/prisma/generated';
 import { PrismaService } from '../../../infra/prisma/prisma.service';
@@ -96,21 +97,25 @@ export class InterviewsService {
   private async findProgress(userId: string): Promise<InterviewStatsProgress> {
     const ongoingWindow = await this.currentService.findOngoingWindow();
     if (ongoingWindow != null) {
-      return this.findWindowProgress(userId, ongoingWindow);
+      const student = await this.prismaService.student.findUnique({
+        where: {
+          userId_cohortId: { userId, cohortId: ongoingWindow?.cohortId },
+        },
+      });
+      if (student != null) {
+        return this.findWindowProgress(student, ongoingWindow);
+      }
     }
     return this.findWeekProgress(userId);
   }
 
   private async findWindowProgress(
-    userId: string,
+    student: Student,
     window: Window,
   ): Promise<InterviewStatsProgress> {
     const studentResultWithInterviewCount =
       await this.prismaService.studentResult.findFirst({
-        where: {
-          student: { userId, cohortId: window.cohortId },
-          windowId: window.id,
-        },
+        where: { studentId: student.id, windowId: window.id },
         include: { _count: { select: { roomRecordUsers: true } } },
       });
     return {

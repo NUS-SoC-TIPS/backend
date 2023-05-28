@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 
 import { DateService } from '../../../infra/date/date.service';
-import { Window } from '../../../infra/prisma/generated';
+import { Student, Window } from '../../../infra/prisma/generated';
 import { PrismaService } from '../../../infra/prisma/prisma.service';
 import { CurrentService } from '../../../productinfra/current/current.service';
 import {
@@ -137,21 +137,25 @@ export class QuestionsService {
   private async findProgress(userId: string): Promise<QuestionStatsProgress> {
     const ongoingWindow = await this.currentService.findOngoingWindow();
     if (ongoingWindow != null) {
-      return this.findWindowProgress(userId, ongoingWindow);
+      const student = await this.prismaService.student.findUnique({
+        where: {
+          userId_cohortId: { userId, cohortId: ongoingWindow?.cohortId },
+        },
+      });
+      if (student != null) {
+        return this.findWindowProgress(student, ongoingWindow);
+      }
     }
     return this.findWeekProgress(userId);
   }
 
   private async findWindowProgress(
-    userId: string,
+    student: Student,
     window: Window,
   ): Promise<QuestionStatsProgress> {
     const studentResultWithSubmissionCount =
       await this.prismaService.studentResult.findFirst({
-        where: {
-          student: { userId, cohortId: window.cohortId },
-          windowId: window.id,
-        },
+        where: { studentId: student.id, windowId: window.id },
         include: { _count: { select: { questionSubmissions: true } } },
       });
     return {
