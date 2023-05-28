@@ -5,6 +5,7 @@ import { Window } from '../../../infra/prisma/generated';
 import { PrismaService } from '../../../infra/prisma/prisma.service';
 import {
   makeStudentBase,
+  makeStudentBaseWithId,
   makeWindowBase,
   WindowBase,
 } from '../../../product/interfaces';
@@ -44,8 +45,7 @@ export class CohortsAdminService {
       coursemologyUrl: cohort.coursemologyUrl,
       windows: cohort.windows.map(makeWindowBase),
       students: cohort.students.map((student) => ({
-        ...makeStudentBase(student),
-        studentId: student.id,
+        ...makeStudentBaseWithId(student),
         joinedAt: student.user.createdAt,
         isExcluded: student.exclusion != null,
       })),

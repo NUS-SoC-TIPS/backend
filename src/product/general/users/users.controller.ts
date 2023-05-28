@@ -12,9 +12,9 @@ import { User } from '../../../infra/prisma/generated';
 import { GetUserRest } from '../../../productinfra/decorators';
 import { JwtRestGuard } from '../../../productinfra/guards';
 import { BadRequestExceptionFilter } from '../../../utils';
-import { UserSelf } from '../../interfaces';
 
 import { UpdateSettingsDto } from './dtos';
+import { UserSelf } from './users.interfaces';
 import { UsersService } from './users.service';
 
 @UseGuards(JwtRestGuard)

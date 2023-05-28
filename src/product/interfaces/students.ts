@@ -7,6 +7,10 @@ export interface StudentBase extends UserBase {
   coursemologyProfileUrl: string;
 }
 
+export interface StudentBaseWithId extends StudentBase {
+  studentId: number;
+}
+
 export const makeStudentBase = (student: {
   user: {
     name: string;
@@ -21,5 +25,22 @@ export const makeStudentBase = (student: {
     ...makeUserBase(student.user),
     coursemologyName: student.coursemologyName,
     coursemologyProfileUrl: student.coursemologyProfileUrl,
+  };
+};
+
+export const makeStudentBaseWithId = (student: {
+  user: {
+    name: string;
+    githubUsername: string;
+    profileUrl: string;
+    photoUrl: string;
+  };
+  id: number;
+  coursemologyName: string;
+  coursemologyProfileUrl: string;
+}): StudentBaseWithId => {
+  return {
+    ...makeStudentBase(student),
+    studentId: student.id,
   };
 };

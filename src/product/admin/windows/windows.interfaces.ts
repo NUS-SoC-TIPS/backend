@@ -1,13 +1,13 @@
 import {
   InterviewBase,
-  StudentBase,
+  StudentBaseWithId,
   SubmissionBase,
   WindowBase,
 } from '../../interfaces';
 
 export interface WindowItem extends WindowBase {
-  students: (StudentBase & {
-    studentId: number;
+  cohortId: number;
+  students: (StudentBaseWithId & {
     submissions: SubmissionBase[];
     interviews: InterviewBase[];
     exclusion: {

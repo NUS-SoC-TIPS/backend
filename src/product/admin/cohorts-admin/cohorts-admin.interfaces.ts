@@ -1,4 +1,8 @@
-import { StudentBase, WindowBase } from '../../../product/interfaces';
+import {
+  StudentBase,
+  StudentBaseWithId,
+  WindowBase,
+} from '../../../product/interfaces';
 
 export interface CohortAdminItem {
   id: number;
@@ -6,8 +10,7 @@ export interface CohortAdminItem {
   coursemologyUrl: string;
   windows: WindowBase[];
   // TODO: Remove this later once a separate query is done
-  students: (StudentBase & {
-    studentId: number;
+  students: (StudentBaseWithId & {
     joinedAt: Date;
     isExcluded: boolean;
   })[];

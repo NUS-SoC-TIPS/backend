@@ -44,6 +44,7 @@ export class ExclusionsService {
         data: { windowId: dto.windowId, reason: dto.reason },
         where: { id: existingExclusion.id },
       });
+      return;
     }
     await this.prismaService.exclusion.create({ data: { ...dto } });
   }
