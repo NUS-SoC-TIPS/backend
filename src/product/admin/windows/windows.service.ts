@@ -53,6 +53,9 @@ export class WindowsService {
           interviews: roomRecordUsers.map((roomRecordUser) =>
             makeInterviewBase(roomRecordUser.roomRecord, student.userId),
           ),
+          hasCompletedWindow:
+            questionSubmissions.length >= window.numQuestions &&
+            (!window.requireInterview || roomRecordUsers.length >= 1),
           exclusion:
             student.exclusion != null &&
             student.exclusion.windowId === window.id
