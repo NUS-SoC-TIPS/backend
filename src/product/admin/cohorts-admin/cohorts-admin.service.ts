@@ -236,6 +236,8 @@ export class CohortsAdminService {
         }
       }),
     );
+    success.sort((a, b) => a.githubUsername.localeCompare(b.githubUsername));
+    error.sort((a, b) => a.githubUsername.localeCompare(b.githubUsername));
     return { success, error };
   }
 
