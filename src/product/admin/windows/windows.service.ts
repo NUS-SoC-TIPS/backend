@@ -68,4 +68,8 @@ export class WindowsService {
       }),
     };
   }
+
+  async deleteWindow(id: number): Promise<void> {
+    await this.prismaService.window.delete({ where: { id } });
+  }
 }

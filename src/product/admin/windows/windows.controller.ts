@@ -1,5 +1,6 @@
 import {
   Controller,
+  Delete,
   Get,
   Logger,
   Param,
@@ -26,5 +27,12 @@ export class WindowsController {
   findWindow(@Param('id') id: string): Promise<WindowItem> {
     this.logger.log('GET /windows/:id', WindowsController.name);
     return this.windowsService.findWindow(+id);
+  }
+
+  @Delete(':id')
+  @UseFilters(BadRequestExceptionFilter)
+  deleteWindow(@Param('id') id: string): Promise<void> {
+    this.logger.log('DELETE /windows/:id', WindowsController.name);
+    return this.windowsService.deleteWindow(+id);
   }
 }
