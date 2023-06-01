@@ -33,6 +33,7 @@ model User {
   roomRecordUsers     RoomRecordUser[]
   roomUsers           RoomUser[]
   students            Student[]
+  notifications       Notification[]
 
   @@map("users")
 }
@@ -215,17 +216,40 @@ model QuestionSubmission {
 }
 
 model Exclusion {
-  id        Int      @id @default(autoincrement())
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  id           Int                    @id @default(autoincrement())
+  createdAt    DateTime               @default(now()) @map("created_at")
+  updatedAt    DateTime               @updatedAt @map("updated_at")
   // Match it to student for now, since each student can only be excluded once
-  studentId Int      @unique @map("student_id")
-  windowId  Int      @map("window_id")
-  reason    String
-  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  window    Window   @relation(fields: [windowId], references: [id], onDelete: Cascade)
+  studentId    Int                    @unique @map("student_id")
+  windowId     Int                    @map("window_id")
+  reason       String
+  student      Student                @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  window       Window                 @relation(fields: [windowId], references: [id], onDelete: Cascade)
+  notification ExclusionNotification?
 
   @@map("exclusions")
+}
+
+// "Superclass" for all notification types
+model Notification {
+  id                    Int                    @id @default(autoincrement())
+  createdAt             DateTime               @default(now()) @map("created_at")
+  updatedAt             DateTime               @updatedAt @map("updated_at")
+  userId                String                 @map("user_id")
+  isRead                Boolean                @default(false) @map("is_read") // Whether the user has read it before
+  user                  User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  exclusionNotification ExclusionNotification?
+
+  @@map("notifications")
+}
+
+model ExclusionNotification {
+  notificationId Int          @id @map("notification_id")
+  exclusionId    Int          @unique @map("exclusion_id")
+  notification   Notification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+  exclusion      Exclusion    @relation(fields: [exclusionId], references: [id], onDelete: Cascade)
+
+  @@map("exclusion_notifications")
 }
 
 enum UserRole {
