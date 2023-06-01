@@ -46,10 +46,20 @@ export class ExclusionsService {
       });
       return;
     }
-    await this.prismaService.exclusion.create({ data: { ...dto } });
+    await this.prismaService.exclusionNotification.create({
+      data: {
+        notification: { create: { userId: student.userId } },
+        exclusion: { create: { ...dto } },
+      },
+    });
   }
 
   async removeExclusion(exclusionId: number): Promise<void> {
-    await this.prismaService.exclusion.delete({ where: { id: exclusionId } });
+    await this.prismaService.$transaction(async (tx) => {
+      await tx.notification.deleteMany({
+        where: { exclusionNotification: { exclusionId } },
+      });
+      await tx.exclusion.delete({ where: { id: exclusionId } });
+    });
   }
 }
