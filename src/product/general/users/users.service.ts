@@ -14,7 +14,17 @@ export class UsersService {
     const { id } = user;
     const settings = await this.findSettings(id);
     const isStudent = await this.findIsStudent(id);
-    return makeUserSelf({ ...user, settings }, isStudent);
+    const notifications = await this.prismaService.notification.findMany({
+      where: { userId: user.id },
+      include: {
+        exclusionNotification: {
+          include: {
+            exclusion: { include: { window: { include: { cohort: true } } } },
+          },
+        },
+      },
+    });
+    return makeUserSelf({ ...user, settings, notifications }, isStudent);
   }
 
   async updateSettings(user: User, dto: UpdateSettingsDto): Promise<void> {

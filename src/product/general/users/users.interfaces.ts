@@ -5,12 +5,22 @@ import {
 } from '../../../infra/prisma/generated';
 import { makeUserBase, UserBase } from '../../interfaces';
 
+interface ExclusionNotification {
+  createdAt: Date;
+  cohortId: number; // For frontend to jump to the right cohort
+  cohortName: string;
+}
+
+// Will be a union type in the future.
+type Notification = ExclusionNotification;
+
 export interface UserSelf extends UserBase {
   id: string;
   role: UserRole;
   isStudent: boolean;
   preferredInterviewLanguage: Language | null;
   preferredKeyBinding: KeyBinding;
+  notifications: Notification[];
 }
 
 export const makeUserSelf = (
@@ -25,9 +35,30 @@ export const makeUserSelf = (
       preferredInterviewLanguage: Language | null;
       preferredKeyBinding: KeyBinding;
     } | null;
+    notifications: {
+      exclusionNotification: {
+        exclusion: { window: { cohort: { id: number; name: string } } };
+      } | null;
+      createdAt: Date;
+    }[];
   },
   isStudent: boolean,
 ): UserSelf => {
+  const notifications: Notification[] = [];
+  user.notifications.forEach((notification) => {
+    if (notification.exclusionNotification != null) {
+      const {
+        exclusion: {
+          window: { cohort },
+        },
+      } = notification.exclusionNotification;
+      notifications.push({
+        cohortId: cohort.id,
+        cohortName: cohort.name,
+        createdAt: notification.createdAt,
+      });
+    }
+  });
   return {
     ...makeUserBase(user),
     id: user.id,
@@ -37,5 +68,6 @@ export const makeUserSelf = (
       user.settings?.preferredInterviewLanguage ?? null,
     preferredKeyBinding:
       user.settings?.preferredKeyBinding ?? KeyBinding.STANDARD,
+    notifications,
   };
 };
