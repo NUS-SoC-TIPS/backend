@@ -1,4 +1,9 @@
-import { InterviewBase, SubmissionBase, WindowBase } from '../../interfaces';
+import {
+  InterviewBase,
+  StudentBase,
+  SubmissionBase,
+  WindowBase,
+} from '../../interfaces';
 
 export interface CohortListItem {
   id: number;
@@ -20,5 +25,6 @@ export interface CohortItem {
     hasCompletedInterview: boolean;
     submissions: SubmissionBase[];
     interviews: InterviewBase[];
+    pairedPartner: StudentBase | null;
   })[];
 }

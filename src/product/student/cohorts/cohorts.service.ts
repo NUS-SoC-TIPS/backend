@@ -9,6 +9,7 @@ import {
 import { PrismaService } from '../../../infra/prisma/prisma.service';
 import {
   makeInterviewBase,
+  makeStudentBase,
   makeSubmissionBase,
   makeWindowBase,
 } from '../../interfaces';
@@ -95,6 +96,18 @@ export class CohortsService {
       include: {
         cohort: true,
         exclusion: { include: { window: true } },
+        pairingStudents: {
+          include: {
+            pairing: {
+              include: {
+                window: true,
+                pairingStudents: {
+                  include: { student: { include: { user: true } } },
+                },
+              },
+            },
+          },
+        },
         results: {
           include: {
             window: true,
@@ -119,7 +132,7 @@ export class CohortsService {
       throw new Error('Invalid cohort accessed');
     }
 
-    const { exclusion, results, cohort } = student;
+    const { exclusion, results, cohort, pairingStudents } = student;
     const windows = results
       .sort((a, b) => a.window.startAt.getTime() - b.window.startAt.getTime())
       .map((result) => {
@@ -138,9 +151,18 @@ export class CohortsService {
         const previouslyExcluded =
           exclusion != null ? window.startAt > exclusion.window.endAt : false;
 
+        const pairingForThisWindow = pairingStudents.filter(
+          (pairingStudent) => pairingStudent.pairing.windowId === window.id,
+        )?.[0].pairing;
+        const partnerStudent = pairingForThisWindow?.pairingStudents?.filter(
+          (pairingStudent) => pairingStudent.id !== student.id,
+        )?.[0]?.student;
+
         return {
           ...makeWindowBase(window),
           exclusion: exclusionForThisWindow,
+          pairedPartner:
+            partnerStudent != null ? makeStudentBase(partnerStudent) : null,
           previouslyExcluded,
           hasCompletedQuestions,
           hasCompletedInterview,
@@ -204,6 +226,7 @@ export class CohortsService {
         return {
           ...makeWindowBase(window),
           exclusion: null,
+          pairedPartner: null,
           previouslyExcluded: false,
           hasCompletedQuestions,
           hasCompletedInterview,
