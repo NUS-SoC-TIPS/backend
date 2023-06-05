@@ -37,20 +37,30 @@ export class ExclusionsService {
 
     dto.reason = dto.reason.trim();
 
-    if (existingExclusion) {
-      // Update if we're going for an earlier exclusion than the existing one for
-      // the same cohort.
-      await this.prismaService.exclusion.update({
-        data: { windowId: dto.windowId, reason: dto.reason },
-        where: { id: existingExclusion.id },
+    await this.prismaService.$transaction(async (tx) => {
+      if (existingExclusion) {
+        // Update if we're going for an earlier exclusion than the existing one for
+        // the same cohort.
+        await tx.exclusion.update({
+          data: { windowId: dto.windowId, reason: dto.reason },
+          where: { id: existingExclusion.id },
+        });
+      } else {
+        await tx.exclusionNotification.create({
+          data: {
+            notification: { create: { userId: student.userId } },
+            exclusion: { create: { ...dto } },
+          },
+        });
+      }
+      // We'll now unpair this student for all future windows, including
+      // the current one that we're excluding for.
+      await tx.pairing.deleteMany({
+        where: {
+          pairingStudents: { some: { studentId: student.id } },
+          window: { startAt: { gte: window.startAt } },
+        },
       });
-      return;
-    }
-    await this.prismaService.exclusionNotification.create({
-      data: {
-        notification: { create: { userId: student.userId } },
-        exclusion: { create: { ...dto } },
-      },
     });
   }
 
