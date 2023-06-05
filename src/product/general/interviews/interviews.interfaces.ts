@@ -1,4 +1,4 @@
-import { StudentBase, UserBase } from '../../interfaces';
+import { StudentBase } from '../../interfaces';
 
 export interface InterviewStatsProgress {
   // If currently in the middle of a window, the number will be returned
@@ -13,5 +13,5 @@ export interface InterviewStatsProgress {
 export interface InterviewStats {
   progress: InterviewStatsProgress;
   averageDurationMs: number; // 0 if no interviews done
-  pairedOrLatestPartner: UserBase | StudentBase | null;
+  pairedPartner: StudentBase | null;
 }

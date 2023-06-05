@@ -6,7 +6,6 @@ import {
   Room,
   RoomStatus,
   RoomUser,
-  Student,
   Window,
 } from '../../../infra/prisma/generated';
 import { PrismaService } from '../../../infra/prisma/prisma.service';
@@ -16,9 +15,8 @@ import {
   InterviewListItem,
   makeInterviewItem,
   makeInterviewListItem,
-  makeUserBase,
+  makeStudentBase,
   StudentBase,
-  UserBase,
 } from '../../interfaces';
 
 import {
@@ -36,10 +34,31 @@ export class InterviewsService {
   ) {}
 
   async findStats(userId: string): Promise<InterviewStats> {
-    const progress = await this.findProgress(userId);
+    let progress: InterviewStatsProgress;
+    let pairedPartner: StudentBase | null = null;
+
+    const ongoingWindow = await this.currentService.findOngoingWindow();
+    if (ongoingWindow != null) {
+      const student = await this.prismaService.student.findUnique({
+        where: {
+          userId_cohortId: { userId, cohortId: ongoingWindow.cohortId },
+        },
+      });
+      if (student != null) {
+        progress = await this.findWindowProgress(student.id, ongoingWindow);
+        pairedPartner = await this.findPairedPartner(
+          student.id,
+          ongoingWindow.id,
+        );
+      } else {
+        progress = await this.findWeekProgress(userId);
+      }
+    } else {
+      progress = await this.findWeekProgress(userId);
+    }
+
     const averageDurationMs = await this.findAverageDurationMs(userId);
-    const pairedOrLatestPartner = await this.findPairedOrLatestPartner(userId);
-    return { progress, averageDurationMs, pairedOrLatestPartner };
+    return { progress, averageDurationMs, pairedPartner };
   }
 
   async findInterviews(userId: string): Promise<InterviewListItem[]> {
@@ -94,28 +113,13 @@ export class InterviewsService {
     return (await this.findCurrentRoomUser(userId))?.room?.slug ?? null;
   }
 
-  private async findProgress(userId: string): Promise<InterviewStatsProgress> {
-    const ongoingWindow = await this.currentService.findOngoingWindow();
-    if (ongoingWindow != null) {
-      const student = await this.prismaService.student.findUnique({
-        where: {
-          userId_cohortId: { userId, cohortId: ongoingWindow?.cohortId },
-        },
-      });
-      if (student != null) {
-        return this.findWindowProgress(student, ongoingWindow);
-      }
-    }
-    return this.findWeekProgress(userId);
-  }
-
   private async findWindowProgress(
-    student: Student,
+    studentId: number,
     window: Window,
   ): Promise<InterviewStatsProgress> {
     const studentResultWithInterviewCount =
       await this.prismaService.studentResult.findFirst({
-        where: { studentId: student.id, windowId: window.id },
+        where: { studentId, windowId: window.id },
         include: { _count: { select: { roomRecordUsers: true } } },
       });
     return {
@@ -157,19 +161,20 @@ export class InterviewsService {
     return roomRecordAggregate._avg.duration ?? 0;
   }
 
-  private async findPairedOrLatestPartner(
-    userId: string,
-  ): Promise<UserBase | StudentBase | null> {
-    // We don't have pairing as of now, so we'll just return the latest partner
-    const latestRoomRecord = await this.prismaService.roomRecord.findFirst({
-      where: { roomRecordUsers: { some: { userId } }, isValid: true },
-      orderBy: { createdAt: 'desc' },
-      include: { roomRecordUsers: { include: { user: true } } },
+  private async findPairedPartner(
+    studentId: number,
+    windowId: number,
+  ): Promise<StudentBase | null> {
+    const pairing = await this.prismaService.pairing.findFirst({
+      where: { windowId, pairingStudents: { some: { studentId } } },
+      include: {
+        pairingStudents: { include: { student: { include: { user: true } } } },
+      },
     });
-    const latestPartnerUser = latestRoomRecord?.roomRecordUsers?.filter(
-      (u) => u.userId !== userId,
-    )[0].user;
-    return latestPartnerUser != null ? makeUserBase(latestPartnerUser) : null;
+    const partnerStudent = pairing?.pairingStudents?.filter(
+      (pairingStudent) => pairingStudent.id !== studentId,
+    )?.[0]?.student;
+    return partnerStudent != null ? makeStudentBase(partnerStudent) : null;
   }
 
   /**
