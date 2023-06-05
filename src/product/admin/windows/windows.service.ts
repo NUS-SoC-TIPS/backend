@@ -1,9 +1,11 @@
 import { Injectable } from '@nestjs/common';
 
+import { Student, User } from '../../../infra/prisma/generated';
 import { TRANSACTION_OPTIONS } from '../../../infra/prisma/prisma.constants';
 import { PrismaService } from '../../../infra/prisma/prisma.service';
 import {
   makeInterviewBase,
+  makeStudentBase,
   makeStudentBaseWithId,
   makeSubmissionBase,
   makeWindowBase,
@@ -24,6 +26,13 @@ export class WindowsService {
     const window = await this.prismaService.window.findUniqueOrThrow({
       where: { id },
       include: {
+        pairings: {
+          include: {
+            pairingStudents: {
+              include: { student: { include: { user: true } } },
+            },
+          },
+        },
         studentResults: {
           include: {
             questionSubmissions: { include: { question: true } },
@@ -48,17 +57,27 @@ export class WindowsService {
         studentResult.student.exclusion == null ||
         studentResult.student.exclusion.window.startAt >= window.startAt,
     );
+
+    const studentIdToPartnerMap = new Map<number, Student & { user: User }>();
+    window.pairings.forEach((pairing) => {
+      const [studentOne, studentTwo] = pairing.pairingStudents;
+      studentIdToPartnerMap.set(studentOne.studentId, studentTwo.student);
+      studentIdToPartnerMap.set(studentTwo.studentId, studentOne.student);
+    });
+
     return {
       ...makeWindowBase(window),
       cohortId: window.cohortId,
       students: studentResults.map((studentResult) => {
         const { student, questionSubmissions, roomRecordUsers } = studentResult;
+        const partner = studentIdToPartnerMap.get(student.id);
         return {
           ...makeStudentBaseWithId(student),
           submissions: questionSubmissions.map(makeSubmissionBase),
           interviews: roomRecordUsers.map((roomRecordUser) =>
             makeInterviewBase(roomRecordUser.roomRecord, student.userId),
           ),
+          pairedPartner: partner != null ? makeStudentBase(partner) : null,
           hasCompletedWindow:
             questionSubmissions.length >= window.numQuestions &&
             (!window.requireInterview || roomRecordUsers.length >= 1),

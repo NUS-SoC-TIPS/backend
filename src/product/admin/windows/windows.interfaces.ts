@@ -1,5 +1,6 @@
 import {
   InterviewBase,
+  StudentBase,
   StudentBaseWithId,
   SubmissionBase,
   WindowBase,
@@ -10,6 +11,7 @@ export interface WindowItem extends WindowBase {
   students: (StudentBaseWithId & {
     submissions: SubmissionBase[];
     interviews: InterviewBase[];
+    pairedPartner: StudentBase | null;
     hasCompletedWindow: boolean;
     exclusion: {
       id: number;
