@@ -43,4 +43,11 @@ export class WindowsController {
     this.logger.log('POST /windows/:id/autoexclude', WindowsController.name);
     return this.windowsService.autoExclude(+id);
   }
+
+  @Post(':id/pairs')
+  @UseFilters(BadRequestExceptionFilter)
+  pairStudents(@Param('id') id: string): Promise<number> {
+    this.logger.log('POST /windows/:id/pairs', WindowsController.name);
+    return this.windowsService.pairStudents(+id);
+  }
 }

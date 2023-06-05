@@ -3,6 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { Student, User } from '../../../infra/prisma/generated';
 import { TRANSACTION_OPTIONS } from '../../../infra/prisma/prisma.constants';
 import { PrismaService } from '../../../infra/prisma/prisma.service';
+import { shuffleArray } from '../../../utils';
 import {
   makeInterviewBase,
   makeStudentBase,
@@ -158,5 +159,64 @@ export class WindowsService {
       );
     }, TRANSACTION_OPTIONS);
     return numExcluded;
+  }
+
+  async pairStudents(id: number): Promise<number> {
+    const window = await this.prismaService.window.findUnique({
+      where: { id },
+    });
+    if (window == null) {
+      throw new Error('Cannot find window');
+    }
+
+    // This window must be ongoing.
+    const now = new Date();
+    if (window.startAt > now || window.endAt < now) {
+      throw new Error('Window must be ongoing for pairing to be done.');
+    }
+
+    // We now pair students who are:
+    // - Not excluded up till and including this window
+    // - Not paired yet
+    // - Not excused from interviews
+    const validStudents = await this.prismaService.student.findMany({
+      where: {
+        AND: [
+          {
+            OR: [
+              { exclusion: null },
+              { exclusion: { window: { startAt: { gt: window.endAt } } } },
+            ],
+          },
+          { pairingStudents: { none: { pairing: { windowId: id } } } },
+          // TODO: Add query for excuses
+        ],
+      },
+    });
+    shuffleArray(validStudents);
+    const studentPairs: [Student, Student][] = [];
+    for (let i = 0; i < validStudents.length; i += 2) {
+      if (i + 1 >= validStudents.length) {
+        break;
+      }
+      studentPairs.push([validStudents[i], validStudents[i + 1]]);
+    }
+    return Promise.all(
+      studentPairs.map((studentPair) =>
+        this.prismaService.pairing.create({
+          data: {
+            pairingStudents: {
+              createMany: {
+                data: [
+                  { studentId: studentPair[0].id },
+                  { studentId: studentPair[1].id },
+                ],
+              },
+            },
+            windowId: id,
+          },
+        }),
+      ),
+    ).then((result) => result.length * 2);
   }
 }
