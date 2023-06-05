@@ -155,6 +155,14 @@ export class WindowsService {
             });
             numExcluded += 1;
           }
+          // We'll now unpair this student for all future windows, including
+          // the current one that we're excluding for.
+          await tx.pairing.deleteMany({
+            where: {
+              pairingStudents: { some: { studentId: student.id } },
+              window: { startAt: { gte: window.startAt } },
+            },
+          });
         }),
       );
     }, TRANSACTION_OPTIONS);
