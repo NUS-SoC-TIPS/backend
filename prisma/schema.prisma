@@ -132,17 +132,18 @@ model Cohort {
 }
 
 model Student {
-  id                     Int             @id @default(autoincrement())
-  createdAt              DateTime        @default(now()) @map("created_at")
-  updatedAt              DateTime        @updatedAt @map("updated_at")
-  userId                 String          @map("user_id")
-  cohortId               Int             @map("cohort_id")
-  coursemologyName       String          @map("coursemology_name")
-  coursemologyProfileUrl String          @map("coursemology_profile_url")
-  user                   User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  cohort                 Cohort          @relation(fields: [cohortId], references: [id], onDelete: Cascade)
+  id                     Int              @id @default(autoincrement())
+  createdAt              DateTime         @default(now()) @map("created_at")
+  updatedAt              DateTime         @updatedAt @map("updated_at")
+  userId                 String           @map("user_id")
+  cohortId               Int              @map("cohort_id")
+  coursemologyName       String           @map("coursemology_name")
+  coursemologyProfileUrl String           @map("coursemology_profile_url")
+  user                   User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cohort                 Cohort           @relation(fields: [cohortId], references: [id], onDelete: Cascade)
   results                StudentResult[]
   exclusion              Exclusion?
+  pairingStudents        PairingStudent[]
 
   @@unique([userId, cohortId])
   @@map("students")
@@ -160,6 +161,7 @@ model Window {
   cohort           Cohort          @relation(fields: [cohortId], references: [id], onDelete: Cascade)
   studentResults   StudentResult[]
   exclusions       Exclusion[]
+  pairings         Pairing[]
 
   @@map("windows")
 }
@@ -228,6 +230,31 @@ model Exclusion {
   notification ExclusionNotification?
 
   @@map("exclusions")
+}
+
+// Pairing for interviews
+model Pairing {
+  id              Int              @id @default(autoincrement())
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
+  windowId        Int              @map("window_id") // The week that this pairing is for
+  window          Window           @relation(fields: [windowId], references: [id], onDelete: Cascade)
+  pairingStudents PairingStudent[]
+
+  @@map("pairings")
+}
+
+model PairingStudent {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  pairingId Int      @map("pairing_id")
+  studentId Int      @map("student_id")
+  pairing   Pairing  @relation(fields: [pairingId], references: [id], onDelete: Cascade)
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([pairingId, studentId])
+  @@map("pairing_students")
 }
 
 // "Superclass" for all notification types
