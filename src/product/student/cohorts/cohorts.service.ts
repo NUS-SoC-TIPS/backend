@@ -153,7 +153,7 @@ export class CohortsService {
 
         const pairingForThisWindow = pairingStudents.filter(
           (pairingStudent) => pairingStudent.pairing.windowId === window.id,
-        )?.[0].pairing;
+        )?.[0]?.pairing;
         const partnerStudent = pairingForThisWindow?.pairingStudents?.filter(
           (pairingStudent) => pairingStudent.id !== student.id,
         )?.[0]?.student;

@@ -189,6 +189,7 @@ export class WindowsService {
             ],
           },
           { pairingStudents: { none: { pairing: { windowId: id } } } },
+          { cohortId: window.cohortId },
           // TODO: Add query for excuses
         ],
       },
