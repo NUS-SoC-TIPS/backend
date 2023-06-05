@@ -172,7 +172,7 @@ export class InterviewsService {
       },
     });
     const partnerStudent = pairing?.pairingStudents?.filter(
-      (pairingStudent) => pairingStudent.id !== studentId,
+      (pairingStudent) => pairingStudent.studentId !== studentId,
     )?.[0]?.student;
     return partnerStudent != null ? makeStudentBase(partnerStudent) : null;
   }
