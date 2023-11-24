@@ -1,7 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { ITXClientDenyList } from 'src/infra/prisma/generated/runtime';
 
 import { DateService } from '../../../infra/date/date.service';
 import {
+  PrismaClient,
   Student,
   StudentResult,
   UserRole,
@@ -29,10 +31,7 @@ import {
   UpdateWindowDto,
 } from './dtos';
 
-type Transaction = Omit<
-  PrismaService,
-  '$connect' | '$disconnect' | '$on' | '$transaction' | '$use'
->;
+type Transaction = Omit<PrismaClient, ITXClientDenyList>;
 
 @Injectable()
 export class CohortsAdminService {
