@@ -77,7 +77,7 @@ export class InterviewsService {
       where: { id, isValid: true, roomRecordUsers: { some: { userId } } },
       include: { roomRecordUsers: { include: { user: true } }, room: true },
     });
-    if (roomRecord == null || roomRecord.room.closedAt == null) {
+    if (roomRecord?.room.closedAt == null) {
       this.logger.error(
         'Invalid interview accessed',
         undefined,

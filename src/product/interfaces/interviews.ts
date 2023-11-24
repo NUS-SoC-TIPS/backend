@@ -72,7 +72,6 @@ export const makeInterviewListItem = (
 ): InterviewListItem => {
   return {
     ...makeInterviewBase(roomRecord, userId),
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     completedAt: roomRecord.room.closedAt!,
     duration: roomRecord.duration,
     language: roomRecord.language,
@@ -100,7 +99,6 @@ export const makeInterviewItem = (
     (roomRecordUser) => roomRecordUser.userId !== userId,
   )[0];
   return {
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     completedAt: roomRecord.room.closedAt!,
     partner: {
       name: partnerRoomRecordUser.user.name,

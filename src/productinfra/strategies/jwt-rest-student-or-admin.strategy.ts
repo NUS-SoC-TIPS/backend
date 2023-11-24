@@ -11,7 +11,10 @@ export class JwtRestStudentOrAdminStrategy extends PassportStrategy(
   Strategy,
   'jwt-rest-student-or-admin',
 ) {
-  constructor(config: ConfigService, private prisma: PrismaService) {
+  constructor(
+    config: ConfigService,
+    private prisma: PrismaService,
+  ) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       secretOrKey: config.get('JWT_SECRET'),

@@ -200,9 +200,8 @@ export class Judge0Service {
     }
     const keys = Array(...this.prismaLanguageToJudge0Language.keys());
     // They will all have the same lastUpdated, so we'll just check any one
-    const lastUpdated = this.prismaLanguageToJudge0Language.get(
-      keys[0],
-    )?.lastUpdated;
+    const lastUpdated = this.prismaLanguageToJudge0Language.get(keys[0])
+      ?.lastUpdated;
     if (lastUpdated && Date.now() - lastUpdated > VERSION_UPDATE_INTERVAL_MS) {
       return this.refreshLanguages();
     }
