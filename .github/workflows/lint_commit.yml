@@ -6,9 +6,9 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: wagoid/commitlint-github-action@v4
+      - uses: wagoid/commitlint-github-action@v5
         with:
           helpURL: https://github.com/CodeToGather/TIPS-Backend/blob/main/CONTRIBUTING.md
