@@ -8736,15 +8736,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"nest-winston@npm:^1.9.4":
-  version: 1.9.4
-  resolution: "nest-winston@npm:1.9.4"
+"nest-winston@npm:^1.10.0":
+  version: 1.10.0
+  resolution: "nest-winston@npm:1.10.0"
   dependencies:
     fast-safe-stringify: "npm:^2.1.1"
   peerDependencies:
     "@nestjs/common": ^5.0.0 || ^6.6.0 || ^7.0.0 || ^8.0.0 || ^9.0.0 || ^10.0.0
     winston: ^3.0.0
-  checksum: 10/ae98b3bdcf2616a0f0faf2e93b512049571d1eb2c8a5dfed05e627ca8867505a30b7687c6edbcb6a21a892ba0b28d8934a7b4c02ce007420790e5618fae8e92d
+  checksum: 10/ade9556c0dd8604b2326f92310de33982723c967eb70ddddf8f218b84104bc5299f475697572befe42fa54129bebfdb69b44efeecf8243b4f34f8d4318ba631c
   languageName: node
   linkType: hard
 
@@ -8873,13 +8873,6 @@ __metadata:
   version: 3.0.0
   resolution: "object-hash@npm:3.0.0"
   checksum: 10/f498d456a20512ba7be500cef4cf7b3c183cc72c65372a549c9a0e6dd78ce26f375e9b1315c07592d3fde8f10d5019986eba35970570d477ed9a2a702514432a
-  languageName: node
-  linkType: hard
-
-"object-hash@npm:^2.0.1":
-  version: 2.2.0
-  resolution: "object-hash@npm:2.2.0"
-  checksum: 10/dee06b6271bf5769ae5f1a7386fdd52c1f18aae9fcb0b8d4bb1232f2d743d06cb5b662be42378b60a1c11829f96f3f86834a16bbaa57a085763295fff8b93e27
   languageName: node
   linkType: hard
 
@@ -10862,7 +10855,7 @@ __metadata:
     lib0: "npm:^0.2.88"
     lint-staged: "npm:^15.1.0"
     markdownlint-cli: "npm:^0.37.0"
-    nest-winston: "npm:^1.9.4"
+    nest-winston: "npm:^1.10.0"
     pactum: "npm:^3.5.1"
     passport: "npm:^0.6.0"
     passport-jwt: "npm:^4.0.1"
@@ -10881,8 +10874,8 @@ __metadata:
     ts-node: "npm:^10.9.1"
     tsconfig-paths: "npm:^4.2.0"
     typescript: "npm:^4.9.5"
-    winston: "npm:^3.11.0"
-    winston-daily-rotate-file: "npm:^4.7.1"
+    winston: "npm:^3.13.0"
+    winston-daily-rotate-file: "npm:^5.0.0"
     y-protocols: "npm:^1.0.6"
     yjs: "npm:^13.6.10"
   languageName: unknown
@@ -10966,7 +10959,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"triple-beam@npm:^1.3.0":
+"triple-beam@npm:^1.3.0, triple-beam@npm:^1.4.1":
   version: 1.4.1
   resolution: "triple-beam@npm:1.4.1"
   checksum: 10/2e881a3e8e076b6f2b85b9ec9dd4a900d3f5016e6d21183ed98e78f9abcc0149e7d54d79a3f432b23afde46b0885bdcdcbff789f39bc75de796316961ec07f61
@@ -11645,34 +11638,34 @@ __metadata:
   languageName: node
   linkType: hard
 
-"winston-daily-rotate-file@npm:^4.7.1":
-  version: 4.7.1
-  resolution: "winston-daily-rotate-file@npm:4.7.1"
+"winston-daily-rotate-file@npm:^5.0.0":
+  version: 5.0.0
+  resolution: "winston-daily-rotate-file@npm:5.0.0"
   dependencies:
     file-stream-rotator: "npm:^0.6.1"
-    object-hash: "npm:^2.0.1"
-    triple-beam: "npm:^1.3.0"
-    winston-transport: "npm:^4.4.0"
+    object-hash: "npm:^3.0.0"
+    triple-beam: "npm:^1.4.1"
+    winston-transport: "npm:^4.7.0"
   peerDependencies:
     winston: ^3
-  checksum: 10/bb59465762c0320addc3a5ccc5fb3ff33e520a5855e6ef98db9f4d03bcb1356a003f2c6428606f0f040af28633a2d73662fc6a7dfdb73158b364a51752c56775
+  checksum: 10/4204deaea0f2a6a9d89747b734547e44d3c30681d6f871d6e146e64ce5807656a6d6fc51057e9c2bda792139356aa36ddd842ce458270e5a77cbd3ed002b7123
   languageName: node
   linkType: hard
 
-"winston-transport@npm:^4.4.0, winston-transport@npm:^4.5.0":
-  version: 4.6.0
-  resolution: "winston-transport@npm:4.6.0"
+"winston-transport@npm:^4.7.0":
+  version: 4.7.0
+  resolution: "winston-transport@npm:4.7.0"
   dependencies:
     logform: "npm:^2.3.2"
     readable-stream: "npm:^3.6.0"
     triple-beam: "npm:^1.3.0"
-  checksum: 10/08b4d5be6377744c52acf7d63877bf54fded9b5cd1aa565c8eb14e3dc425de2e8f68bb994a1c1afef9e3aa700d79bcfa55bfbca370ea3068782c104ff033af35
+  checksum: 10/c8eae7b110e68396edcf26aec86608bd8ac98f3cc05961064e2e577b023d9c4aa485546cacba84efaf48b7d6b1e282dc211fd959ee16cbd31d34476d96daea43
   languageName: node
   linkType: hard
 
-"winston@npm:^3.11.0":
-  version: 3.11.0
-  resolution: "winston@npm:3.11.0"
+"winston@npm:^3.13.0":
+  version: 3.13.0
+  resolution: "winston@npm:3.13.0"
   dependencies:
     "@colors/colors": "npm:^1.6.0"
     "@dabh/diagnostics": "npm:^2.0.2"
@@ -11684,8 +11677,8 @@ __metadata:
     safe-stable-stringify: "npm:^2.3.1"
     stack-trace: "npm:0.0.x"
     triple-beam: "npm:^1.3.0"
-    winston-transport: "npm:^4.5.0"
-  checksum: 10/8b456bdfbf336898c5a7ca83b5c312fe46f32830c759e231f950378c28a0ddd0780e64ceaf6ea76e0366fb1500b49b9fee80d1045e41efc3b03b51ad31eeb307
+    winston-transport: "npm:^4.7.0"
+  checksum: 10/436675598359af27e4eabde2ce578cf77da893ffd57d0479f037fef939e8eb721031f0102b14399eee93b3412b545946c431d1fff23db3beeac2ffa395537f7b
   languageName: node
   linkType: hard
 
