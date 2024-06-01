@@ -9,7 +9,6 @@ import {
 import * as winston from 'winston';
 import DailyRotateFile from 'winston-daily-rotate-file';
 
-import { PrismaService } from './infra/prisma/prisma.service';
 import { AppModule } from './app.module';
 
 function getWinstonFormat(isConsole: boolean): winston.Logform.Format {
@@ -68,10 +67,9 @@ async function bootstrap(): Promise<void> {
   app.useGlobalPipes(
     new ValidationPipe({ whitelist: true, forbidUnknownValues: false }),
   );
-  const prismaService = app.get(PrismaService);
-  const configService = app.get(ConfigService);
-  await prismaService.enableShutdownHooks(app);
+  app.enableShutdownHooks();
   app.enableCors();
+  const configService = app.get(ConfigService);
   await app.listen(configService.get('PORT') ?? 3001);
 }
 

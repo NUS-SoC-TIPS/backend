@@ -1,9 +1,4 @@
-import {
-  INestApplication,
-  Injectable,
-  Logger,
-  OnModuleInit,
-} from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 
 import { DataService } from '../data/data.service';
 
@@ -41,12 +36,6 @@ export class PrismaService
     await this.seedLeetCode();
     await this.seedKattis();
     this.logger.log('All data seeded', PrismaService.name);
-  }
-
-  async enableShutdownHooks(app: INestApplication): Promise<void> {
-    this.$on('beforeExit', async () => {
-      await app.close();
-    });
   }
 
   // Sequencing matters here!
