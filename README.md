@@ -28,13 +28,14 @@ This project requires Docker and Docker Compose to be installed for the database
    yarn install && yarn husky install
    ```
 
-1. Make a copy of the default `.env` file, name it `.env.development` and fill it up:
+1. Make a copy of the default `.env.template` file, name it `.env.development` and fill it up:
 
    ```sh
-   cp .env .env.development
+   cp .env.template .env.development
    ```
 
    ```sh
+   NODE_ENV="development"
    DATABASE_URL="postgresql://postgres:123@localhost:5433/tips?schema=public"
    JWT_SECRET="some_secret_here"
    PORT=3001
@@ -43,6 +44,9 @@ This project requires Docker and Docker Compose to be installed for the database
    FIREBASE_PRIVATE_KEY=
    AGORA_APP_ID=
    AGORA_APP_CERTIFICATE=
+   JUDGE0_KEY=
+   JUDGE0_HOST=
+   JUDGE0_CALLBACK_URL=
    ```
 
 1. Setup the database by running:

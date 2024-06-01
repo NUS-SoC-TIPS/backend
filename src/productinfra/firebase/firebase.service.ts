@@ -17,15 +17,24 @@ export class FirebaseService implements OnModuleInit {
       );
       return;
     }
-    firebase.initializeApp({
-      credential: firebase.credential.cert({
-        projectId: this.configService.get('FIREBASE_PROJECT_ID'),
-        clientEmail: this.configService.get('FIREBASE_CLIENT_EMAIL'),
-        privateKey: this.configService
-          .get('FIREBASE_PRIVATE_KEY')
-          ?.replace(/\\n/g, '\n'),
-      }),
-    });
+    try {
+      firebase.initializeApp({
+        credential: firebase.credential.cert({
+          projectId: this.configService.get('FIREBASE_PROJECT_ID'),
+          clientEmail: this.configService.get('FIREBASE_CLIENT_EMAIL'),
+          privateKey: this.configService
+            .get('FIREBASE_PRIVATE_KEY')
+            ?.replace(/\\n/g, '\n'),
+        }),
+      });
+    } catch (e) {
+      this.logger.error(
+        'Failed to initialize app. It is likely due to some NodeJS process-level caching. Try to restart this on a new process.',
+        e instanceof Error ? e.stack : undefined,
+        FirebaseService.name,
+      );
+      throw e;
+    }
   }
 
   verifyToken(token: string): Promise<string> {
