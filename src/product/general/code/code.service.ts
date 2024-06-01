@@ -112,7 +112,6 @@ export class CodeService {
         e instanceof Error ? e.stack : undefined,
         CodeService.name,
       );
-      doc.emit('error', [e]);
     }
   }
 
