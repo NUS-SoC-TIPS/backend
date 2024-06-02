@@ -30,7 +30,7 @@
     "test:src": "dotenv -e .env.test -- jest --runInBand --detectOpenHandles",
     "test:e2e": "dotenv -e .env.test -- jest --config ./test/jest-e2e.json --runInBand --detectOpenHandles",
     "postinstall": "husky && yarn run patch",
-    "patch": "patch -p1 -N -i patches/*.patch || rimraf .yarn/**/*.rej"
+    "patch": "patch -p1 -N -i patches/*.patch || rimraf .yarn/**/*.rej || true"
   },
   "dependencies": {
     "@nestjs/common": "^10.3.8",
