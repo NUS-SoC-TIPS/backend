@@ -317,27 +317,44 @@ enum Language {
   ELIXIR
   DART
 
-  // For LeetCode Database questions
+  // For LeetCode Database + Pandas questions
   MY_SQL
   MS_SQL_SERVER
   ORACLE
+  PANDAS
+  POSTGRESQL
 
   // For LeetCode Shell questions
   BASH
 
   // For Kattis questions
+  ADA
+  ALGOL_68
   APL
   COBOL
   LISP
+  CRYSTAL
+  D
   F_SHARP
   FORTRAN
   GERBIL
   HASKELL
   JULIA
+  LUA
+  MODULA_2
+  NIM
   OBJECTIVE_C
   OCAML
+  OCTAVE
+  ODIN
   PASCAL
+  PERL
   PROLOG
+  SIMULA_67
+  SMALLTALK
+  SNOBOL
+  VISUAL_BASIC
+  ZIG
 
   @@map("language")
 }
@@ -357,6 +374,7 @@ enum QuestionType {
   JAVASCRIPT
   SHELL
   CONCURRENCY
+  PANDAS
 
   @@map("question_type")
 }
