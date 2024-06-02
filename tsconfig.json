@@ -3,5 +3,12 @@
   "compilerOptions": {
     "allowJs": true
   },
-  "include": ["src", "test", ".prettierrc.js"]
+  "include": [
+    "src",
+    "test",
+    ".prettierrc.js",
+    "commitlint.config.js",
+    "ecosystem.config.js",
+    "eslint.config.mjs"
+  ]
 }

@@ -20,7 +20,7 @@ Also, due to the usage of Yarn Berry and the latest ESLint Flag Config, you will
 1. Clone this repository:
 
    ```sh
-   git clone https://github.com/CodeToGather/TIPS-Backend.git
+   git clone git@github.com:NUS-SoC-TIPS/backend.git
    ```
 
 1. Navigate to the project root and install the dependencies:

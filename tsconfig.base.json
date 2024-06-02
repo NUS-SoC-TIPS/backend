@@ -19,6 +19,6 @@
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": true,
     "noUncheckedIndexedAccess": true,
-    "resolveJsonModule": true,
+    "resolveJsonModule": true
   }
 }
