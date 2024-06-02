@@ -173,7 +173,7 @@ export class Judge0Service {
       if (!Array.isArray(response.data) || response.data.length !== 1) {
         return null;
       }
-      return response.data[0].token;
+      return response.data[0]?.token ?? null;
     } catch (e) {
       this.logger.error(
         'Failed to create batched submission',
@@ -197,14 +197,14 @@ export class Judge0Service {
   }
 
   private async refreshLanguagesIfNecessary(): Promise<void> {
-    if (this.prismaLanguageToJudge0Language.size === 0) {
-      return this.refreshLanguages();
-    }
     const keys = Array(...this.prismaLanguageToJudge0Language.keys());
     // They will all have the same lastUpdated, so we'll just check any one
-    const lastUpdated = this.prismaLanguageToJudge0Language.get(
-      keys[0],
-    )?.lastUpdated;
+    const keyToCheck = keys[0];
+    if (keyToCheck == null) {
+      return this.refreshLanguages();
+    }
+    const lastUpdated =
+      this.prismaLanguageToJudge0Language.get(keyToCheck)?.lastUpdated;
     if (lastUpdated && Date.now() - lastUpdated > VERSION_UPDATE_INTERVAL_MS) {
       return this.refreshLanguages();
     }

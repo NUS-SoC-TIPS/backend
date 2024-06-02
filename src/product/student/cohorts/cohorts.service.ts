@@ -56,12 +56,16 @@ export class CohortsService {
     cohorts.sort((a, b) => {
       if (a.windows.length === 0 && b.windows.length === 0) {
         return b.createdAt.getTime() - a.createdAt.getTime();
-      } else if (a.windows.length === 0) {
+      }
+      const aWindow = a.windows[0];
+      if (aWindow == null) {
         return 1; // Sort a to the back
-      } else if (b.windows.length === 0) {
+      }
+      const bWindow = b.windows[0];
+      if (bWindow == null) {
         return -1; // Sort b to the back
       }
-      return b.windows[0].startAt.getTime() - a.windows[0].startAt.getTime();
+      return bWindow.startAt.getTime() - aWindow.startAt.getTime();
     });
 
     const now = new Date();

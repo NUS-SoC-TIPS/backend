@@ -62,6 +62,11 @@ export class WindowsService {
     const studentIdToPartnerMap = new Map<number, Student & { user: User }>();
     window.pairings.forEach((pairing) => {
       const [studentOne, studentTwo] = pairing.pairingStudents;
+      if (studentOne == null || studentTwo == null) {
+        throw new Error(
+          `Invalid pairing ${pairing.id} found for window ${window.id}`,
+        );
+      }
       studentIdToPartnerMap.set(studentOne.studentId, studentTwo.student);
       studentIdToPartnerMap.set(studentTwo.studentId, studentOne.student);
     });
@@ -208,7 +213,11 @@ export class WindowsService {
       if (i + 1 >= validStudents.length) {
         break;
       }
-      studentPairs.push([validStudents[i], validStudents[i + 1]]);
+      const pair = [validStudents[i], validStudents[i + 1]] as [
+        Student,
+        Student,
+      ];
+      studentPairs.push(pair);
     }
     return Promise.all(
       studentPairs.map((studentPair) =>

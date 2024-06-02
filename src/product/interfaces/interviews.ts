@@ -45,7 +45,10 @@ export const makeInterviewBase = (
 ): InterviewBase => {
   const partnerUser = roomRecord.roomRecordUsers.filter(
     (roomRecordUser) => roomRecordUser.userId !== userId,
-  )[0].user;
+  )[0]?.user;
+  if (partnerUser == null) {
+    throw new Error('Partner cannot be found');
+  }
   return {
     id: roomRecord.id,
     partner: makeUserBase(partnerUser),
@@ -98,11 +101,14 @@ export const makeInterviewItem = (
   },
   userId: string,
 ): InterviewItem => {
+  if (roomRecord.room.closedAt == null) {
+    throw new Error('Room is not closed');
+  }
   const partnerRoomRecordUser = roomRecord.roomRecordUsers.filter(
     (roomRecordUser) => roomRecordUser.userId !== userId,
   )[0];
-  if (roomRecord.room.closedAt == null) {
-    throw new Error('Room is not closed');
+  if (partnerRoomRecordUser == null) {
+    throw new Error('Partner cannot be found');
   }
   return {
     completedAt: roomRecord.room.closedAt,
