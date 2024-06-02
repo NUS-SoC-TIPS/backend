@@ -83,6 +83,7 @@ const RAW_RUNTIME_STATE =
           ["lib0", "npm:0.2.94"],\
           ["lint-staged", "npm:15.2.5"],\
           ["markdownlint-cli", "npm:0.41.0"],\
+          ["mime-lite", "npm:1.0.3"],\
           ["nest-winston", "virtual:ddc83d4ef0c92f6c674e3f379a200087374f66d827378f57a7ee4bc60b5eca6cb251490a34955b05d669fb45dc9e38ee9c99f009fecec0ea2b4fd3cc6877ad7b#npm:1.10.0"],\
           ["pactum", "npm:3.7.0"],\
           ["passport", "npm:0.7.0"],\
@@ -13329,6 +13330,7 @@ const RAW_RUNTIME_STATE =
           ["lib0", "npm:0.2.94"],\
           ["lint-staged", "npm:15.2.5"],\
           ["markdownlint-cli", "npm:0.41.0"],\
+          ["mime-lite", "npm:1.0.3"],\
           ["nest-winston", "virtual:ddc83d4ef0c92f6c674e3f379a200087374f66d827378f57a7ee4bc60b5eca6cb251490a34955b05d669fb45dc9e38ee9c99f009fecec0ea2b4fd3cc6877ad7b#npm:1.10.0"],\
           ["pactum", "npm:3.7.0"],\
           ["passport", "npm:0.7.0"],\

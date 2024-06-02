@@ -10857,6 +10857,7 @@ __metadata:
     lib0: "npm:^0.2.94"
     lint-staged: "npm:^15.2.5"
     markdownlint-cli: "npm:^0.41.0"
+    mime-lite: "npm:^1.0.3"
     nest-winston: "npm:^1.10.0"
     pactum: "npm:^3.7.0"
     passport: "npm:^0.7.0"

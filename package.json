@@ -103,6 +103,7 @@
     "jest-mock": "^29.7.0",
     "lint-staged": "^15.2.5",
     "markdownlint-cli": "^0.41.0",
+    "mime-lite": "^1.0.3",
     "pactum": "^3.7.0",
     "prettier": "^3.3.0",
     "prettier-plugin-prisma": "^5.0.0",
