@@ -15,6 +15,8 @@ TIPS is built to support the technical interview preparation for NUS SoC student
 
 This project requires Docker and Docker Compose to be installed for the database. We will be using the `docker-compose` family of commands.
 
+Also, due to the usage of Yarn Berry and the latest ESLint Flag Config, you will need VSCode Insider in order to have IDE support for ESLint. This will be the case until [https://github.com/yarnpkg/berry/issues/6219] is fixed.
+
 1. Clone this repository:
 
    ```sh
