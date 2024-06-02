@@ -8,7 +8,6 @@ import {
   UserRole,
   Window,
 } from '../../../infra/prisma/generated';
-import { ITXClientDenyList } from '../../../infra/prisma/generated/runtime';
 import { TRANSACTION_OPTIONS } from '../../../infra/prisma/prisma.constants';
 import { PrismaService } from '../../../infra/prisma/prisma.service';
 import {
@@ -31,7 +30,10 @@ import {
   UpdateWindowDto,
 } from './dtos';
 
-type Transaction = Omit<PrismaClient, ITXClientDenyList>;
+type Transaction = Omit<
+  PrismaClient,
+  '$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'
+>;
 
 @Injectable()
 export class CohortsAdminService {
