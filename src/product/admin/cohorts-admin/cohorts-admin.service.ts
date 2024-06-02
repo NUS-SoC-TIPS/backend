@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 
 import { DateService } from '../../../infra/date/date.service';
 import {
-  PrismaClient,
+  Prisma,
   Student,
   StudentResult,
   UserRole,
@@ -29,11 +29,6 @@ import {
   UpdateCohortDto,
   UpdateWindowDto,
 } from './dtos';
-
-type Transaction = Omit<
-  PrismaClient,
-  '$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'
->;
 
 @Injectable()
 export class CohortsAdminService {
@@ -277,7 +272,7 @@ export class CohortsAdminService {
   }
 
   private async matchForNewStudent(
-    tx: Transaction,
+    tx: Prisma.TransactionClient,
     student: Student,
     windows: Window[],
   ): Promise<void> {
@@ -292,7 +287,10 @@ export class CohortsAdminService {
     return this.matchForStudentResults(tx, studentResults);
   }
 
-  private async matchForWindow(tx: Transaction, window: Window): Promise<void> {
+  private async matchForWindow(
+    tx: Prisma.TransactionClient,
+    window: Window,
+  ): Promise<void> {
     const students = await tx.student.findMany({
       where: { cohortId: window.cohortId },
     });
@@ -312,7 +310,7 @@ export class CohortsAdminService {
   }
 
   private async matchForStudentResults(
-    tx: Transaction,
+    tx: Prisma.TransactionClient,
     studentResults: (StudentResult & { window: Window; student: Student })[],
   ): Promise<void> {
     await Promise.all(
@@ -351,7 +349,7 @@ export class CohortsAdminService {
   }
 
   private async unmatchForWindow(
-    tx: Transaction,
+    tx: Prisma.TransactionClient,
     window: Window,
   ): Promise<void> {
     const studentResults = await tx.studentResult.findMany({
@@ -374,7 +372,7 @@ export class CohortsAdminService {
   }
 
   private async isValidWindow(
-    tx: Transaction,
+    tx: Prisma.TransactionClient,
     cohortId: number,
     windowId: number | null,
     startAt: Date,
