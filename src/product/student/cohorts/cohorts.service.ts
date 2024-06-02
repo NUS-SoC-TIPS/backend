@@ -180,6 +180,7 @@ export class CohortsService {
     return {
       name: cohort.name,
       coursemologyUrl: cohort.coursemologyUrl,
+      email: cohort.email,
       windows,
     };
   }
@@ -245,6 +246,7 @@ export class CohortsService {
     return {
       name: cohort.name,
       coursemologyUrl: cohort.coursemologyUrl,
+      email: cohort.email,
       windows,
     };
   }

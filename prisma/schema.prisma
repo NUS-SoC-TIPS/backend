@@ -123,6 +123,7 @@ model Cohort {
   updatedAt       DateTime  @updatedAt @map("updated_at")
   name            String    @unique
   coursemologyUrl String    @unique @map("coursemology_url")
+  email           String
   windows         Window[]
   students        Student[]
 

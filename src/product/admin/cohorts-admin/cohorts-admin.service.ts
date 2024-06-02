@@ -50,6 +50,7 @@ export class CohortsAdminService {
       id: cohort.id,
       name: cohort.name,
       coursemologyUrl: cohort.coursemologyUrl,
+      email: cohort.email,
       windows: cohort.windows.map(makeWindowBase),
       students: cohort.students.map((student) => ({
         ...makeStudentBaseWithId(student),
@@ -65,6 +66,7 @@ export class CohortsAdminService {
         data: {
           name: dto.name,
           coursemologyUrl: dto.coursemologyUrl,
+          email: dto.email,
         },
       })
       .then((result) => ({ id: result.id }));
@@ -80,11 +82,13 @@ export class CohortsAdminService {
         data: {
           name: dto.name.trim(),
           coursemologyUrl: dto.coursemologyUrl.trim(),
+          email: dto.email.trim(),
         },
       })
       .then((result) => ({
         name: result.name,
         coursemologyUrl: result.coursemologyUrl,
+        email: result.email,
       }));
   }
 
