@@ -20,6 +20,5 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedIndexedAccess": true,
     "resolveJsonModule": true,
-    "allowJs": true,
   }
 }
