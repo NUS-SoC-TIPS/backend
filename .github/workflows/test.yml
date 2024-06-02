@@ -52,4 +52,5 @@ jobs:
       - name: Run tests
         run: |
           yarn install
+          yarn post-install
           yarn test:ci

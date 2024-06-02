@@ -30,7 +30,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-yarn-
       - name: Install dependencies
-        # Runs the installations sequentially because GitHub Actions cannot handle the load of parallelism
-        run: yarn install
+        run: yarn install && yarn post-install
       - name: Lint files
         run: yarn lint
