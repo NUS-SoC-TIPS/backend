@@ -25,7 +25,7 @@ This project requires Docker and Docker Compose to be installed for the database
 
    ```sh
    cd TIPS-Backend
-   yarn install && yarn husky install
+   yarn install && yarn postinstall
    ```
 
 1. Make a copy of the default `.env.template` file, name it `.env.development` and fill it up:

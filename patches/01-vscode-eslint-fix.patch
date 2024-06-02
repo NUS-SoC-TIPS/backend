@@ -1,0 +1,376 @@
+diff --git a/.pnp.loader.mjs b/.pnp.loader.mjs
+index 6815830..0d28791 100644
+--- a/.pnp.loader.mjs
++++ b/.pnp.loader.mjs
+@@ -6,7 +6,7 @@ import { URL as URL$1, fileURLToPath, pathToFileURL } from 'url';
+ import path from 'path';
+ import { createHash } from 'crypto';
+ import { EOL } from 'os';
+-import moduleExports, { isBuiltin } from 'module';
++import esmModule, { createRequire, isBuiltin } from 'module';
+ import assert from 'assert';
+ 
+ const SAFE_TIME = 456789e3;
+@@ -1975,6 +1975,13 @@ function packageImportsResolve({ name, base, conditions, readFileSyncFn }) {
+   throwImportNotDefined(name, packageJSONUrl, base);
+ }
+ 
++let findPnpApi = esmModule.findPnpApi;
++if (!findPnpApi) {
++  const require = createRequire(import.meta.url);
++  const pnpApi = require(`./.pnp.cjs`);
++  pnpApi.setup();
++  findPnpApi = esmModule.findPnpApi;
++}
+ const pathRegExp = /^(?![a-zA-Z]:[\\/]|\\\\|\.{0,2}(?:\/|$))((?:node:)?(?:@[^/]+\/)?[^/]+)\/*(.*|)$/;
+ const isRelativeRegexp = /^\.{0,2}\//;
+ function tryReadFile(filePath) {
+@@ -2002,7 +2009,6 @@ async function resolvePrivateRequest(specifier, issuer, context, nextResolve) {
+   }
+ }
+ async function resolve$1(originalSpecifier, context, nextResolve) {
+-  const { findPnpApi } = moduleExports;
+   if (!findPnpApi || isBuiltin(originalSpecifier))
+     return nextResolve(originalSpecifier, context, nextResolve);
+   let specifier = originalSpecifier;
+diff --git a/.yarn/sdks/eslint/bin/eslint.js b/.yarn/sdks/eslint/bin/eslint.js
+index 9ef98e4..42eab99 100755
+--- a/.yarn/sdks/eslint/bin/eslint.js
++++ b/.yarn/sdks/eslint/bin/eslint.js
+@@ -1,18 +1,25 @@
+ #!/usr/bin/env node
+ 
+ const {existsSync} = require(`fs`);
+-const {createRequire} = require(`module`);
++const {createRequire, register} = require(`module`);
+ const {resolve} = require(`path`);
++const {pathToFileURL} = require(`url`);
+ 
+ const relPnpApiPath = "../../../../.pnp.cjs";
+ 
+ const absPnpApiPath = resolve(__dirname, relPnpApiPath);
+ const absRequire = createRequire(absPnpApiPath);
+ 
++const absPnpLoaderPath = resolve(absPnpApiPath, `../.pnp.loader.mjs`);
++const isPnpLoaderEnabled = existsSync(absPnpLoaderPath);
++
+ if (existsSync(absPnpApiPath)) {
+   if (!process.versions.pnp) {
+     // Setup the environment to be able to require eslint/bin/eslint.js
+     require(absPnpApiPath).setup();
++    if (isPnpLoaderEnabled && register) {
++      register(pathToFileURL(absPnpLoaderPath));
++    }
+   }
+ }
+ 
+diff --git a/.yarn/sdks/eslint/lib/api.js b/.yarn/sdks/eslint/lib/api.js
+index 653b22b..ea2b46a 100644
+--- a/.yarn/sdks/eslint/lib/api.js
++++ b/.yarn/sdks/eslint/lib/api.js
+@@ -1,18 +1,25 @@
+ #!/usr/bin/env node
+ 
+ const {existsSync} = require(`fs`);
+-const {createRequire} = require(`module`);
++const {createRequire, register} = require(`module`);
+ const {resolve} = require(`path`);
++const {pathToFileURL} = require(`url`);
+ 
+ const relPnpApiPath = "../../../../.pnp.cjs";
+ 
+ const absPnpApiPath = resolve(__dirname, relPnpApiPath);
+ const absRequire = createRequire(absPnpApiPath);
+ 
++const absPnpLoaderPath = resolve(absPnpApiPath, `../.pnp.loader.mjs`);
++const isPnpLoaderEnabled = existsSync(absPnpLoaderPath);
++
+ if (existsSync(absPnpApiPath)) {
+   if (!process.versions.pnp) {
+     // Setup the environment to be able to require eslint
+     require(absPnpApiPath).setup();
++    if (isPnpLoaderEnabled && register) {
++      register(pathToFileURL(absPnpLoaderPath));
++    }
+   }
+ }
+ 
+diff --git a/.yarn/sdks/eslint/lib/unsupported-api.js b/.yarn/sdks/eslint/lib/unsupported-api.js
+index 30fdf15..f5f8e24 100644
+--- a/.yarn/sdks/eslint/lib/unsupported-api.js
++++ b/.yarn/sdks/eslint/lib/unsupported-api.js
+@@ -1,18 +1,25 @@
+ #!/usr/bin/env node
+ 
+ const {existsSync} = require(`fs`);
+-const {createRequire} = require(`module`);
++const {createRequire, register} = require(`module`);
+ const {resolve} = require(`path`);
++const {pathToFileURL} = require(`url`);
+ 
+ const relPnpApiPath = "../../../../.pnp.cjs";
+ 
+ const absPnpApiPath = resolve(__dirname, relPnpApiPath);
+ const absRequire = createRequire(absPnpApiPath);
+ 
++const absPnpLoaderPath = resolve(absPnpApiPath, `../.pnp.loader.mjs`);
++const isPnpLoaderEnabled = existsSync(absPnpLoaderPath);
++
+ if (existsSync(absPnpApiPath)) {
+   if (!process.versions.pnp) {
+     // Setup the environment to be able to require eslint/use-at-your-own-risk
+     require(absPnpApiPath).setup();
++    if (isPnpLoaderEnabled && register) {
++      register(pathToFileURL(absPnpLoaderPath));
++    }
+   }
+ }
+ 
+diff --git a/.yarn/sdks/prettier/bin/prettier.cjs b/.yarn/sdks/prettier/bin/prettier.cjs
+index 5efad68..00f1f7f 100755
+--- a/.yarn/sdks/prettier/bin/prettier.cjs
++++ b/.yarn/sdks/prettier/bin/prettier.cjs
+@@ -1,18 +1,25 @@
+ #!/usr/bin/env node
+ 
+ const {existsSync} = require(`fs`);
+-const {createRequire} = require(`module`);
++const {createRequire, register} = require(`module`);
+ const {resolve} = require(`path`);
++const {pathToFileURL} = require(`url`);
+ 
+ const relPnpApiPath = "../../../../.pnp.cjs";
+ 
+ const absPnpApiPath = resolve(__dirname, relPnpApiPath);
+ const absRequire = createRequire(absPnpApiPath);
+ 
++const absPnpLoaderPath = resolve(absPnpApiPath, `../.pnp.loader.mjs`);
++const isPnpLoaderEnabled = existsSync(absPnpLoaderPath);
++
+ if (existsSync(absPnpApiPath)) {
+   if (!process.versions.pnp) {
+     // Setup the environment to be able to require prettier/bin/prettier.cjs
+     require(absPnpApiPath).setup();
++    if (isPnpLoaderEnabled && register) {
++      register(pathToFileURL(absPnpLoaderPath));
++    }
+   }
+ }
+ 
+diff --git a/.yarn/sdks/prettier/index.cjs b/.yarn/sdks/prettier/index.cjs
+index 8758e36..7c4a68c 100644
+--- a/.yarn/sdks/prettier/index.cjs
++++ b/.yarn/sdks/prettier/index.cjs
+@@ -1,18 +1,25 @@
+ #!/usr/bin/env node
+ 
+ const {existsSync} = require(`fs`);
+-const {createRequire} = require(`module`);
++const {createRequire, register} = require(`module`);
+ const {resolve} = require(`path`);
++const {pathToFileURL} = require(`url`);
+ 
+ const relPnpApiPath = "../../../.pnp.cjs";
+ 
+ const absPnpApiPath = resolve(__dirname, relPnpApiPath);
+ const absRequire = createRequire(absPnpApiPath);
+ 
++const absPnpLoaderPath = resolve(absPnpApiPath, `.pnp.loader.mjs`);
++const isPnpLoaderEnabled = existsSync(absPnpLoaderPath);
++
+ if (existsSync(absPnpApiPath)) {
+   if (!process.versions.pnp) {
+     // Setup the environment to be able to require prettier
+     require(absPnpApiPath).setup();
++    if (isPnpLoaderEnabled && register) {
++      register(pathToFileURL(absPnpLoaderPath));
++    }
+   }
+ }
+ 
+diff --git a/.yarn/sdks/typescript/bin/tsc b/.yarn/sdks/typescript/bin/tsc
+index 454b950..a6bb0e2 100755
+--- a/.yarn/sdks/typescript/bin/tsc
++++ b/.yarn/sdks/typescript/bin/tsc
+@@ -1,18 +1,25 @@
+ #!/usr/bin/env node
+ 
+ const {existsSync} = require(`fs`);
+-const {createRequire} = require(`module`);
++const {createRequire, register} = require(`module`);
+ const {resolve} = require(`path`);
++const {pathToFileURL} = require(`url`);
+ 
+ const relPnpApiPath = "../../../../.pnp.cjs";
+ 
+ const absPnpApiPath = resolve(__dirname, relPnpApiPath);
+ const absRequire = createRequire(absPnpApiPath);
+ 
++const absPnpLoaderPath = resolve(absPnpApiPath, `../.pnp.loader.mjs`);
++const isPnpLoaderEnabled = existsSync(absPnpLoaderPath);
++
+ if (existsSync(absPnpApiPath)) {
+   if (!process.versions.pnp) {
+     // Setup the environment to be able to require typescript/bin/tsc
+     require(absPnpApiPath).setup();
++    if (isPnpLoaderEnabled && register) {
++      register(pathToFileURL(absPnpLoaderPath));
++    }
+   }
+ }
+ 
+diff --git a/.yarn/sdks/typescript/bin/tsserver b/.yarn/sdks/typescript/bin/tsserver
+index d7a6056..957bed2 100755
+--- a/.yarn/sdks/typescript/bin/tsserver
++++ b/.yarn/sdks/typescript/bin/tsserver
+@@ -1,18 +1,25 @@
+ #!/usr/bin/env node
+ 
+ const {existsSync} = require(`fs`);
+-const {createRequire} = require(`module`);
++const {createRequire, register} = require(`module`);
+ const {resolve} = require(`path`);
++const {pathToFileURL} = require(`url`);
+ 
+ const relPnpApiPath = "../../../../.pnp.cjs";
+ 
+ const absPnpApiPath = resolve(__dirname, relPnpApiPath);
+ const absRequire = createRequire(absPnpApiPath);
+ 
++const absPnpLoaderPath = resolve(absPnpApiPath, `../.pnp.loader.mjs`);
++const isPnpLoaderEnabled = existsSync(absPnpLoaderPath);
++
+ if (existsSync(absPnpApiPath)) {
+   if (!process.versions.pnp) {
+     // Setup the environment to be able to require typescript/bin/tsserver
+     require(absPnpApiPath).setup();
++    if (isPnpLoaderEnabled && register) {
++      register(pathToFileURL(absPnpLoaderPath));
++    }
+   }
+ }
+ 
+diff --git a/.yarn/sdks/typescript/lib/tsc.js b/.yarn/sdks/typescript/lib/tsc.js
+index 2f62fc9..a262a77 100644
+--- a/.yarn/sdks/typescript/lib/tsc.js
++++ b/.yarn/sdks/typescript/lib/tsc.js
+@@ -1,18 +1,25 @@
+ #!/usr/bin/env node
+ 
+ const {existsSync} = require(`fs`);
+-const {createRequire} = require(`module`);
++const {createRequire, register} = require(`module`);
+ const {resolve} = require(`path`);
++const {pathToFileURL} = require(`url`);
+ 
+ const relPnpApiPath = "../../../../.pnp.cjs";
+ 
+ const absPnpApiPath = resolve(__dirname, relPnpApiPath);
+ const absRequire = createRequire(absPnpApiPath);
+ 
++const absPnpLoaderPath = resolve(absPnpApiPath, `../.pnp.loader.mjs`);
++const isPnpLoaderEnabled = existsSync(absPnpLoaderPath);
++
+ if (existsSync(absPnpApiPath)) {
+   if (!process.versions.pnp) {
+     // Setup the environment to be able to require typescript/lib/tsc.js
+     require(absPnpApiPath).setup();
++    if (isPnpLoaderEnabled && register) {
++      register(pathToFileURL(absPnpLoaderPath));
++    }
+   }
+ }
+ 
+diff --git a/.yarn/sdks/typescript/lib/tsserver.js b/.yarn/sdks/typescript/lib/tsserver.js
+index ed80075..1dae54c 100644
+--- a/.yarn/sdks/typescript/lib/tsserver.js
++++ b/.yarn/sdks/typescript/lib/tsserver.js
+@@ -1,18 +1,25 @@
+ #!/usr/bin/env node
+ 
+ const {existsSync} = require(`fs`);
+-const {createRequire} = require(`module`);
++const {createRequire, register} = require(`module`);
+ const {resolve} = require(`path`);
++const {pathToFileURL} = require(`url`);
+ 
+ const relPnpApiPath = "../../../../.pnp.cjs";
+ 
+ const absPnpApiPath = resolve(__dirname, relPnpApiPath);
+ const absRequire = createRequire(absPnpApiPath);
+ 
++const absPnpLoaderPath = resolve(absPnpApiPath, `../.pnp.loader.mjs`);
++const isPnpLoaderEnabled = existsSync(absPnpLoaderPath);
++
+ if (existsSync(absPnpApiPath)) {
+   if (!process.versions.pnp) {
+     // Setup the environment to be able to require typescript/lib/tsserver.js
+     require(absPnpApiPath).setup();
++    if (isPnpLoaderEnabled && register) {
++      register(pathToFileURL(absPnpLoaderPath));
++    }
+   }
+ }
+ 
+diff --git a/.yarn/sdks/typescript/lib/tsserverlibrary.js b/.yarn/sdks/typescript/lib/tsserverlibrary.js
+index 4d99766..7f9d7f9 100644
+--- a/.yarn/sdks/typescript/lib/tsserverlibrary.js
++++ b/.yarn/sdks/typescript/lib/tsserverlibrary.js
+@@ -1,18 +1,25 @@
+ #!/usr/bin/env node
+ 
+ const {existsSync} = require(`fs`);
+-const {createRequire} = require(`module`);
++const {createRequire, register} = require(`module`);
+ const {resolve} = require(`path`);
++const {pathToFileURL} = require(`url`);
+ 
+ const relPnpApiPath = "../../../../.pnp.cjs";
+ 
+ const absPnpApiPath = resolve(__dirname, relPnpApiPath);
+ const absRequire = createRequire(absPnpApiPath);
+ 
++const absPnpLoaderPath = resolve(absPnpApiPath, `../.pnp.loader.mjs`);
++const isPnpLoaderEnabled = existsSync(absPnpLoaderPath);
++
+ if (existsSync(absPnpApiPath)) {
+   if (!process.versions.pnp) {
+     // Setup the environment to be able to require typescript/lib/tsserverlibrary.js
+     require(absPnpApiPath).setup();
++    if (isPnpLoaderEnabled && register) {
++      register(pathToFileURL(absPnpLoaderPath));
++    }
+   }
+ }
+ 
+diff --git a/.yarn/sdks/typescript/lib/typescript.js b/.yarn/sdks/typescript/lib/typescript.js
+index b5f4db2..317b60b 100644
+--- a/.yarn/sdks/typescript/lib/typescript.js
++++ b/.yarn/sdks/typescript/lib/typescript.js
+@@ -1,18 +1,25 @@
+ #!/usr/bin/env node
+ 
+ const {existsSync} = require(`fs`);
+-const {createRequire} = require(`module`);
++const {createRequire, register} = require(`module`);
+ const {resolve} = require(`path`);
++const {pathToFileURL} = require(`url`);
+ 
+ const relPnpApiPath = "../../../../.pnp.cjs";
+ 
+ const absPnpApiPath = resolve(__dirname, relPnpApiPath);
+ const absRequire = createRequire(absPnpApiPath);
+ 
++const absPnpLoaderPath = resolve(absPnpApiPath, `../.pnp.loader.mjs`);
++const isPnpLoaderEnabled = existsSync(absPnpLoaderPath);
++
+ if (existsSync(absPnpApiPath)) {
+   if (!process.versions.pnp) {
+     // Setup the environment to be able to require typescript
+     require(absPnpApiPath).setup();
++    if (isPnpLoaderEnabled && register) {
++      register(pathToFileURL(absPnpLoaderPath));
++    }
+   }
+ }
+ 

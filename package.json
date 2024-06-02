@@ -20,8 +20,8 @@
     "db:test:restart": "yarn db:test:rm && yarn db:test:up && sleep 1 && yarn prisma:test:setup",
     "commit": "git-cz",
     "build": "rimraf dist && yarn pnpify prisma generate && nest build",
-    "start": "dotenv -e .env.development -- nest start",
-    "start:dev": "dotenv -e .env.development -- nest start --debug --watch",
+    "start": "rimraf dist && dotenv -e .env.development -- nest start",
+    "start:dev": "rimraf dist && dotenv -e .env.development -- nest start --debug --watch",
     "start:prod": "dotenv -e .env.production -- node dist/main",
     "lint": "prettier --check \"src/**/*.ts\" \"test/**/*.ts\" && eslint \"{src,apps,libs,test}/**/*.ts\"",
     "lint:fix": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\" && eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
@@ -29,7 +29,8 @@
     "test:ci": "yarn prisma:test:setup && yarn test:src",
     "test:src": "dotenv -e .env.test -- jest --runInBand --detectOpenHandles",
     "test:e2e": "dotenv -e .env.test -- jest --config ./test/jest-e2e.json --runInBand --detectOpenHandles",
-    "postinstall": "husky"
+    "postinstall": "husky && yarn run patch",
+    "patch": "patch -p1 -N -i patches/*.patch || rimraf .yarn/**/*.rej"
   },
   "dependencies": {
     "@nestjs/common": "^10.3.8",
