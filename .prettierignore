@@ -1,7 +1,5 @@
-node_modules
 dist
 build
-jest.config.js
-coverage
-__snapshots__
 src/infra/prisma/generated/*
+.yarn
+.pnp.*

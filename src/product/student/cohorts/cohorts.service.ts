@@ -69,7 +69,7 @@ export class CohortsService {
       const { id, name, windows, exclusion } = cohort;
       const startAt = windows[0]?.startAt ?? null;
       const endAt = windows[windows.length - 1]?.endAt ?? null;
-      let status;
+      let status: CohortListItem['status'];
       if (exclusion != null) {
         status = 'FAILED';
       } else if (startAt == null || endAt == null || now < startAt) {
@@ -153,9 +153,12 @@ export class CohortsService {
 
         const pairingForThisWindow = pairingStudents.filter(
           (pairingStudent) => pairingStudent.pairing.windowId === window.id,
-        )?.[0]?.pairing;
+        )[0]?.pairing;
+        // Incorrect lint, without this disable it flags out all optional chaining after the first one
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         const partnerStudent = pairingForThisWindow?.pairingStudents?.filter(
           (pairingStudent) => pairingStudent.id !== student.id,
+          // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         )?.[0]?.student;
 
         return {

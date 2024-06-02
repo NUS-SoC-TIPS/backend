@@ -73,7 +73,7 @@ export class RoomsService {
 
   async closeRoom(entity: CreateRecordData, isAuto: boolean): Promise<void> {
     const { roomRecordUsers, ...recordData } = entity;
-    const [roomRecord, _] = await this.prismaService.$transaction([
+    const [roomRecord] = await this.prismaService.$transaction([
       this.prismaService.roomRecord.create({
         data: {
           ...recordData,

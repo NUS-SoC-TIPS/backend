@@ -85,19 +85,23 @@ export class RoomsGateway implements OnGatewayDisconnect, OnModuleDestroy {
       });
       return;
     }
-    if (
-      this.roomIdToSockets.get(room.id)?.filter((s) => s.user?.id === user.id)
-        ?.length ??
-      0 > 0
-    ) {
+
+    const userSocketsInRoom = this.roomIdToSockets
+      .get(room.id)
+      ?.filter((s) => s.user?.id === user.id);
+    if ((userSocketsInRoom?.length ?? 0) > 0) {
+      // This means that the user is already in this room, just using another browser tab.
       socket.emit(ROOM_EVENTS.IN_ANOTHER_TAB);
       return;
     }
 
     // Update relevant data
-    this.addSocketToRoomStructures(socket, room);
+    await this.addSocketToRoomStructures(socket, room);
     // This is the final point of failure. Subsequently, no following steps should throw an error.
-    this.roomsService.createRoomUser({ roomId: room.id, userId: user.id });
+    await this.roomsService.createRoomUser({
+      roomId: room.id,
+      userId: user.id,
+    });
     socket.broadcast
       .to(`${room.id}`)
       // TODO: Consider adding other properties if e.g. UI is redesigned
@@ -130,7 +134,7 @@ export class RoomsGateway implements OnGatewayDisconnect, OnModuleDestroy {
   @SubscribeMessage(ROOM_EVENTS.CLOSE_ROOM)
   closeRoom(@GetRoom() room: Room): Promise<void> {
     this.logger.log(ROOM_EVENTS.CLOSE_ROOM, RoomsGateway.name);
-    return this.closeRoomHelper(room, false).catch((e) => {
+    return this.closeRoomHelper(room, false).catch((e: unknown) => {
       this.logger.error(
         `Failed to close room with ID: ${room.id}`,
         e instanceof Error ? e.stack : undefined,
@@ -140,7 +144,7 @@ export class RoomsGateway implements OnGatewayDisconnect, OnModuleDestroy {
     });
   }
 
-  handleDisconnect(@ConnectedSocket() socket: ISocket): void {
+  async handleDisconnect(@ConnectedSocket() socket: ISocket): Promise<void> {
     if (!socket.room) {
       return;
     }
@@ -149,18 +153,18 @@ export class RoomsGateway implements OnGatewayDisconnect, OnModuleDestroy {
       RoomsGateway.name,
     );
     const { room } = socket;
-    this.removeSocketFromRoomStructures(socket, room);
+    await this.removeSocketFromRoomStructures(socket, room);
     this.codeService.leaveDoc(room.id, socket);
     this.server.to(`${room.id}`).emit(ROOM_EVENTS.PARTNER_DISCONNECTED);
   }
 
-  onModuleDestroy(): Promise<void[]> {
+  onModuleDestroy(): Promise<unknown[]> {
     this.logger.log('Destroying module...', RoomsGateway.name);
     return Promise.all(
       [...this.roomIdToSockets.keys()].map((roomId) =>
         this.roomsService.findRoomById(roomId).then((room) => {
           if (room) {
-            return this.closeRoomHelper(room, true).catch((e) => {
+            return this.closeRoomHelper(room, true).catch((e: unknown) => {
               // We will consume the error here. It'll be a best effort attempt at closing room.
               this.logger.error(
                 `Failed to close room with ID: ${roomId} during shutdown`,
@@ -195,12 +199,15 @@ export class RoomsGateway implements OnGatewayDisconnect, OnModuleDestroy {
     this.server.to(`${room.id}`).emit(ROOM_EVENTS.CLOSE_ROOM);
     this.codeService.closeRoom(room);
     this.notesService.closeRoom(room.id);
-    this.removeRoomFromRoomStructures(room.id);
+    await this.removeRoomFromRoomStructures(room.id);
   }
 
   // This method needs to take in Room instead of just id, because we need
   // to link it to the socket.
-  private addSocketToRoomStructures(socket: ISocket, room: Room): void {
+  private async addSocketToRoomStructures(
+    socket: ISocket,
+    room: Room,
+  ): Promise<void> {
     let sockets = this.roomIdToSockets.get(room.id);
     if (sockets == null) {
       sockets = [];
@@ -208,11 +215,14 @@ export class RoomsGateway implements OnGatewayDisconnect, OnModuleDestroy {
     }
     sockets.push(socket);
     this.clearRoomTimeout(room.id);
-    socket.join(`${room.id}`);
+    await socket.join(`${room.id}`);
     socket.room = room;
   }
 
-  private removeSocketFromRoomStructures(socket: ISocket, room: Room): void {
+  private async removeSocketFromRoomStructures(
+    socket: ISocket,
+    room: Room,
+  ): Promise<void> {
     const sockets = this.roomIdToSockets.get(room.id);
     if (sockets == null) {
       this.logger.error(
@@ -225,13 +235,13 @@ export class RoomsGateway implements OnGatewayDisconnect, OnModuleDestroy {
     const updatedSockets = sockets.filter((s) => s.id !== socket.id);
     this.roomIdToSockets.set(room.id, updatedSockets);
     socket.room = undefined;
-    socket.leave(`${room.id}`);
+    await socket.leave(`${room.id}`);
 
     // If there's nobody left in the room, we set it to autoclose in ROOM_AUTOCLOSE_DURATION
     if (updatedSockets.length === 0) {
       this.clearRoomTimeout(room.id);
       const timeout = setTimeout(() => {
-        this.closeRoomHelper(room, true).catch((e) => {
+        this.closeRoomHelper(room, true).catch((e: unknown) => {
           // We will consume the error here. No real harm if auto-close fails.
           this.logger.error(
             'Failed to autoclose room',
@@ -244,7 +254,7 @@ export class RoomsGateway implements OnGatewayDisconnect, OnModuleDestroy {
     }
   }
 
-  private removeRoomFromRoomStructures(roomId: number): void {
+  private async removeRoomFromRoomStructures(roomId: number): Promise<void> {
     const sockets = this.roomIdToSockets.get(roomId);
     if (sockets == null) {
       // This shouldn't occur, since an exception should already have occurred when trying to
@@ -257,10 +267,12 @@ export class RoomsGateway implements OnGatewayDisconnect, OnModuleDestroy {
       );
       return;
     }
-    sockets.forEach((s) => {
-      s.room = undefined;
-      s.leave(`${roomId}`);
-    });
+    await Promise.all(
+      sockets.map(async (s) => {
+        s.room = undefined;
+        await s.leave(`${roomId}`);
+      }),
+    );
     this.roomIdToSockets.delete(roomId);
     this.clearRoomTimeout(roomId);
   }

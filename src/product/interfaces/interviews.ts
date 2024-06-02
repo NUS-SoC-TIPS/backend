@@ -70,9 +70,12 @@ export const makeInterviewListItem = (
   },
   userId: string,
 ): InterviewListItem => {
+  if (roomRecord.room.closedAt == null) {
+    throw new Error('Room is not closed');
+  }
   return {
     ...makeInterviewBase(roomRecord, userId),
-    completedAt: roomRecord.room.closedAt!,
+    completedAt: roomRecord.room.closedAt,
     duration: roomRecord.duration,
     language: roomRecord.language,
   };
@@ -98,8 +101,11 @@ export const makeInterviewItem = (
   const partnerRoomRecordUser = roomRecord.roomRecordUsers.filter(
     (roomRecordUser) => roomRecordUser.userId !== userId,
   )[0];
+  if (roomRecord.room.closedAt == null) {
+    throw new Error('Room is not closed');
+  }
   return {
-    completedAt: roomRecord.room.closedAt!,
+    completedAt: roomRecord.room.closedAt,
     partner: {
       name: partnerRoomRecordUser.user.name,
       notes: partnerRoomRecordUser.notes,

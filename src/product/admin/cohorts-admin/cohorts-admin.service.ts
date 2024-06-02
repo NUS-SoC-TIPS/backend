@@ -1,5 +1,4 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { ITXClientDenyList } from 'src/infra/prisma/generated/runtime';
 
 import { DateService } from '../../../infra/date/date.service';
 import {
@@ -9,6 +8,7 @@ import {
   UserRole,
   Window,
 } from '../../../infra/prisma/generated';
+import { ITXClientDenyList } from '../../../infra/prisma/generated/runtime';
 import { TRANSACTION_OPTIONS } from '../../../infra/prisma/prisma.constants';
 import { PrismaService } from '../../../infra/prisma/prisma.service';
 import {
@@ -98,7 +98,14 @@ export class CohortsAdminService {
     const startAt = this.dateService.findStartOfDay(dto.startAt);
     const endAt = this.dateService.findEndOfDay(dto.endAt);
     return this.prismaService.$transaction(async (tx) => {
-      if (!this.isValidWindow(tx, cohortId, null, startAt, endAt)) {
+      const isValidWindow = await this.isValidWindow(
+        tx,
+        cohortId,
+        null,
+        startAt,
+        endAt,
+      );
+      if (!isValidWindow) {
         throw new Error('Invalid window!');
       }
       const window = await tx.window.create({
@@ -116,7 +123,14 @@ export class CohortsAdminService {
     const startAt = this.dateService.findStartOfDay(dto.startAt);
     const endAt = this.dateService.findEndOfDay(dto.endAt);
     return this.prismaService.$transaction(async (tx) => {
-      if (!this.isValidWindow(tx, cohortId, dto.id, startAt, endAt)) {
+      const isValidWindow = await this.isValidWindow(
+        tx,
+        cohortId,
+        dto.id,
+        startAt,
+        endAt,
+      );
+      if (!isValidWindow) {
         throw new Error('Invalid window!');
       }
       const existingWindow = await tx.window.findUniqueOrThrow({
@@ -242,7 +256,7 @@ export class CohortsAdminService {
             .then(() => {
               success.push(makeStudentBase({ ...student, user: matchedUser }));
             })
-            .catch((e) => {
+            .catch((e: unknown) => {
               this.logger.error(
                 'Error occurred while creating student',
                 e instanceof Error ? e.stack : undefined,

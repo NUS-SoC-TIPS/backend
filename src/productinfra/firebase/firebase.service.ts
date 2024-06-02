@@ -9,8 +9,8 @@ export class FirebaseService implements OnModuleInit {
     private readonly configService: ConfigService,
   ) {}
 
-  async onModuleInit(): Promise<void> {
-    if (this.configService.get('NODE_ENV') === 'test') {
+  onModuleInit(): void {
+    if (this.configService.get<string>('NODE_ENV') === 'test') {
       this.logger.warn(
         'Firebase is not initializing due to being in test environment',
         FirebaseService.name,
@@ -20,10 +20,10 @@ export class FirebaseService implements OnModuleInit {
     try {
       firebase.initializeApp({
         credential: firebase.credential.cert({
-          projectId: this.configService.get('FIREBASE_PROJECT_ID'),
-          clientEmail: this.configService.get('FIREBASE_CLIENT_EMAIL'),
+          projectId: this.configService.get<string>('FIREBASE_PROJECT_ID'),
+          clientEmail: this.configService.get<string>('FIREBASE_CLIENT_EMAIL'),
           privateKey: this.configService
-            .get('FIREBASE_PRIVATE_KEY')
+            .get<string>('FIREBASE_PRIVATE_KEY')
             ?.replace(/\\n/g, '\n'),
         }),
       });
@@ -42,7 +42,7 @@ export class FirebaseService implements OnModuleInit {
       .auth()
       .verifyIdToken(token)
       .then((decodedToken) => decodedToken.uid)
-      .catch((e) => {
+      .catch((e: unknown) => {
         this.logger.error(
           'Failed to verify token',
           e instanceof Error ? e.stack : undefined,

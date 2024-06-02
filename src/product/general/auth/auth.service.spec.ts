@@ -7,7 +7,7 @@ import { FirebaseService } from '../../../productinfra/firebase/firebase.service
 import { mocker } from '../../../utils';
 import { UsersService } from '../users/users.service';
 
-import { AuthService } from './auth.service';
+import { AuthService, AuthServicePayload } from './auth.service';
 import { AuthDto } from './dtos';
 
 describe('AuthService', () => {
@@ -136,7 +136,7 @@ describe('AuthService', () => {
 
     it('should return a token', async () => {
       const token = await service.login(authDto);
-      const result = await jwt.verifyAsync(token, {
+      const result = await jwt.verifyAsync<AuthServicePayload>(token, {
         secret: 'secret',
       });
       expect(result).toMatchObject({ sub: '1' });

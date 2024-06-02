@@ -3,6 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import { generateSlug } from 'random-word-slugs';
 
 import { PrismaService } from '../infra/prisma/prisma.service';
+import { AuthServicePayload } from '../product/general/auth/auth.service';
 
 @Injectable()
 export class DevService {
@@ -28,8 +29,8 @@ export class DevService {
 
   // Duplicate of AuthService's method of the same name
   private signToken(userId: string): Promise<string> {
-    const payload = { sub: userId };
-    return this.jwt.signAsync(payload).catch((e) => {
+    const payload: AuthServicePayload = { sub: userId };
+    return this.jwt.signAsync(payload).catch((e: unknown) => {
       this.logger.error(
         'JWT token async signing failed',
         e instanceof Error ? e.stack : undefined,

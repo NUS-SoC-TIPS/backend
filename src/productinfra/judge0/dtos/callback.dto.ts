@@ -40,16 +40,28 @@ export class CallbackDto {
   @ValidateIf((_, value) => value !== null)
   message: string | null;
 
-  @Transform((params) =>
-    params.value !== null ? parseFloat(params.value) : null,
-  )
+  @Transform((params) => {
+    if (typeof params.value === 'number') {
+      return params.value;
+    }
+    if (typeof params.value !== 'string') {
+      return null;
+    }
+    return parseFloat(params.value);
+  })
   @IsNumber()
   @ValidateIf((_, value) => value !== null)
   time: number | null;
 
-  @Transform((params) =>
-    params.value !== null ? parseFloat(params.value) : null,
-  )
+  @Transform((params) => {
+    if (typeof params.value === 'number') {
+      return params.value;
+    }
+    if (typeof params.value !== 'string') {
+      return null;
+    }
+    return parseFloat(params.value);
+  })
   @IsNumber()
   @ValidateIf((_, value) => value !== null)
   memory: number | null;

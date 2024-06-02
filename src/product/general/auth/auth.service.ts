@@ -8,6 +8,11 @@ import { FirebaseService } from '../../../productinfra/firebase/firebase.service
 import { UpsertUserData } from './auth.interfaces';
 import { AuthDto } from './dtos';
 
+// Exposed for testing
+export interface AuthServicePayload {
+  sub: string;
+}
+
 @Injectable()
 export class AuthService {
   constructor(
@@ -27,20 +32,22 @@ export class AuthService {
   }
 
   async authenticate(token: string): Promise<User | null> {
-    const payload = await this.jwtService.verifyAsync(token).catch((e) => {
-      this.logger.error(
-        'Failed to verify token async',
-        e instanceof Error ? e.stack : undefined,
-        AuthService.name,
-      );
-      throw new Error('Invalid token');
-    });
+    const payload = await this.jwtService
+      .verifyAsync<AuthServicePayload>(token)
+      .catch((e: unknown) => {
+        this.logger.error(
+          'Failed to verify token async',
+          e instanceof Error ? e.stack : undefined,
+          AuthService.name,
+        );
+        throw new Error('Invalid token');
+      });
     return this.prismaService.user.findUnique({ where: { id: payload.sub } });
   }
 
   private signToken(userId: string): Promise<string> {
-    const payload = { sub: userId };
-    return this.jwtService.signAsync(payload).catch((e) => {
+    const payload: AuthServicePayload = { sub: userId };
+    return this.jwtService.signAsync(payload).catch((e: unknown) => {
       this.logger.error(
         'JWT token async signing failed',
         e instanceof Error ? e.stack : undefined,

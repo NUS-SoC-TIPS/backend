@@ -4,7 +4,6 @@ import helmet from 'helmet';
 import * as pactum from 'pactum';
 
 import { AppModule } from '../src/app.module';
-import appConfig from '../src/infra/data/jsons/config.json';
 import { User } from '../src/infra/prisma/generated';
 import { PrismaService } from '../src/infra/prisma/prisma.service';
 import { createUserAndLogin } from '../src/utils';
@@ -25,7 +24,6 @@ describe('Application (e2e)', () => {
     app.use(helmet());
     app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
     prisma = app.get(PrismaService);
-    await prisma.enableShutdownHooks(app);
     await app.init();
     await app.listen(3333);
     await prisma.cleanDb();
@@ -49,11 +47,7 @@ describe('Application (e2e)', () => {
           Authorization: `Bearer ${token}`,
         })
         .expectStatus(200)
-        .expectBody(
-          JSON.parse(
-            JSON.stringify({ ...user, settings: null, config: appConfig }),
-          ),
-        );
+        .expectBody(JSON.parse(JSON.stringify({ ...user, settings: null })));
     });
 
     it('should throw an error if user tries to get self without JWT', () => {

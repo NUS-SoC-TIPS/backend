@@ -23,11 +23,15 @@ export class PrismaService
       ],
     });
     // this.$on('query', (e) => this.logger.debug(e, PrismaService.name));
-    this.$on('info', (e) => this.logger.log(e, PrismaService.name));
-    this.$on('warn', (e) => this.logger.warn(e, PrismaService.name));
-    this.$on('error', (e) =>
-      this.logger.error(e, undefined, PrismaService.name),
-    );
+    this.$on('info', (e) => {
+      this.logger.log(e, PrismaService.name);
+    });
+    this.$on('warn', (e) => {
+      this.logger.warn(e, PrismaService.name);
+    });
+    this.$on('error', (e) => {
+      this.logger.error(e, undefined, PrismaService.name);
+    });
   }
 
   async onModuleInit(): Promise<void> {

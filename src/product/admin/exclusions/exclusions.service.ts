@@ -19,10 +19,6 @@ export class ExclusionsService {
       where: { id: dto.studentId },
       include: { exclusion: { include: { window: true } } },
     });
-    if (!student) {
-      throw new Error('Student does not exist');
-    }
-
     const existingExclusion = student.exclusion;
     if (
       existingExclusion &&

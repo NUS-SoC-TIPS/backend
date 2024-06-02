@@ -17,13 +17,13 @@ export class DataService {
 
   constructor() {
     this.adminData = adminsJson;
-    this.leetCodeData = leetCodeJson.map((l) => ({
+    this.leetCodeData = leetCodeJson.map((l: QuestionData[number]) => ({
       ...l,
       difficulty: QuestionDifficulty[l.difficulty],
       type: QuestionType[l.type],
       source: QuestionSource.LEETCODE,
     }));
-    this.kattisData = kattisJson.map((k) => ({
+    this.kattisData = kattisJson.map((k: QuestionData[number]) => ({
       ...k,
       difficulty: QuestionDifficulty[k.difficulty],
       type: QuestionType[k.type],

@@ -33,11 +33,13 @@ export class AuthGateway implements OnGatewayConnection {
   ): Promise<void> {
     this.logger.log(AUTH_EVENTS.AUTHENTICATE, AuthGateway.name);
 
-    const user = await this.authService.authenticate(token).catch((e) => {
-      if (e instanceof Error) {
-        throw new WsException(e.message);
-      }
-    });
+    const user = await this.authService
+      .authenticate(token)
+      .catch((e: unknown) => {
+        if (e instanceof Error) {
+          throw new WsException(e.message);
+        }
+      });
     if (!user) {
       this.logger.error(
         'No user found with given token',

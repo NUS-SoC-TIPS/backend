@@ -110,6 +110,8 @@ export class InterviewsService {
   }
 
   async findCurrentRoom(userId: string): Promise<string | null> {
+    // Incorrect lint, without this disable it flags out all optional chaining after the first one
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     return (await this.findCurrentRoomUser(userId))?.room?.slug ?? null;
   }
 
@@ -124,6 +126,8 @@ export class InterviewsService {
       });
     return {
       numInterviewsThisWindowOrWeek:
+        // Incorrect lint, without this disable it flags out all optional chaining after the first one
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         studentResultWithInterviewCount?._count?.roomRecordUsers ?? 0,
       isInterviewRequired: window.requireInterview,
       startOfWindowOrWeek: window.startAt,
@@ -171,8 +175,11 @@ export class InterviewsService {
         pairingStudents: { include: { student: { include: { user: true } } } },
       },
     });
+    // Incorrect lint, without this disable it flags out all optional chaining after the first one
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     const partnerStudent = pairing?.pairingStudents?.filter(
       (pairingStudent) => pairingStudent.studentId !== studentId,
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     )?.[0]?.student;
     return partnerStudent != null ? makeStudentBase(partnerStudent) : null;
   }

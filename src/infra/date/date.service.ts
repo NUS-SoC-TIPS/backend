@@ -11,7 +11,7 @@ import 'dayjs/locale/en-sg';
 export class DateService implements OnModuleInit {
   constructor(private readonly logger: Logger) {}
 
-  async onModuleInit(): Promise<void> {
+  onModuleInit(): void {
     // Configure dayjs globally
     dayjs.locale('en-sg');
     dayjs.extend(utc);

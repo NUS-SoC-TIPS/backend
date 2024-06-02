@@ -1,5 +1,4 @@
-import { INestApplication, InjectionToken } from '@nestjs/common';
-import { CanActivate } from '@nestjs/common';
+import { CanActivate, INestApplication, InjectionToken } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Mock, MockFunctionMetadata, ModuleMocker } from 'jest-mock';
 

@@ -13,8 +13,10 @@ export class AgoraService {
 
   generateAccessToken(roomId: number, userId: string): string | null {
     this.logger.debug('Generating Agora access token...', AgoraService.name);
-    const agoraAppId = this.configService.get('AGORA_APP_ID');
-    const agoraAppCertificate = this.configService.get('AGORA_APP_CERTIFICATE');
+    const agoraAppId = this.configService.get<string>('AGORA_APP_ID');
+    const agoraAppCertificate = this.configService.get<string>(
+      'AGORA_APP_CERTIFICATE',
+    );
     if (agoraAppId == null || agoraAppCertificate == null) {
       this.logger.error(
         'Agora app ID or certificate not defined, failed to generate access token.',

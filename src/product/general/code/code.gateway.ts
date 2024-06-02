@@ -61,7 +61,7 @@ export class CodeGateway implements OnModuleDestroy {
   @UseGuards(AuthWsGuard, InRoomGuard)
   @SubscribeMessage(CODE_EVENTS.UPDATE_YJS)
   updateYjs(
-    @MessageBody() data: any,
+    @MessageBody() data: Uint8Array,
     @ConnectedSocket() socket: ISocket,
     @GetRoom('id') roomId: number,
   ): void {
@@ -103,7 +103,7 @@ export class CodeGateway implements OnModuleDestroy {
     this.server.to(`${room.id}`).emit(CODE_EVENTS.EXECUTE_CODE);
 
     // If we're in development, we want to skip the use of webhooks, so we'll execute the code synchronously
-    if (this.configService.get('NODE_ENV') === 'development') {
+    if (this.configService.get<string>('NODE_ENV') === 'development') {
       const result = await this.codeService.executeCodeSync(room);
       if (result == null) {
         this.server
@@ -157,9 +157,9 @@ export class CodeGateway implements OnModuleDestroy {
 
   onModuleDestroy(): void {
     this.logger.log('Destroying module...', CodeGateway.name);
-    [...this.roomIdToCodeExecutionTimeouts.keys()].map((roomId) =>
-      this.clearRoomTimeout(roomId),
-    );
+    [...this.roomIdToCodeExecutionTimeouts.keys()].map((roomId) => {
+      this.clearRoomTimeout(roomId);
+    });
   }
 
   private cancelExecution(roomId: number): void {

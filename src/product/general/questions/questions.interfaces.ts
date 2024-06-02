@@ -10,10 +10,8 @@ export interface QuestionStatsProgress {
   isWindow: boolean;
 }
 
-export type QuestionStatsLanguageBreakdown = {
-  // Keys are values of the Language enum
-  [language: string]: string;
-};
+// Keys are values of the Language enum
+export type QuestionStatsLanguageBreakdown = Record<string, string>;
 
 export interface QuestionStats {
   progress: QuestionStatsProgress;

@@ -18,7 +18,7 @@ function getWinstonFormat(isConsole: boolean): winston.Logform.Format {
     nestWinstonModuleUtilities.format.nestLike('tips-backend', {
       colors: isConsole,
       prettyPrint: isConsole,
-    }),
+    }) as winston.Logform.Format,
   );
 }
 
@@ -70,7 +70,7 @@ async function bootstrap(): Promise<void> {
   app.enableShutdownHooks();
   app.enableCors();
   const configService = app.get(ConfigService);
-  await app.listen(configService.get('PORT') ?? 3001);
+  await app.listen(configService.get<number>('PORT') ?? 3001);
 }
 
-bootstrap();
+void bootstrap();

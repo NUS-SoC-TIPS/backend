@@ -142,7 +142,7 @@ export class QuestionsService {
     if (ongoingWindow != null) {
       const student = await this.prismaService.student.findUnique({
         where: {
-          userId_cohortId: { userId, cohortId: ongoingWindow?.cohortId },
+          userId_cohortId: { userId, cohortId: ongoingWindow.cohortId },
         },
       });
       if (student != null) {
@@ -163,6 +163,8 @@ export class QuestionsService {
       });
     return {
       numSubmissionsThisWindowOrWeek:
+        // Incorrect lint, without this disable it flags out all optional chaining after the first one
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         studentResultWithSubmissionCount?._count?.questionSubmissions ?? 0,
       numSubmissionsRequired: window.numQuestions,
       startOfWindowOrWeek: window.startAt,

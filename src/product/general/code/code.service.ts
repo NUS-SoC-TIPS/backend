@@ -71,7 +71,7 @@ export class CodeService {
   updateDoc(
     roomId: number,
     socket: ISocket,
-    data: any,
+    data: Uint8Array,
   ): Uint8Array | undefined {
     const doc = this.roomToDoc.get(roomId);
     if (doc == null) {
@@ -117,6 +117,8 @@ export class CodeService {
 
   leaveDoc(roomId: number, socket: ISocket): void {
     const doc = this.roomToDoc.get(roomId);
+    // Incorrect lint, without this disable it flags out all optional chaining after the first one
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     const controlledIds = doc?.connections?.get(socket);
     if (doc == null || controlledIds == null) {
       this.logger.warn(
@@ -228,7 +230,7 @@ export class CodeService {
     return this.judge0Service.interpretResults(dto);
   }
 
-  getExecutableLanguages(): Promise<{ [language: string]: string }> {
+  getExecutableLanguages(): Promise<Record<string, string>> {
     return this.judge0Service.getExecutableLanguages();
   }
 }

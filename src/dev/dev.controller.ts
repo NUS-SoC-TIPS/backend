@@ -22,7 +22,7 @@ export class DevController {
   @Post('login')
   @UseFilters(BadRequestExceptionFilter)
   async login(): Promise<{ token: string }> {
-    if (this.configService.get('NODE_ENV') !== 'development') {
+    if (this.configService.get<string>('NODE_ENV') !== 'development') {
       throw new NotFoundException();
     }
     this.logger.log('POST /dev/login', DevController.name);

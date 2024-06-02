@@ -27,9 +27,11 @@ export class Judge0Service {
     private readonly logger: Logger,
     private readonly configService: ConfigService,
   ) {
-    this.judge0Key = this.configService.get('JUDGE0_KEY');
-    this.judge0Host = this.configService.get('JUDGE0_HOST');
-    this.judge0CallbackUrl = this.configService.get('JUDGE0_CALLBACK_URL');
+    this.judge0Key = this.configService.get<string>('JUDGE0_KEY');
+    this.judge0Host = this.configService.get<string>('JUDGE0_HOST');
+    this.judge0CallbackUrl = this.configService.get<string>(
+      'JUDGE0_CALLBACK_URL',
+    );
     this.prismaLanguageToJudge0Language = new Map();
   }
 
@@ -89,7 +91,7 @@ export class Judge0Service {
 
   // Returns a map of language to Judge0 language name
   // TODO: Compute and cache it until it gets refreshed.
-  async getExecutableLanguages(): Promise<{ [language: string]: string }> {
+  async getExecutableLanguages(): Promise<Record<string, string>> {
     await this.refreshLanguagesIfNecessary();
     const languages = {};
     [...this.prismaLanguageToJudge0Language.entries()].forEach(
@@ -137,7 +139,7 @@ export class Judge0Service {
     submission: Judge0Submission,
   ): Promise<string | null> {
     try {
-      const response = await axios.post(
+      const response = await axios.post<{ token: string }>(
         `https://${this.judge0Host}/submissions`,
         submission,
         {
@@ -160,7 +162,7 @@ export class Judge0Service {
     submission: Judge0Submission,
   ): Promise<string | null> {
     try {
-      const response = await axios.post(
+      const response = await axios.post<{ token: string }[]>(
         `https://${this.judge0Host}/submissions/batch`,
         { submissions: [submission] },
         {
@@ -200,8 +202,9 @@ export class Judge0Service {
     }
     const keys = Array(...this.prismaLanguageToJudge0Language.keys());
     // They will all have the same lastUpdated, so we'll just check any one
-    const lastUpdated = this.prismaLanguageToJudge0Language.get(keys[0])
-      ?.lastUpdated;
+    const lastUpdated = this.prismaLanguageToJudge0Language.get(
+      keys[0],
+    )?.lastUpdated;
     if (lastUpdated && Date.now() - lastUpdated > VERSION_UPDATE_INTERVAL_MS) {
       return this.refreshLanguages();
     }
@@ -245,12 +248,14 @@ export class Judge0Service {
   //    number.
   private matchPrismaLanguageToJudge0Language(
     data: { id: number; name: string }[],
-  ): { [language: string]: { id: number; name: string } } {
+  ): Record<string, { id: number; name: string }> {
     const languages = Object.values(Language);
     const matchings = {};
 
     languages.forEach((language) => {
-      const prefix = PRISMA_LANGUAGE_TO_JUDGE0_NAME_PREFIX[language];
+      const prefix = PRISMA_LANGUAGE_TO_JUDGE0_NAME_PREFIX[language] as
+        | string
+        | undefined;
       if (prefix == null) {
         return;
       }
