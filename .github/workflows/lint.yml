@@ -30,6 +30,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-yarn-
       - name: Install dependencies
-        run: yarn install && yarn post-install
+        run: yarn install && yarn postinstall
       - name: Lint files
         run: yarn lint
