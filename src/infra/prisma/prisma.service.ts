@@ -93,14 +93,28 @@ export class PrismaService
     this.logger.log('Admins seeded', PrismaService.name);
   }
 
+  /**
+   * It turns out that LeetCode often updates the names and slugs of their questions.
+   * As such, we will check if an ID-based update is needed first.
+   */
   private seedLeetCode(): Promise<Question[]> {
+    const leetCodeData = this.dataService.getLeetCodeData();
     return Promise.all(
-      this.dataService.getLeetCodeData().map((question) => {
-        const { slug, source, ...questionData } = question;
-        return this.question.upsert({
-          create: { ...question },
-          update: { ...questionData },
-          where: { slug_source: { slug, source } },
+      leetCodeData.map(async (question) => {
+        const { id, source, slug, ...questionData } = question;
+        const existingQuestion = await this.question.findUnique({
+          where: { id_source: { id, source } },
+        });
+        if (!existingQuestion || existingQuestion.slug === slug) {
+          return this.question.upsert({
+            create: { ...question },
+            update: { ...questionData, id },
+            where: { slug_source: { slug, source } },
+          });
+        }
+        return this.question.update({
+          where: { id_source: { id, source } },
+          data: { ...questionData, slug },
         });
       }),
     ).then((result) => {
