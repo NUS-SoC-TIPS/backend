@@ -2,7 +2,13 @@ import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 
 import { DataService } from '../data/data.service';
 
-import { Prisma, PrismaClient, Question, UserRole } from './generated';
+import {
+  Prisma,
+  PrismaClient,
+  Question,
+  QuestionSource,
+  UserRole,
+} from './generated';
 
 @Injectable()
 export class PrismaService
@@ -118,14 +124,34 @@ export class PrismaService
         });
       }),
     ).then((result) => {
-      this.logger.log('LeetCode questions seeded', PrismaService.name);
+      this.logger.log(
+        `${result.length} LeetCode questions seeded`,
+        PrismaService.name,
+      );
       return result;
     });
   }
 
-  private seedKattis(): Promise<Question[]> {
-    return Promise.all(
-      this.dataService.getKattisData().map((question) => {
+  /**
+   * For Kattis, the IDs are actually arbitrary. But as we have a constraint
+   * on (source, ID), we will sidestep this by first bumping up all existing IDs,
+   * doing an upsert, then cleaning up on the remaining high IDs.
+   */
+  private async seedKattis(): Promise<Question[]> {
+    const kattisData = this.dataService.getKattisData();
+    const numKattisQuestions = await this.question.count({
+      where: { source: QuestionSource.KATTIS },
+    });
+    // If we assume the worst case, which is that none of the new questions
+    // overlap with existing ones, then we need to free up
+    // (kattisData.length + numKattieQuestions) IDs
+    await this.question.updateMany({
+      data: { id: { increment: kattisData.length + numKattisQuestions } },
+      where: { source: QuestionSource.KATTIS },
+    });
+    // Now do an upsert. Many of the high IDs would be "reduced" here.
+    const newlyAddedQuestions = await Promise.all(
+      kattisData.map((question) => {
         const { slug, source, ...questionData } = question;
         return this.question.upsert({
           create: { ...question },
@@ -133,9 +159,30 @@ export class PrismaService
           where: { slug_source: { slug, source } },
         });
       }),
-    ).then((result) => {
-      this.logger.log('Kattis questions seeded', PrismaService.name);
-      return result;
+    );
+    // But for the remaining ones, we'll append them to the end.
+    const remainingQuestions = await this.question.findMany({
+      where: { id: { gt: kattisData.length + numKattisQuestions } },
+      orderBy: { id: 'asc' },
     });
+    const updatedRemainingQuestions = await Promise.all(
+      remainingQuestions.map((question, index) => {
+        return this.question.update({
+          where: {
+            slug_source: { slug: question.slug, source: question.source },
+          },
+          data: { id: newlyAddedQuestions.length + index + 1 },
+        });
+      }),
+    );
+    const finalQuestions = [
+      ...newlyAddedQuestions,
+      ...updatedRemainingQuestions,
+    ];
+    this.logger.log(
+      `${finalQuestions.length} Kattis questions seeded`,
+      PrismaService.name,
+    );
+    return finalQuestions;
   }
 }
