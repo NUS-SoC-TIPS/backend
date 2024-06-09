@@ -1,4 +1,4 @@
-import { ExcuseFrom,ExcuseStatus } from 'src/infra/prisma/generated';
+import { ExcuseFrom, ExcuseStatus } from 'src/infra/prisma/generated';
 
 import { UserBase } from './users';
 import { WindowBase } from './windows';
