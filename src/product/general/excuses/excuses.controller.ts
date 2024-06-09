@@ -68,10 +68,13 @@ export class ExcusesController {
 
   @Post('/create')
   @UseFilters(BadRequestExceptionFilter)
-  createExcuse(@Body() dto: CreateExcuseDto): Promise<number> {
+  createExcuse(
+    @Body() dto: CreateExcuseDto,
+    @GetUserRest() user: User,
+  ): Promise<number> {
     this.logger.log('POST /excuses/create', ExcusesController.name);
 
-    return this.excusesService.createExcuse(dto);
+    return this.excusesService.createExcuse(dto, user);
   }
 
   @Put(':id')

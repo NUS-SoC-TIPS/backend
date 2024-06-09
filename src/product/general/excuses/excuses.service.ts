@@ -49,9 +49,18 @@ export class ExcusesService {
     return excuses.map((excuse) => makeExcuseBase(excuse));
   }
 
-  async createExcuse(excuse: CreateExcuseDto): Promise<number> {
+  async createExcuse(excuse: CreateExcuseDto, user: User): Promise<number> {
+    const student = await this.prismaService.student.findFirst({
+      where: { userId: user.id },
+    });
+
+    if (!student) {
+      throw new Error('Student not found');
+    }
+
     const createExcuseData = {
       ...excuse,
+      studentId: student.id,
       excuseStatus: ExcuseStatus.PENDING,
     };
 

@@ -14,8 +14,4 @@ export class CreateExcuseDto {
   @IsNumber()
   @IsNotEmpty()
   windowId: number;
-
-  @IsNumber()
-  @IsNotEmpty()
-  studentId: number;
 }
