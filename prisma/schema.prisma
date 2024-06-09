@@ -143,6 +143,7 @@ model Student {
   results                StudentResult[]
   exclusion              Exclusion?
   pairingStudents        PairingStudent[]
+  excuses                Excuse[]
 
   @@unique([userId, cohortId])
   @@map("students")
@@ -161,8 +162,22 @@ model Window {
   studentResults   StudentResult[]
   exclusions       Exclusion[]
   pairings         Pairing[]
+  Excuse           Excuse[]
 
   @@map("windows")
+}
+
+model Excuse {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  studentId Int      @map("student_id")
+  windowId  Int      @map("window_id")
+  reason    String
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  window    Window   @relation(fields: [windowId], references: [id], onDelete: Cascade)
+
+  @@map("excuses")
 }
 
 // Tracks the student's work done for each window
