@@ -50,18 +50,27 @@ export class ExcusesService {
   }
 
   async createExcuse(excuse: CreateExcuseDto, user: User): Promise<number> {
-    const student = await this.prismaService.student.findFirst({
-      where: { userId: user.id },
-    });
+    const [student, window] = await Promise.all([
+      this.prismaService.student.findFirst({
+        where: { userId: user.id },
+      }),
+      this.prismaService.window.findUnique({
+        where: { id: excuse.windowId },
+      }),
+    ]);
 
-    if (!student) {
-      throw new Error('Student not found');
+    if (!student || !window) {
+      throw new Error('Student or Window not found');
+    }
+
+    if (window.endAt < new Date()) {
+      throw new Error('End date must be greater than current date');
     }
 
     const createExcuseData = {
       ...excuse,
       studentId: student.id,
-      excuseStatus: ExcuseStatus.PENDING,
+      status: ExcuseStatus.PENDING,
     };
 
     const createdExcuse = await this.prismaService.excuse.create({
@@ -79,9 +88,25 @@ export class ExcusesService {
     id: number,
     excuse: Partial<UpdateExcuseDto>,
   ): Promise<number> {
+    const existingExcuse = await this.prismaService.excuse.findUnique({
+      where: { id },
+    });
+
+    if (!existingExcuse) {
+      throw new Error('Excuse not found');
+    }
+
+    const window = await this.prismaService.window.findUnique({
+      where: { id: existingExcuse.windowId },
+    });
+
+    if (window && window.endAt < new Date()) {
+      throw new Error('End date must be greater than current date');
+    }
+
     const res = await this.prismaService.excuse.update({
       where: { id },
-      data: excuse,
+      data: { ...excuse },
     });
 
     return res.id;
