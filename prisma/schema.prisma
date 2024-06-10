@@ -168,16 +168,16 @@ model Window {
 }
 
 model Excuse {
-  id           Int          @id @default(autoincrement())
-  createdAt    DateTime     @default(now()) @map("created_at")
-  updatedAt    DateTime     @updatedAt @map("updated_at")
-  studentId    Int          @map("student_id")
-  windowId     Int          @map("window_id")
-  excuseFrom   ExcuseFrom   @map("excuse_from")
-  excuseStatus ExcuseStatus @map("excuse_status")
-  reason       String
-  student      Student      @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  window       Window       @relation(fields: [windowId], references: [id], onDelete: Cascade)
+  id         Int          @id @default(autoincrement())
+  createdAt  DateTime     @default(now()) @map("created_at")
+  updatedAt  DateTime     @updatedAt @map("updated_at")
+  studentId  Int          @map("student_id")
+  windowId   Int          @map("window_id")
+  excuseFrom ExcuseFrom   @map("excuse_from")
+  status     ExcuseStatus @map("excuse_status")
+  reason     String
+  student    Student      @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  window     Window       @relation(fields: [windowId], references: [id], onDelete: Cascade)
 
   @@map("excuses")
 }

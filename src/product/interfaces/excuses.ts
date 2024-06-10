@@ -8,7 +8,7 @@ export interface ExcuseBase {
   user: UserBase;
   window: WindowBase;
   excuseFrom: ExcuseFrom;
-  excuseReason: string;
+  reason: string;
   status: ExcuseStatus;
 }
 
@@ -20,7 +20,7 @@ interface ExcuseWithRelations {
   studentId: number;
   windowId: number;
   excuseFrom: ExcuseFrom;
-  excuseStatus: ExcuseStatus;
+  status: ExcuseStatus;
   reason: string;
   student: {
     id: number;
@@ -70,7 +70,7 @@ export const makeExcuseBase = (excuse: ExcuseWithRelations): ExcuseBase => {
       requireInterview: excuse.window.requireInterview,
     },
     excuseFrom: excuse.excuseFrom,
-    excuseReason: excuse.reason,
-    status: excuse.excuseStatus,
+    reason: excuse.reason,
+    status: excuse.status,
   };
 };
