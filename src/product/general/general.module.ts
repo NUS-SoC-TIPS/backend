@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 
 import { AuthModule } from './auth/auth.module';
 import { CodeModule } from './code/code.module';
+import { ExcusesModule } from './excuses/excuses.module';
 import { InterviewsModule } from './interviews/interviews.module';
 import { NotesModule } from './notes/notes.module';
 import { QuestionsModule } from './questions/questions.module';
@@ -17,6 +18,7 @@ import { UsersModule } from './users/users.module';
     UsersModule,
     QuestionsModule,
     InterviewsModule,
+    ExcusesModule,
   ],
 })
 export class GeneralModule {}
