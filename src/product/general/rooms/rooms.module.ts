@@ -1,7 +1,7 @@
 import { Logger, Module } from '@nestjs/common';
 
-import { WebrtcModule } from '../../../productinfra/webrtc/webrtc.module';
 import { CurrentModule } from '../../../productinfra/current/current.module';
+import { WebrtcModule } from '../../../productinfra/webrtc/webrtc.module';
 import { CodeModule } from '../code/code.module';
 import { NotesModule } from '../notes/notes.module';
 
