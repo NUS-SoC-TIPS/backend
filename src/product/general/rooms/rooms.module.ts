@@ -1,7 +1,7 @@
 import { Logger, Module } from '@nestjs/common';
 
-import { AgoraModule } from '../../../productinfra/agora/agora.module';
 import { CurrentModule } from '../../../productinfra/current/current.module';
+import { WebrtcModule } from '../../../productinfra/webrtc/webrtc.module';
 import { CodeModule } from '../code/code.module';
 import { NotesModule } from '../notes/notes.module';
 
@@ -10,6 +10,6 @@ import { RoomsService } from './rooms.service';
 
 @Module({
   providers: [RoomsService, RoomsGateway, Logger],
-  imports: [AgoraModule, CodeModule, NotesModule, CurrentModule],
+  imports: [WebrtcModule, CodeModule, NotesModule, CurrentModule],
 })
 export class RoomsModule {}

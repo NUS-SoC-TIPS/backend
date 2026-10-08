@@ -13,7 +13,7 @@ const Configuration = {
       'always',
       [
         'admin',
-        'agora',
+        'webrtc',
         'auth',
         'code',
         'cohorts',
