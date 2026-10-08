@@ -58,9 +58,7 @@ export class WebrtcService {
   private buildStaticTurnServer(): RTCIceServerConfig | null {
     const urls = this.getConfiguredList('WEBRTC_TURN_URLS', []);
     const username = this.configService.get<string>('WEBRTC_TURN_USERNAME');
-    const credential = this.configService.get<string>(
-      'WEBRTC_TURN_CREDENTIAL',
-    );
+    const credential = this.configService.get<string>('WEBRTC_TURN_CREDENTIAL');
     if (urls.length === 0 || username == null || credential == null) {
       return null;
     }
@@ -114,10 +112,7 @@ export class WebrtcService {
     }
   }
 
-  private getConfiguredList(
-    key: string,
-    fallback: string[],
-  ): string[] {
+  private getConfiguredList(key: string, fallback: string[]): string[] {
     const raw = this.configService.get<string>(key);
     if (raw == null || raw.trim() === '') {
       return fallback;
