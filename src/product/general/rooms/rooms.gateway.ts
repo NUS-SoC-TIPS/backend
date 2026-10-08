@@ -17,9 +17,9 @@ import { Server } from 'socket.io';
 
 import { ISocket } from '../../../infra/interfaces/socket';
 import { Room, RoomStatus, User } from '../../../infra/prisma/generated';
-import { WebrtcService } from '../../../productinfra/webrtc/webrtc.service';
 import { GetRoom, GetUserWs } from '../../../productinfra/decorators';
 import { AuthWsGuard, InRoomGuard } from '../../../productinfra/guards';
+import { WebrtcService } from '../../../productinfra/webrtc/webrtc.service';
 import { makeUserBase } from '../../interfaces';
 import { CodeService } from '../code/code.service';
 import { NotesService } from '../notes/notes.service';
