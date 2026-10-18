@@ -56,7 +56,6 @@ const RAW_RUNTIME_STATE =
           ["@types/supertest", "npm:6.0.2"],\
           ["@typescript-eslint/parser", "virtual:ddc83d4ef0c92f6c674e3f379a200087374f66d827378f57a7ee4bc60b5eca6cb251490a34955b05d669fb45dc9e38ee9c99f009fecec0ea2b4fd3cc6877ad7b#npm:7.11.0"],\
           ["@yarnpkg/pnpify", "npm:4.1.0"],\
-          ["agora-access-token", "npm:2.0.4"],\
           ["atob", "npm:2.1.2"],\
           ["axios", "npm:1.7.2"],\
           ["btoa", "npm:1.2.1"],\
@@ -4170,17 +4169,6 @@ const RAW_RUNTIME_STATE =
         "linkType": "HARD"\
       }]\
     ]],\
-    ["agora-access-token", [\
-      ["npm:2.0.4", {\
-        "packageLocation": "./.yarn/cache/agora-access-token-npm-2.0.4-3533c6060e-a8e366203f.zip/node_modules/agora-access-token/",\
-        "packageDependencies": [\
-          ["agora-access-token", "npm:2.0.4"],\
-          ["crc-32", "npm:1.2.0"],\
-          ["cuint", "npm:0.2.2"]\
-        ],\
-        "linkType": "HARD"\
-      }]\
-    ]],\
     ["ajv", [\
       ["npm:6.12.6", {\
         "packageLocation": "./.yarn/cache/ajv-npm-6.12.6-4b5105e2b2-48d6ad2113.zip/node_modules/ajv/",\
@@ -5713,17 +5701,6 @@ const RAW_RUNTIME_STATE =
         "linkType": "HARD"\
       }]\
     ]],\
-    ["crc-32", [\
-      ["npm:1.2.0", {\
-        "packageLocation": "./.yarn/cache/crc-32-npm-1.2.0-e56bb85839-10c648c986.zip/node_modules/crc-32/",\
-        "packageDependencies": [\
-          ["crc-32", "npm:1.2.0"],\
-          ["exit-on-epipe", "npm:1.0.1"],\
-          ["printj", "npm:1.1.2"]\
-        ],\
-        "linkType": "HARD"\
-      }]\
-    ]],\
     ["create-jest", [\
       ["npm:29.7.0", {\
         "packageLocation": "./.yarn/cache/create-jest-npm-29.7.0-3a6a7b993b-847b476445.zip/node_modules/create-jest/",\
@@ -5757,15 +5734,6 @@ const RAW_RUNTIME_STATE =
           ["path-key", "npm:3.1.1"],\
           ["shebang-command", "npm:2.0.0"],\
           ["which", "npm:2.0.2"]\
-        ],\
-        "linkType": "HARD"\
-      }]\
-    ]],\
-    ["cuint", [\
-      ["npm:0.2.2", {\
-        "packageLocation": "./.yarn/cache/cuint-npm-0.2.2-3990651cc6-c1b98971f4.zip/node_modules/cuint/",\
-        "packageDependencies": [\
-          ["cuint", "npm:0.2.2"]\
         ],\
         "linkType": "HARD"\
       }]\
@@ -7038,15 +7006,6 @@ const RAW_RUNTIME_STATE =
         "packageLocation": "./.yarn/cache/exit-npm-0.1.2-ef3761a67d-387555050c.zip/node_modules/exit/",\
         "packageDependencies": [\
           ["exit", "npm:0.1.2"]\
-        ],\
-        "linkType": "HARD"\
-      }]\
-    ]],\
-    ["exit-on-epipe", [\
-      ["npm:1.0.1", {\
-        "packageLocation": "./.yarn/cache/exit-on-epipe-npm-1.0.1-1aade96e24-b180aa277a.zip/node_modules/exit-on-epipe/",\
-        "packageDependencies": [\
-          ["exit-on-epipe", "npm:1.0.1"]\
         ],\
         "linkType": "HARD"\
       }]\
@@ -11748,15 +11707,6 @@ const RAW_RUNTIME_STATE =
         "linkType": "HARD"\
       }]\
     ]],\
-    ["printj", [\
-      ["npm:1.1.2", {\
-        "packageLocation": "./.yarn/cache/printj-npm-1.1.2-5c18cf1e70-45376a5ee7.zip/node_modules/printj/",\
-        "packageDependencies": [\
-          ["printj", "npm:1.1.2"]\
-        ],\
-        "linkType": "HARD"\
-      }]\
-    ]],\
     ["prisma", [\
       ["npm:5.14.0", {\
         "packageLocation": "./.yarn/unplugged/prisma-npm-5.14.0-6981e3f57e/node_modules/prisma/",\
@@ -13303,7 +13253,6 @@ const RAW_RUNTIME_STATE =
           ["@types/supertest", "npm:6.0.2"],\
           ["@typescript-eslint/parser", "virtual:ddc83d4ef0c92f6c674e3f379a200087374f66d827378f57a7ee4bc60b5eca6cb251490a34955b05d669fb45dc9e38ee9c99f009fecec0ea2b4fd3cc6877ad7b#npm:7.11.0"],\
           ["@yarnpkg/pnpify", "npm:4.1.0"],\
-          ["agora-access-token", "npm:2.0.4"],\
           ["atob", "npm:2.1.2"],\
           ["axios", "npm:1.7.2"],\
           ["btoa", "npm:1.2.1"],\
