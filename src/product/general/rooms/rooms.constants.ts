@@ -19,6 +19,12 @@ export const ROOM_EVENTS = {
   // To inform the other user that one user has disconnected
   PARTNER_DISCONNECTED: 'partner_disconnected',
 
+  // WebRTC signaling, relayed verbatim between the two peers in the room.
+  // Payloads are opaque SDP / ICE JSON owned by the frontend peer wrapper.
+  VIDEO_OFFER: 'video_offer',
+  VIDEO_ANSWER: 'video_answer',
+  VIDEO_ICE_CANDIDATE: 'video_ice_candidate',
+
   // General errors, such as due to database errors
   JOIN_ROOM_FAILED: 'join_room_failed',
   CLOSE_ROOM_FAILED: 'close_room_failed',
