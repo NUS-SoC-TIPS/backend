@@ -13,7 +13,6 @@ const Configuration = {
       'always',
       [
         'admin',
-        'webrtc',
         'auth',
         'code',
         'cohorts',
@@ -39,6 +38,7 @@ const Configuration = {
         'submissions',
         'users',
         'utils',
+        'webrtc',
       ],
     ],
     'type-enum': [

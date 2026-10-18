@@ -16,3 +16,7 @@ export const CLOUDFLARE_TURN_CREDENTIAL_TTL_SECONDS = 86400;
 
 export const CLOUDFLARE_TURN_CREDENTIALS_URL =
   'https://rtc.live.cloudflare.com/v1/turn/keys';
+
+// Upper bound on how long a room join waits for Cloudflare to mint TURN
+// credentials before falling back to STUN-only.
+export const CLOUDFLARE_TURN_REQUEST_TIMEOUT_MS = 3000;
