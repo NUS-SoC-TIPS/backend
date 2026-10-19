@@ -2921,16 +2921,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"agora-access-token@npm:^2.0.4":
-  version: 2.0.4
-  resolution: "agora-access-token@npm:2.0.4"
-  dependencies:
-    crc-32: "npm:1.2.0"
-    cuint: "npm:0.2.2"
-  checksum: 10/a8e366203f411c6198bdda6a84d44ab283cd8c024f24f35aa009de047c019699775d269361e06aeb8235e872cf92485afe418656e1db0e3019b184de114000ae
-  languageName: node
-  linkType: hard
-
 "ajv-formats@npm:2.1.1":
   version: 2.1.1
   resolution: "ajv-formats@npm:2.1.1"
@@ -4208,18 +4198,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"crc-32@npm:1.2.0":
-  version: 1.2.0
-  resolution: "crc-32@npm:1.2.0"
-  dependencies:
-    exit-on-epipe: "npm:~1.0.1"
-    printj: "npm:~1.1.0"
-  bin:
-    crc32: ./bin/crc32.njs
-  checksum: 10/10c648c986b005ed0ea8393bb0d1ccb99e7a102505b136d313dee6abe204aa682d9bb9bc6fd180f9cd98ef92aa029964f1cc96a2a85eb50507dedd9ead1a262f
-  languageName: node
-  linkType: hard
-
 "create-jest@npm:^29.7.0":
   version: 29.7.0
   resolution: "create-jest@npm:29.7.0"
@@ -4252,13 +4230,6 @@ __metadata:
     shebang-command: "npm:^2.0.0"
     which: "npm:^2.0.1"
   checksum: 10/e1a13869d2f57d974de0d9ef7acbf69dc6937db20b918525a01dacb5032129bd552d290d886d981e99f1b624cb03657084cc87bd40f115c07ecf376821c729ce
-  languageName: node
-  linkType: hard
-
-"cuint@npm:0.2.2":
-  version: 0.2.2
-  resolution: "cuint@npm:0.2.2"
-  checksum: 10/c1b98971f4a1b32ce71ec82eac87df87b54ee85d982e3967a6dd89f19ffd3ebbbdb82e3738e489f475611b6ed126c0deba05ed9ecffea0a721a4d43773ce0670
   languageName: node
   linkType: hard
 
@@ -5257,13 +5228,6 @@ __metadata:
     signal-exit: "npm:^4.1.0"
     strip-final-newline: "npm:^3.0.0"
   checksum: 10/d2ab5fe1e2bb92b9788864d0713f1fce9a07c4594e272c0c97bc18c90569897ab262e4ea58d27a694d288227a2e24f16f5e2575b44224ad9983b799dc7f1098d
-  languageName: node
-  linkType: hard
-
-"exit-on-epipe@npm:~1.0.1":
-  version: 1.0.1
-  resolution: "exit-on-epipe@npm:1.0.1"
-  checksum: 10/b180aa277aec5bef2609b34e5876061f421a1f81bf343beb213c4d60b382ddcb6b83012833f0ba329d6bc38042685c8d89b1c52ea495b9b6327948ea80627398
   languageName: node
   linkType: hard
 
@@ -9425,15 +9389,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"printj@npm:~1.1.0":
-  version: 1.1.2
-  resolution: "printj@npm:1.1.2"
-  bin:
-    printj: ./bin/printj.njs
-  checksum: 10/45376a5ee7ef2e0d7ff0b4fecc893d73995a332e63d7e0622a544fe662c8213d22f0c9750e627c6d732a7d7a543266be960e6cd51cf19485cce87cf80468bb41
-  languageName: node
-  linkType: hard
-
 "prisma@npm:5.14.0":
   version: 5.14.0
   resolution: "prisma@npm:5.14.0"
@@ -10830,7 +10785,6 @@ __metadata:
     "@types/supertest": "npm:^6.0.2"
     "@typescript-eslint/parser": "npm:^7.11.0"
     "@yarnpkg/pnpify": "npm:^4.1.0"
-    agora-access-token: "npm:^2.0.4"
     atob: "npm:^2.1.2"
     axios: "npm:^1.7.2"
     btoa: "npm:^1.2.1"

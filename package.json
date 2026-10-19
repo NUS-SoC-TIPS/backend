@@ -44,7 +44,6 @@
     "@nestjs/platform-socket.io": "^10.3.8",
     "@nestjs/websockets": "^10.3.8",
     "@prisma/client": "5.14.0",
-    "agora-access-token": "^2.0.4",
     "atob": "^2.1.2",
     "axios": "^1.7.2",
     "btoa": "^1.2.1",

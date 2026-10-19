@@ -17,9 +17,9 @@ import { Server } from 'socket.io';
 
 import { ISocket } from '../../../infra/interfaces/socket';
 import { Room, RoomStatus, User } from '../../../infra/prisma/generated';
-import { AgoraService } from '../../../productinfra/agora/agora.service';
 import { GetRoom, GetUserWs } from '../../../productinfra/decorators';
 import { AuthWsGuard, InRoomGuard } from '../../../productinfra/guards';
+import { WebrtcService } from '../../../productinfra/webrtc/webrtc.service';
 import { makeUserBase } from '../../interfaces';
 import { CodeService } from '../code/code.service';
 import { NotesService } from '../notes/notes.service';
@@ -43,7 +43,7 @@ export class RoomsGateway implements OnGatewayDisconnect, OnModuleDestroy {
   constructor(
     private readonly logger: Logger,
     private readonly codeService: CodeService,
-    private readonly agoraService: AgoraService,
+    private readonly webrtcService: WebrtcService,
     private readonly notesService: NotesService,
     private readonly roomsService: RoomsService,
   ) {
@@ -112,7 +112,7 @@ export class RoomsGateway implements OnGatewayDisconnect, OnModuleDestroy {
       user.id,
     );
     const notes = this.notesService.findForUserInRoom(room.id, user.id);
-    const videoToken = this.agoraService.generateAccessToken(room.id, user.id);
+    const iceServers = await this.webrtcService.getIceServers();
     const partner = room.roomUsers.filter((u) => u.userId !== user.id)[0]?.user;
     const isPartnerInRoom = this.roomIdToSockets.get(room.id)?.length === 2;
     const executableLanguageToVersionMap =
@@ -121,7 +121,7 @@ export class RoomsGateway implements OnGatewayDisconnect, OnModuleDestroy {
     socket.emit(ROOM_EVENTS.JOIN_ROOM, {
       id: room.id,
       partner: partner != null ? { name: partner.name } : null,
-      videoToken,
+      iceServers,
       language,
       notes,
       isPartnerInRoom,
@@ -142,6 +142,41 @@ export class RoomsGateway implements OnGatewayDisconnect, OnModuleDestroy {
       );
       throw e;
     });
+  }
+
+  // WebRTC signaling: offer, answer and ICE candidates are relayed to the
+  // other peer in the room. Payloads are opaque SDP / ICE JSON objects
+  // owned by the frontend peer wrapper; the server never inspects them.
+  @UseGuards(AuthWsGuard, InRoomGuard)
+  @SubscribeMessage(ROOM_EVENTS.VIDEO_OFFER)
+  relayVideoOffer(
+    @MessageBody() data: unknown,
+    @GetRoom() room: Room,
+    @ConnectedSocket() socket: ISocket,
+  ): void {
+    socket.broadcast.to(`${room.id}`).emit(ROOM_EVENTS.VIDEO_OFFER, data);
+  }
+
+  @UseGuards(AuthWsGuard, InRoomGuard)
+  @SubscribeMessage(ROOM_EVENTS.VIDEO_ANSWER)
+  relayVideoAnswer(
+    @MessageBody() data: unknown,
+    @GetRoom() room: Room,
+    @ConnectedSocket() socket: ISocket,
+  ): void {
+    socket.broadcast.to(`${room.id}`).emit(ROOM_EVENTS.VIDEO_ANSWER, data);
+  }
+
+  @UseGuards(AuthWsGuard, InRoomGuard)
+  @SubscribeMessage(ROOM_EVENTS.VIDEO_ICE_CANDIDATE)
+  relayVideoIceCandidate(
+    @MessageBody() data: unknown,
+    @GetRoom() room: Room,
+    @ConnectedSocket() socket: ISocket,
+  ): void {
+    socket.broadcast
+      .to(`${room.id}`)
+      .emit(ROOM_EVENTS.VIDEO_ICE_CANDIDATE, data);
   }
 
   async handleDisconnect(@ConnectedSocket() socket: ISocket): Promise<void> {
